@@ -13,7 +13,7 @@ use termix_doc::{
     MessagePart, MessageRole, MessageStatus, SegmentWriter, SessionCommandEntry,
     SessionCommandPayload, SessionCommandStatus, SessionDoc, SessionMessageEntry, SubagentStatus,
 };
-use termix_engine::{EngineCore, EngineRpc, HarnessRegistry, RunJournal};
+use termix_engine::{EngineCore, HarnessRegistry, RunJournal};
 use termix_harness::mock::MockHarness;
 use termix_harness::{Harness, HarnessError, RunControls};
 use termix_proto::{

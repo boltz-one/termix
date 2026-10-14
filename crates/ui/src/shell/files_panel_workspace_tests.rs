@@ -114,7 +114,6 @@ fn files_panel_workspace_navigation_and_external_updates() {
                 &directory.path().join("engine"),
                 Arc::new(termix_engine::default_registry()),
                 termix_proto::HarnessId::Mock,
-                None,
             )
         })
         .unwrap();
