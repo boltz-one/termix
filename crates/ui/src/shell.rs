@@ -1086,9 +1086,6 @@ pub(crate) fn chat_title_editor(
 /// [`gpui::EdgeFade`] scope — per-primitive, so text fades per glyph).
 const SIDEBAR_GLASS_FADE_BAND: f32 = 24.0;
 
-/// Target of the sidebar's "Star on GitHub" banner (same as the landing page).
-const GITHUB_REPO_URL: &str = "https://github.com/termix/comet";
-
 /// New-thread controls float over the tail of a top-anchored image hero. The
 /// hero reaches below the composer, giving its lower mask room to dissolve
 /// gradually into the otherwise empty lower canvas.
@@ -8388,8 +8385,6 @@ impl Shell {
         )
         .fade_overflow_y(&self.sidebar_scroll);
 
-        let github_star_banner = self.render_github_star_banner(false, theme, cx);
-
         div()
             .w(px(self.sidebar_content_width()))
             .h_full()
@@ -8405,9 +8400,6 @@ impl Shell {
             .when_some(self.render_connection_pill(theme, cx), |el, pill| {
                 el.child(pill)
             })
-            // "Star on GitHub" banner until dismissed (persisted), then the
-            // update strip — both above the user menu, below the lists.
-            .when_some(github_star_banner, |el, banner| el.child(banner))
             .child(
                 div()
                     .p(px(Theme::SPACE_SM))
@@ -8417,83 +8409,6 @@ impl Shell {
                     .child(self.render_sidebar_footer_row(theme, cx)),
             )
             .into_any_element()
-    }
-
-    /// "Star on GitHub" banner, styled like the update strip. Clicking it
-    /// opens the repository; either that or the close button dismisses it for
-    /// good — the choice is persisted so it never returns on the next launch.
-    fn render_github_star_banner(
-        &self,
-        above_update_strip: bool,
-        theme: &Theme,
-        cx: &mut Context<Self>,
-    ) -> Option<AnyElement> {
-        if self.settings.github_star_banner_dismissed {
-            return None;
-        }
-        let tone = theme.accent;
-        let chip_bg_hover = theme.accent.opacity(0.16);
-        let close_bg_hover = theme.accent.opacity(0.22);
-        Some(
-            div()
-                .id("github-star-banner")
-                .mx(px(Theme::SPACE_SM))
-                .when(above_update_strip, |el| el.mb(px(Theme::SPACE_XS)))
-                .pl(px(Theme::SPACE_SM))
-                .pr(px(Theme::SPACE_XS))
-                .py(px(4.0))
-                .rounded(px(Theme::CONTROL_RADIUS))
-                .bg(theme.accent_wash)
-                .flex()
-                .flex_row()
-                .items_center()
-                .gap(px(6.0))
-                .text_size(crate::typography::ui_rems(11.0))
-                .font_weight(gpui::FontWeight::MEDIUM)
-                .text_color(tone)
-                .cursor_pointer()
-                .hover(move |s| s.bg(chip_bg_hover))
-                .on_click(cx.listener(|this, _, _, cx| {
-                    cx.open_url(GITHUB_REPO_URL);
-                    this.dismiss_github_star_banner(cx);
-                }))
-                // Glyphs sit below the line box's optical center: nudge the
-                // star half a pixel down so it centers on the cap height.
-                .child(
-                    icon(icons::STAR_BOLD)
-                        .flex_none()
-                        .relative()
-                        .top(px(0.5))
-                        .size(px(12.0))
-                        .text_color(tone),
-                )
-                .child(div().flex_1().min_w_0().truncate().child("Star on GitHub"))
-                .child(
-                    div()
-                        .id("github-star-banner-dismiss")
-                        .flex_none()
-                        .size(px(18.0))
-                        .rounded(px(4.0))
-                        .flex()
-                        .items_center()
-                        .justify_center()
-                        .cursor_pointer()
-                        .hover(move |s| s.bg(close_bg_hover))
-                        .on_click(cx.listener(|this, _, _, cx| {
-                            cx.stop_propagation();
-                            this.dismiss_github_star_banner(cx);
-                        }))
-                        .tooltip(crate::settings::widgets::text_tooltip("Dismiss"))
-                        .child(icon(icons::CLOSE).size(px(10.0)).text_color(tone)),
-                )
-                .into_any_element(),
-        )
-    }
-
-    fn dismiss_github_star_banner(&mut self, cx: &mut Context<Self>) {
-        self.settings.github_star_banner_dismissed = true;
-        self.schedule_save(cx);
-        cx.notify();
     }
 
     /// The sidebar's bottom row: account menu on the left, settings toggle on
