@@ -421,6 +421,7 @@ async fn probe_details(
         voices,
     })
 }
+#[allow(clippy::too_many_arguments)]
 async fn start(
     client: RpcClient,
     thread: String,
@@ -480,6 +481,7 @@ async fn start(
     // Keep devices muted/suppressed until the engine confirms the owner stream.
     Ok(host)
 }
+#[allow(clippy::too_many_arguments)]
 async fn start_external(
     client: RpcClient,
     thread: String,

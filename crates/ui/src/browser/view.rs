@@ -51,8 +51,8 @@ impl BrowserSurface {
                 cx.stop_propagation();
                 return;
             }
-            if event.keystroke.modifiers.control && !event.keystroke.modifiers.alt {
-                if let Some(native) = &self.native {
+            if event.keystroke.modifiers.control && !event.keystroke.modifiers.alt
+                && let Some(native) = &self.native {
                     match event.keystroke.key.as_str() {
                         "c" | "x" => {
                             native.command(serde_json::json!({"cmd":if event.keystroke.key=="c" {"copy"} else {"cut"}}));
@@ -71,7 +71,6 @@ impl BrowserSurface {
                         _ => {}
                     }
                 }
-            }
             self.linux_key(&event.keystroke, true);
             cx.stop_propagation();
             return;

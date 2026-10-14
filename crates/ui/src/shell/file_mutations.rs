@@ -144,7 +144,7 @@ impl Shell {
             }
             .await;
             for surface in &surfaces {
-                let _ = surface.update(cx, |files, cx| files.finish_mutation(&intent, &result, cx));
+                surface.update(cx, |files, cx| files.finish_mutation(&intent, &result, cx));
             }
         })
         .detach();

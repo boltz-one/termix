@@ -107,7 +107,9 @@ struct Member {
     fast: bool,
 }
 
+
 #[derive(Default)]
+#[allow(clippy::type_complexity)]
 pub(super) struct Catalog {
     // Only overlapping callers share a result. A later picker open always
     // probes again, including after errors, login changes, or model rollouts.

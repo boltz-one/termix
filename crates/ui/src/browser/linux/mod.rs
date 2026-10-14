@@ -163,8 +163,8 @@ impl BrowserData {
     /// Blocking initialization, called only by the dedicated startup thread.
     fn worker(&self) -> Result<Arc<Worker>, String> {
         let mut current = self.current.lock().unwrap();
-        if let Some(worker) = current.as_ref() {
-            if worker
+        if let Some(worker) = current.as_ref()
+            && worker
                 .child
                 .lock()
                 .unwrap()
@@ -174,7 +174,6 @@ impl BrowserData {
             {
                 return Ok(worker.clone());
             }
-        }
         #[cfg(test)]
         let executable = self
             .helper_override
@@ -514,12 +513,11 @@ impl super::BrowserSurface {
                     page.loading = false;
                 }
                 if !self.address.focus_handle(cx).is_focused(window) {
-                    if let Some(url) = &page.url {
-                        if self.address.read(cx).text() != url {
+                    if let Some(url) = &page.url
+                        && self.address.read(cx).text() != url {
                             self.address
                                 .update(cx, |input, cx| input.set_text(url.clone(), cx));
                         }
-                    }
                     self.address_edited = false;
                 }
                 if page != self.page {
@@ -734,8 +732,8 @@ impl super::BrowserSurface {
         cx.notify();
     }
     pub(super) fn linux_choose_menu(&mut self, index: usize, cx: &mut gpui::Context<Self>) {
-        if let Some(native) = &mut self.native {
-            if let Some(item) = native
+        if let Some(native) = &mut self.native
+            && let Some(item) = native
                 .menu
                 .as_ref()
                 .and_then(|m| m["items"].get(index))
@@ -750,7 +748,6 @@ impl super::BrowserSurface {
                     native.command(json!({"cmd":action}));
                 }
             }
-        }
         self.linux_dismiss_menu(cx);
     }
     pub(super) fn linux_menu_key(&mut self, key: &str, cx: &mut gpui::Context<Self>) -> bool {

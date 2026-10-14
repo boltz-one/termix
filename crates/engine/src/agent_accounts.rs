@@ -3759,13 +3759,12 @@ fn scan_device_code(output: &str) -> Option<String> {
         {
             return Some(token.to_string());
         }
-        if lower.contains("enter") || lower.trim_end().ends_with("code:") {
-            if let Some(next) = lines[ix + 1..].iter().find(|l| !l.trim().is_empty())
+        if (lower.contains("enter") || lower.trim_end().ends_with("code:"))
+            && let Some(next) = lines[ix + 1..].iter().find(|l| !l.trim().is_empty())
                 && is_code(next)
             {
                 return Some(next.trim().to_string());
             }
-        }
     }
     None
 }

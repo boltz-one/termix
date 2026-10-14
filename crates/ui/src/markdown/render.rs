@@ -1833,8 +1833,8 @@ fn text_element(
     opts: &RenderOptions,
     theme: &Theme,
 ) -> AnyElement {
-    if let Some(image_ui) = opts.media.as_ref().and_then(|media| media.image.as_ref()) {
-        if runs.iter().any(|run| run.style.image.is_some()) {
+    if let Some(image_ui) = opts.media.as_ref().and_then(|media| media.image.as_ref())
+        && runs.iter().any(|run| run.style.image.is_some()) {
             let mut elements = Vec::new();
             let mut start = 0;
             for (index, run) in runs.iter().enumerate() {
@@ -1878,7 +1878,6 @@ fn text_element(
                 .children(elements)
                 .into_any_element();
         }
-    }
     if let Some(lines) = opts
         .workspace_root
         .as_deref()
@@ -2045,8 +2044,8 @@ fn render_code_block(
     theme: &Theme,
     highlight: CodeHighlight,
 ) -> AnyElement {
-    if language.is_some_and(|l| l.eq_ignore_ascii_case("mermaid")) {
-        if let Some(handler) = opts.media.as_ref().and_then(|media| media.diagram.as_ref()) {
+    if language.is_some_and(|l| l.eq_ignore_ascii_case("mermaid"))
+        && let Some(handler) = opts.media.as_ref().and_then(|media| media.diagram.as_ref()) {
             let frame_id: SharedString = format!("{}-mermaid-{ix}", opts.row_key).into();
             let diagram = match handler(code, frame_id.clone(), theme) {
                 DiagramView::Source => {
@@ -2102,7 +2101,6 @@ fn render_code_block(
             return code_block_frame(frame_id, language, actions, diagram.body, theme)
                 .into_any_element();
         }
-    }
     render_code_block_source(language, code, top_ix, ix, opts, theme, highlight)
 }
 
@@ -2482,7 +2480,7 @@ fn render_code_block_source_with_actions(
     };
 
     let scrollbar = (!fit_content)
-        .then(|| code_ui.as_ref())
+        .then_some(code_ui.as_ref())
         .flatten()
         .and_then(|ui| {
             let bar = ui.scrollbar.as_ref()?;

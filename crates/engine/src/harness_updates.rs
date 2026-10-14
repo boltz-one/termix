@@ -2275,9 +2275,7 @@ async fn run_command_output_env(
             "{} exited with {}{}",
             executable.display(),
             output.status,
-            (!detail.is_empty())
-                .then(|| format!(": {detail}"))
-                .unwrap_or_default()
+            if !detail.is_empty() { format!(": {detail}") } else { Default::default() }
         ));
     }
     Ok(if stdout.is_empty() { stderr } else { stdout })

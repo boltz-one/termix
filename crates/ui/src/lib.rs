@@ -210,7 +210,7 @@ pub fn run_app(config: UiConfig) {
         let click_state = state.clone();
         cx.spawn(async move |cx| {
             while let Some(target) = click_rx.next().await {
-                let _ = cx.update(|cx| open_notification_target(target, &click_state, cx));
+                cx.update(|cx| open_notification_target(target, &click_state, cx));
             }
         })
         .detach();

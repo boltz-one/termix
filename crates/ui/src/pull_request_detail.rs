@@ -515,8 +515,8 @@ impl PullRequestDetailPage {
                     if matches!(event, crate::composer::ComposerInputEvent::Edited) {
                         page.file_query = input.read(cx).text().to_lowercase();
                         cx.notify();
-                    } else if matches!(event, crate::composer::ComposerInputEvent::Submitted) {
-                        if let Some(index) =
+                    } else if matches!(event, crate::composer::ComposerInputEvent::Submitted)
+                        && let Some(index) =
                             page.parsed_diff().files.iter().position(|(path, _)| {
                                 path.to_lowercase().contains(&page.file_query)
                             })
@@ -527,7 +527,6 @@ impl PullRequestDetailPage {
                                 page.return_focus = Some(page.files_focus.clone());
                             }
                         }
-                    }
                 }),
             );
         let page_handle = cx.weak_entity();

@@ -592,7 +592,8 @@ impl ChatDocHandle {
 
 impl DocHost {
     pub fn new(store: Arc<DocsStore>, config: DocHostConfig) -> Self {
-        let host = Self {
+        
+        Self {
             inner: Arc::new(DocHostInner {
                 store,
                 config,
@@ -614,8 +615,7 @@ impl DocHost {
                 executing: Mutex::new(HashSet::new()),
                 connectivity: OnceLock::new(),
             }),
-        };
-        host
+        }
     }
 
     /// Every background task rides the tracker, raced against the shutdown
@@ -942,14 +942,13 @@ impl DocHost {
                     .sync_job_version(&chat, "recovery")
                     .ok()
                     .flatten();
-                if host.salvage_chat_transcript(&chat).await.is_ok() {
-                    if let Some(version) = version {
+                if host.salvage_chat_transcript(&chat).await.is_ok()
+                    && let Some(version) = version {
                         let _ = host
                             .inner
                             .store
                             .complete_sync_job(&chat, "recovery", version);
                     }
-                }
             }
         });
     }
@@ -2642,7 +2641,7 @@ impl DocHost {
                 let worktree_spec = request.worktree.take();
                 let fresh_worktree = match &worktree_spec {
                     Some(spec) => {
-                        let (cwd, fresh) = self.materialize_worktree(chat_id, &spec).await?;
+                        let (cwd, fresh) = self.materialize_worktree(chat_id, spec).await?;
                         request.cwd = cwd;
                         fresh
                     }
