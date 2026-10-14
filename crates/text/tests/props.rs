@@ -4,8 +4,8 @@
 mod common;
 
 use common::*;
-use unicode_segmentation::UnicodeSegmentation;
 use termix_text::*;
+use unicode_segmentation::UnicodeSegmentation;
 
 struct Rng(u64);
 

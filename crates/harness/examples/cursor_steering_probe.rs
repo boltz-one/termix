@@ -2,9 +2,9 @@
 //! cargo run -p termix-harness --example cursor_steering_probe -- gemini-3-flash
 use futures::StreamExt;
 use std::time::Duration;
-use tokio::sync::{mpsc, oneshot};
 use termix_harness::{CancellationToken, CursorHarness, Harness, RunControls, SteerMessage};
 use termix_proto::{AgentEvent, DoneStatus, RunRequest, SandboxLevel};
+use tokio::sync::{mpsc, oneshot};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

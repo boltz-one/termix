@@ -263,7 +263,10 @@ mod gate_tests {
 
     #[test]
     fn connecting_loads_and_failed_fails() {
-        assert_eq!(gate_phase(&ConnectionStatus::Connecting), GatePhase::Loading);
+        assert_eq!(
+            gate_phase(&ConnectionStatus::Connecting),
+            GatePhase::Loading
+        );
         assert_eq!(
             gate_phase(&ConnectionStatus::Failed("boom".into())),
             GatePhase::Failed("boom".into())

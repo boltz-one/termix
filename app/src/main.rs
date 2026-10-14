@@ -267,7 +267,7 @@ fn engine_config_from_env() -> termix_engine::EngineConfig {
 /// `TERMIX_HARNESS` (kebab-case id) picks the default harness for chats without a
 /// config row — `mock` powers the e2e smoke; default `claude-code`.
 fn harness_from_env() -> termix_engine::HarnessId {
-    match std::env::var("TERMIX_HARNESS").as_deref() .map(str::trim) {
+    match std::env::var("TERMIX_HARNESS").as_deref().map(str::trim) {
         Ok("mock") => termix_engine::HarnessId::Mock,
         Ok("codex") => termix_engine::HarnessId::Codex,
         Ok("cursor") => termix_engine::HarnessId::Cursor,

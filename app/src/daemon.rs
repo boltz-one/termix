@@ -409,7 +409,10 @@ mod tests {
     fn launchd_plist_shape() {
         let plist = render_launchd_plist(
             Path::new("/Users/x/termix & co/termix"),
-            &[("TERMIX_DATA_DIR".into(), "/Users/x/.termix & co/data".into())],
+            &[(
+                "TERMIX_DATA_DIR".into(),
+                "/Users/x/.termix & co/data".into(),
+            )],
             Path::new("/Users/x/.termix/daemon.log"),
         );
         assert!(plist.contains("<key>Label</key><string>sh.termix.app</string>"));
@@ -419,7 +422,8 @@ mod tests {
         assert!(plist.contains("<string>headless</string>"));
         assert!(plist.contains("<key>SuccessfulExit</key><false/>"));
         assert!(
-            plist.contains("<key>StandardOutPath</key><string>/Users/x/.termix/daemon.log</string>")
+            plist
+                .contains("<key>StandardOutPath</key><string>/Users/x/.termix/daemon.log</string>")
         );
     }
 }

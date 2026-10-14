@@ -256,11 +256,7 @@ pub struct CheckoutDiffSync {
 impl CheckoutDiffSync {
     /// Build and start the sync loop: follows the workspace chat watch and runs the
     /// 2-minute repair tick. Requires a tokio runtime.
-    pub fn start(
-        repos: Repos,
-        workspace: WorkspaceHost,
-        device_id: &str,
-    ) -> Self {
+    pub fn start(repos: Repos, workspace: WorkspaceHost, device_id: &str) -> Self {
         // Grace = one repair interval: an entry must survive at least one full
         // fresh revalidation pass before reconcile may tear it down.
         Self::start_with_orphan_grace(repos, workspace, device_id, REPAIR_INTERVAL)
@@ -275,13 +271,7 @@ impl CheckoutDiffSync {
         device_id: &str,
         orphan_grace: Duration,
     ) -> Self {
-        Self::start_with_timings(
-            repos,
-            workspace,
-            device_id,
-            orphan_grace,
-            INTEREST_LINGER,
-        )
+        Self::start_with_timings(repos, workspace, device_id, orphan_grace, INTEREST_LINGER)
     }
 
     /// [`CheckoutDiffSync::start_with_orphan_grace`] plus an explicit interest

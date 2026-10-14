@@ -3,7 +3,6 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
-use tokio::sync::mpsc;
 use termix_proto::{
     ListWorkspaceDirectoryRequest, ReadWorkspaceFileRequest, SearchWorkspaceContentRequest,
     SearchWorkspaceFilesRequest, WarmWorkspaceSearchRequest, WarmWorkspaceSearchResult,
@@ -12,6 +11,7 @@ use termix_proto::{
     WriteWorkspaceFileRequest,
 };
 use termix_rpc::{RpcError, methods};
+use tokio::sync::mpsc;
 
 use crate::state::{AppState, EngineHandle};
 

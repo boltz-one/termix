@@ -778,7 +778,11 @@ impl TerminalColors {
             Appearance::Light => "termix-light",
         };
         let registry = ThemeRegistry::active();
-        Self::from_variant(registry.variant(id).expect("Termix terminal palette exists"))
+        Self::from_variant(
+            registry
+                .variant(id)
+                .expect("Termix terminal palette exists"),
+        )
     }
 }
 

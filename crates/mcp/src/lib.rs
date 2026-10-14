@@ -17,14 +17,14 @@
 //! originating chat, and a chat can never message itself.
 
 mod jsonrpc;
+mod termix;
 mod tools;
 mod transcript;
-mod termix;
 
 pub use jsonrpc::serve_stdio;
+pub use termix::{Origin, Termix};
 pub use tools::{ToolDef, Tools};
 pub use transcript::{RenderOptions, RenderedMessage, render_entries};
-pub use termix::{Origin, Termix};
 
 /// How `termix mcp` finds the engine and who it speaks for.
 #[derive(Debug, Clone)]

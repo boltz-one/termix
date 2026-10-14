@@ -552,7 +552,10 @@ async fn mcp_injection_reaches_sdk_on_create_and_resume_with_fresh_identity() {
             options["mcpServers"]["termix"]["args"],
             serde_json::json!(["mcp"])
         );
-        assert_eq!(options["mcpServers"]["termix"]["env"]["TERMIX_CHAT_ID"], chat);
+        assert_eq!(
+            options["mcpServers"]["termix"]["env"]["TERMIX_CHAT_ID"],
+            chat
+        );
         assert_eq!(
             options["mcpServers"]["termix"]["env"]["TERMIX_IPC_PORT"],
             "27699"

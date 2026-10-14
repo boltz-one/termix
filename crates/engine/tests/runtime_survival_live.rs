@@ -136,8 +136,7 @@ async fn agent_process_survives_sends_and_cancel() {
     let id = harness.id();
     let registry = HarnessRegistry::new();
     registry.register(harness);
-    let core =
-        EngineCore::assemble(&dir.path().join("engine"), Arc::new(registry), id).unwrap();
+    let core = EngineCore::assemble(&dir.path().join("engine"), Arc::new(registry), id).unwrap();
     core.workspace
         .create_space("space", &core.device_id, &cwd, None, false)
         .unwrap();
@@ -575,7 +574,10 @@ async fn stop_tears_down_all_agent_work() {
             termix_proto::HarnessId::ClaudeCode,
             Arc::new(ClaudeHarness::new()),
         ),
-        "codex" => (termix_proto::HarnessId::Codex, Arc::new(CodexHarness::new())),
+        "codex" => (
+            termix_proto::HarnessId::Codex,
+            Arc::new(CodexHarness::new()),
+        ),
         _ => panic!("claude or codex"),
     };
     let alive = || {
@@ -594,8 +596,7 @@ async fn stop_tears_down_all_agent_work() {
     let cwd = dir.path().to_str().unwrap().to_owned();
     let registry = HarnessRegistry::new();
     registry.register(harness);
-    let core =
-        EngineCore::assemble(&dir.path().join("engine"), Arc::new(registry), id).unwrap();
+    let core = EngineCore::assemble(&dir.path().join("engine"), Arc::new(registry), id).unwrap();
     core.workspace
         .create_space("space", &core.device_id, &cwd, None, false)
         .unwrap();
@@ -732,8 +733,7 @@ async fn idle_reaper_spares_a_background_shell_until_it_wakes_the_agent() {
     let cwd = dir.path().to_str().unwrap().to_owned();
     let registry = HarnessRegistry::new();
     registry.register(Arc::new(ClaudeHarness::new()));
-    let core =
-        EngineCore::assemble(&dir.path().join("engine"), Arc::new(registry), id).unwrap();
+    let core = EngineCore::assemble(&dir.path().join("engine"), Arc::new(registry), id).unwrap();
     core.workspace
         .create_space("space", &core.device_id, &cwd, None, false)
         .unwrap();

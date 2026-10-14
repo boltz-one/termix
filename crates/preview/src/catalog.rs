@@ -8,8 +8,8 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
-use tokio::sync::watch;
 use termix_proto::{PREVIEW_PROXY_PORT, PreviewService, PreviewSnapshot};
+use tokio::sync::watch;
 
 #[derive(Clone)]
 pub struct Catalog(Arc<Inner>);

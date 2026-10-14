@@ -10,10 +10,10 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use termix_proto::{
     ProjectAction, ProjectActionDraft, ProjectActionIcon, ProjectActionRun, ProjectActionsSnapshot,
 };
+use uuid::Uuid;
 
 use crate::{EngineError, Terminals};
 

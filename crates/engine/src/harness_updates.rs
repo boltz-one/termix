@@ -11,10 +11,10 @@ use std::time::Duration;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
+use termix_harness::process::{Command, Stdio};
 use tokio::io::AsyncWriteExt as _;
 use tokio::sync::watch;
 use tokio_util::sync::CancellationToken;
-use termix_harness::process::{Command, Stdio};
 
 use termix_proto::{
     HarnessId, HarnessInstallSource, HarnessUpdateFailure, HarnessUpdatePhase, HarnessUpdatePolicy,

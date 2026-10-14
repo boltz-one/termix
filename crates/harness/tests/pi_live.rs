@@ -2,9 +2,9 @@
 #![cfg(unix)]
 use futures::StreamExt;
 use std::{os::unix::fs::PermissionsExt, time::Duration};
-use tokio::sync::{mpsc, oneshot};
 use termix_harness::{CancellationToken, Harness, PiHarness, RunControls, SteerMessage};
 use termix_proto::{AgentEvent, DoneStatus, RunRequest, SandboxLevel, UserInputAnswer};
+use tokio::sync::{mpsc, oneshot};
 
 fn isolated_pi() -> (tempfile::TempDir, PiHarness) {
     let dir = tempfile::tempdir().unwrap();

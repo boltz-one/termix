@@ -14,13 +14,6 @@ use std::{
     },
     time::Duration,
 };
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::{
-    WebSocketStream,
-    tungstenite::{Message, client::IntoClientRequest, protocol::Role},
-};
-use tokio_util::sync::CancellationToken;
 use termix_preview::{
     catalog::Catalog,
     discovery::Listener,
@@ -28,6 +21,13 @@ use termix_preview::{
     peer::Peers,
     proxy::{self, Router},
 };
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tokio_tungstenite::{
+    WebSocketStream,
+    tungstenite::{Message, client::IntoClientRequest, protocol::Role},
+};
+use tokio_util::sync::CancellationToken;
 type Body = UnsyncBoxBody<Bytes, hyper::Error>;
 fn full(value: impl Into<Bytes>) -> Body {
     Full::new(value.into())

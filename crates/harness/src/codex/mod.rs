@@ -2366,7 +2366,10 @@ mod mcp_injection_tests {
         };
         let overrides: serde_json::Map<String, Value> =
             codex_mcp_overrides(&mcp).into_iter().collect();
-        assert_eq!(overrides["mcp_servers.termix.command"], "/opt/termix/termix");
+        assert_eq!(
+            overrides["mcp_servers.termix.command"],
+            "/opt/termix/termix"
+        );
         assert_eq!(overrides["mcp_servers.termix.args"], json!(["mcp"]));
         assert_eq!(
             overrides["mcp_servers.termix.env"],
@@ -2399,7 +2402,12 @@ mod skill_discovery_tests {
             json!({"type":"skill","name":"review","path":"/repo/a b/SKILL.md"})
         );
         assert_eq!(input[2]["path"], "/repo/other/SKILL.md");
-        assert!(!input[0]["text"].as_str().unwrap().contains("termix-invoke:"));
+        assert!(
+            !input[0]["text"]
+                .as_str()
+                .unwrap()
+                .contains("termix-invoke:")
+        );
         for raw in [
             "$review".into(),
             format!("`{}`", a.link()),

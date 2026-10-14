@@ -2360,7 +2360,9 @@ mod tests {
         );
         cx.simulate_keystrokes("cmd-c");
         assert_eq!(
-            cx.read_from_clipboard().and_then(|item| item.text()).as_deref(),
+            cx.read_from_clipboard()
+                .and_then(|item| item.text())
+                .as_deref(),
             Some("First")
         );
         page.update(cx, |page, cx| page.select_tab(Tab::Activity, cx));
@@ -2855,12 +2857,13 @@ mod tests {
 
     #[test]
     fn ci_summary_handles_mixed_and_unreported_checks() {
-        let check = |conclusion: &str, state: &str, status: &str| termix_proto::ChangeRequestCheck {
-            conclusion: conclusion.into(),
-            state: state.into(),
-            status: status.into(),
-            ..Default::default()
-        };
+        let check =
+            |conclusion: &str, state: &str, status: &str| termix_proto::ChangeRequestCheck {
+                conclusion: conclusion.into(),
+                state: state.into(),
+                status: status.into(),
+                ..Default::default()
+            };
         let ci_status = |checks: &[termix_proto::ChangeRequestCheck]| {
             super::ci_status(&ChangeRequestDetail {
                 ci: termix_proto::change_request_assessment::ChangeRequestCi::from_checks(checks),
@@ -3441,7 +3444,12 @@ mod tests {
             cx.simulate_resize(gpui::size(px(width), px(800.0)));
             cx.run_until_parked();
             let mut previous_right = px(0.0);
-            for selector in ["pr-detail-title", "pr-detail-refresh", "pr-copy-url", "pr-external"] {
+            for selector in [
+                "pr-detail-title",
+                "pr-detail-refresh",
+                "pr-copy-url",
+                "pr-external",
+            ] {
                 let bounds = cx.debug_bounds(selector).unwrap();
                 assert!(
                     bounds.left() >= previous_right && bounds.right() <= px(width),

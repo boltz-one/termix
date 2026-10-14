@@ -1799,8 +1799,9 @@ fn is_compact_work_part(ix: usize, part: &MessagePart, reply_start: Option<usize
 /// the smoothness measurement knob. Off by default; zero cost when off.
 fn frame_stats_enabled() -> bool {
     static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ENABLED
-        .get_or_init(|| std::env::var("TERMIX_FRAME_STATS").is_ok_and(|v| !v.is_empty() && v != "0"))
+    *ENABLED.get_or_init(|| {
+        std::env::var("TERMIX_FRAME_STATS").is_ok_and(|v| !v.is_empty() && v != "0")
+    })
 }
 
 const FRAME_STATS_WINDOW: usize = 240;
@@ -10766,7 +10767,9 @@ mod tests {
                         termix_doc::TranscriptUpdate {
                             frame,
                             context_usage: None,
-                            replay_baseline: Some(termix_doc::TranscriptBaseline::capture(&history)),
+                            replay_baseline: Some(termix_doc::TranscriptBaseline::capture(
+                                &history,
+                            )),
                         },
                         cx,
                     )

@@ -281,12 +281,8 @@ async fn exercise_projectless(mode: Mode) {
         requests: requests.clone(),
     }));
     let registry = Arc::new(registry);
-    let core = EngineCore::assemble(
-        &tmp.path().join("data"),
-        registry.clone(),
-        HarnessId::Mock,
-    )
-    .expect("engine core assembles");
+    let core = EngineCore::assemble(&tmp.path().join("data"), registry.clone(), HarnessId::Mock)
+        .expect("engine core assembles");
 
     // The composer's exact wire shape for "Don't work in a project": a
     // deviceId, no spaceId, no cwd.

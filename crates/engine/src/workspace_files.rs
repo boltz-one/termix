@@ -11,8 +11,6 @@ use std::sync::{Arc, Mutex, Weak};
 use std::time::{Duration, Instant};
 
 use sha2::{Digest, Sha256};
-use tokio::sync::{Notify, broadcast, mpsc};
-use tokio_util::sync::CancellationToken;
 use termix_proto::{
     ListWorkspaceDirectoryRequest, ReadWorkspaceFileRequest, SearchWorkspaceContentRequest,
     SearchWorkspaceFilesRequest, WarmWorkspaceSearchRequest, WarmWorkspaceSearchResult,
@@ -25,6 +23,8 @@ use termix_proto::{
     WriteWorkspaceFileRequest,
 };
 use termix_rpc::RpcError;
+use tokio::sync::{Notify, broadcast, mpsc};
+use tokio_util::sync::CancellationToken;
 
 use crate::workspace_search::{IndexState, NameKinds, normalize_name_query};
 use crate::{Repos, WorkspaceHost, WorkspaceSearch};

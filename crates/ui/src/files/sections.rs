@@ -590,16 +590,11 @@ impl FilesSurface {
                 })),
             )
             .child(
-                header_action(
-                    "files-sections-fork",
-                    icons::FORK,
-                    "Fork this chat",
-                    theme,
-                )
-                .on_click(cx.listener(|_, _, _, cx| {
-                    cx.stop_propagation();
-                    cx.emit(FilesEvent::ForkChat);
-                })),
+                header_action("files-sections-fork", icons::FORK, "Fork this chat", theme)
+                    .on_click(cx.listener(|_, _, _, cx| {
+                        cx.stop_propagation();
+                        cx.emit(FilesEvent::ForkChat);
+                    })),
             )
             .into_any_element()
     }
@@ -1007,16 +1002,12 @@ impl FilesSurface {
                 .gap(px(6.0))
                 .h(px(EMPTY_ACTIONS_HEIGHT))
                 .child(
-                    pill_button(
-                        "files-sections-empty-fork",
-                        icons::FORK,
-                        "Fork",
-                        theme,
-                    )
-                    .on_click(cx.listener(|_, _, _, cx| {
-                        cx.stop_propagation();
-                        cx.emit(FilesEvent::ForkChat);
-                    })),
+                    pill_button("files-sections-empty-fork", icons::FORK, "Fork", theme).on_click(
+                        cx.listener(|_, _, _, cx| {
+                            cx.stop_propagation();
+                            cx.emit(FilesEvent::ForkChat);
+                        }),
+                    ),
                 )
                 .child(
                     pill_button(

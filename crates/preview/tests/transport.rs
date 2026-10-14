@@ -5,9 +5,9 @@ use std::{
     },
     time::Duration,
 };
+use termix_preview::mux::{self, BoxIo, Connector};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_util::sync::CancellationToken;
-use termix_preview::mux::{self, BoxIo, Connector};
 struct Echo(Arc<AtomicUsize>);
 #[async_trait::async_trait]
 impl Connector for Echo {

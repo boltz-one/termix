@@ -52,9 +52,7 @@ use termix_proto::{
     ChatConfig, CreateWorktreeOutcome, EngineInfo, HarnessId, HarnessUpdatePolicy,
     ProjectActionDraft, Space, ToolCall, WorkspaceScope,
 };
-use termix_rpc::{
-    RpcError, RpcReply, RpcService, capability_errors, methods, parse_params,
-};
+use termix_rpc::{RpcError, RpcReply, RpcService, capability_errors, methods, parse_params};
 
 use crate::agent_accounts::AgentAccounts;
 use crate::change_requests::CheckoutChangeRequests;
@@ -682,7 +680,6 @@ impl EngineRpc {
             .ok_or_else(|| RpcError::Failed("agent updates unavailable".into()))
     }
 
-
     fn local_project_action_space(&self, space_id: &str) -> Result<Space, RpcError> {
         let space = self
             .workspace
@@ -1084,7 +1081,8 @@ async fn run_requested_install(
     cancel: termix_harness::CancellationToken,
 ) -> Result<(), termix_harness::HarnessError> {
     #[cfg(test)]
-    if let Ok(script) = std::env::var(format!("TERMIX_INSTALLER_COMMAND_{harness:?}").to_uppercase())
+    if let Ok(script) =
+        std::env::var(format!("TERMIX_INSTALLER_COMMAND_{harness:?}").to_uppercase())
     {
         return termix_harness::install::install_with_command(harness, &script, cancel).await;
     }
@@ -1159,7 +1157,8 @@ fn doc_messages_stream(
                 };
                 let replay_baseline = match prev.as_ref() {
                     None => {
-                        opening_baseline = termix_doc::TranscriptBaseline::capture(&current.entries);
+                        opening_baseline =
+                            termix_doc::TranscriptBaseline::capture(&current.entries);
                         Some(opening_baseline.clone())
                     }
                     Some(prev)
@@ -3103,12 +3102,9 @@ mod tests {
             std::path::PathBuf::from(std::env::var_os("TERMIX_INSTALL_FIXTURE_CHILD").unwrap());
         let registry = Arc::new(HarnessRegistry::new());
         registry.register(Arc::new(termix_harness::CodexHarness::new()));
-        let core = crate::EngineCore::assemble(
-            &root.join("engine"),
-            registry.clone(),
-            HarnessId::Codex,
-        )
-        .unwrap();
+        let core =
+            crate::EngineCore::assemble(&root.join("engine"), registry.clone(), HarnessId::Codex)
+                .unwrap();
         let rpc = core.rpc_service();
         let params = serde_json::json!({"harness": "codex"});
         assert!(!registry.descriptors()[0].installed);
@@ -3205,8 +3201,8 @@ mod tests {
     async fn explicit_install_rpc_verifies_archive_and_refreshes_descriptors() {
         use sha2::{Digest, Sha512};
         use std::io::Write;
-        use tokio::io::{AsyncReadExt, AsyncWriteExt};
         use termix_harness::archive_install::{ArchivePin, ensure_installed, installed_entry};
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
         if std::env::var_os("TERMIX_INSTALL_RPC_TEST").is_none() {
             let root = tempfile::tempdir().unwrap();
             let output = tokio::process::Command::new(std::env::current_exe().unwrap())
@@ -3493,4 +3489,3 @@ mod tests {
         );
     }
 }
-

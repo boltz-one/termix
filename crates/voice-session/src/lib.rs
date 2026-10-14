@@ -5,11 +5,11 @@ use futures::{StreamExt, stream::BoxStream};
 use serde_json::{Value, json};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use termix_proto::voice::{remote as wire, *};
+use termix_rpc::{RpcClient, methods};
 use tokio::sync::{mpsc, watch};
 use tokio_util::sync::CancellationToken;
 pub use view::{Caption, SpeakerActivity, VoiceView, orb_state};
-use termix_proto::voice::{remote as wire, *};
-use termix_rpc::{RpcClient, methods};
 
 #[async_trait]
 pub trait VoiceMediaEndpoint: Send + Sync {

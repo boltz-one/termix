@@ -2657,7 +2657,8 @@ impl DocHost {
                     if termix_proto::projectless::is_home_cwd(&request.cwd)
                         && let Ok(Some(chat)) = ws.chat(chat_id)
                         && let Some(cwd) = chat.cwd.filter(|cwd| {
-                            chat.space_id.is_none() && termix_proto::projectless::is_scratch_cwd(cwd)
+                            chat.space_id.is_none()
+                                && termix_proto::projectless::is_scratch_cwd(cwd)
                         })
                     {
                         request.cwd = cwd;

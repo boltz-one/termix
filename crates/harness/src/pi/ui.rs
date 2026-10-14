@@ -1,8 +1,8 @@
 use super::{normalize::string, rpc::Client};
 use serde_json::{Value, json};
 use std::sync::Arc;
-use tokio::{sync::oneshot, task::JoinSet};
 use termix_proto::{UserInputAnswer, UserInputQuestion};
+use tokio::{sync::oneshot, task::JoinSet};
 pub(super) type Input =
     dyn Fn(Vec<UserInputQuestion>) -> oneshot::Receiver<Vec<UserInputAnswer>> + Send + Sync;
 #[derive(Default)]

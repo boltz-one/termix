@@ -3,12 +3,12 @@
 //! Checks a running shell survives a rapid burst and every follow-up is acted on.
 use futures::StreamExt;
 use std::{sync::Arc, time::Duration};
-use tokio::sync::{mpsc, oneshot};
 use termix_harness::{
     AcpHarness, CancellationToken, ClaudeHarness, CodexHarness, CursorHarness, Harness,
     OpencodeHarness, RunControls, SteerMessage,
 };
 use termix_proto::{AgentEvent, DoneStatus, RunRequest, SandboxLevel};
+use tokio::sync::{mpsc, oneshot};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

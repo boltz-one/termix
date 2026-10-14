@@ -369,13 +369,10 @@ impl Render for DevicesPage {
             }
             block
         });
-        let card = div()
-            .flex()
-            .flex_col()
-            .when_some(local_block, |el, block| {
-                el.child(widgets::section_label(&theme, "This device").mt(px(28.0)))
-                    .child(block)
-            });
+        let card = div().flex().flex_col().when_some(local_block, |el, block| {
+            el.child(widgets::section_label(&theme, "This device").mt(px(28.0)))
+                .child(block)
+        });
 
         let scrollbar = popover::rail(self, "devices-page-scrollbar", &theme, cx);
         div()

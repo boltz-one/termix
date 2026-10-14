@@ -281,7 +281,11 @@ impl Repos {
     /// Like [`Self::git`], for commands that answer "no" with a silent exit
     /// status 1 (`rev-parse --verify --quiet`): `Ok(None)` then, `Err` for
     /// any other failure.
-    async fn git_probe(&self, args: &[&str], cwd: Option<&Path>) -> Result<Option<String>, EngineError> {
+    async fn git_probe(
+        &self,
+        args: &[&str],
+        cwd: Option<&Path>,
+    ) -> Result<Option<String>, EngineError> {
         let mut cmd = tokio::process::Command::new("git");
         #[cfg(windows)]
         {
@@ -298,7 +302,9 @@ impl Repos {
             .await
             .map_err(|e| EngineError::Other(format!("git spawn failed: {e}")))?;
         if output.status.success() {
-            return Ok(Some(String::from_utf8_lossy(&output.stdout).trim().to_string()));
+            return Ok(Some(
+                String::from_utf8_lossy(&output.stdout).trim().to_string(),
+            ));
         }
         let stderr = String::from_utf8_lossy(&output.stderr);
         if output.status.code() == Some(1) && stderr.trim().is_empty() {
@@ -422,7 +428,9 @@ impl Repos {
             Some(root) => format!("commit:{root}"),
             None => self.remote_or_local_identity(path).await?,
         };
-        let prefix = self.git(&["rev-parse", "--show-prefix"], Some(path)).await?;
+        let prefix = self
+            .git(&["rev-parse", "--show-prefix"], Some(path))
+            .await?;
         let prefix = prefix.trim_end_matches('/');
         Ok(if prefix.is_empty() {
             base
@@ -483,12 +491,21 @@ impl Repos {
             return Ok(None);
         }
         let Some(head) = self
-            .git_probe(&["rev-parse", "--verify", "--quiet", "HEAD^{commit}"], Some(path))
+            .git_probe(
+                &["rev-parse", "--verify", "--quiet", "HEAD^{commit}"],
+                Some(path),
+            )
             .await?
         else {
             return Ok(None); // unborn HEAD: no commits yet
         };
-        if let Some(root) = self.inner.trunk_roots.lock().ok().and_then(|cache| cache.get(&head).cloned()) {
+        if let Some(root) = self
+            .inner
+            .trunk_roots
+            .lock()
+            .ok()
+            .and_then(|cache| cache.get(&head).cloned())
+        {
             return Ok(Some(root));
         }
         let roots = self

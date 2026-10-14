@@ -13,9 +13,9 @@
 //! `task` explicitly.
 
 use futures::StreamExt;
-use tokio::sync::{mpsc, oneshot};
 use termix_harness::{CancellationToken, Harness, OpencodeHarness, RunControls};
 use termix_proto::{AgentEvent, RunRequest, SandboxLevel, UserInputAnswer};
+use tokio::sync::{mpsc, oneshot};
 
 #[tokio::main]
 async fn main() {

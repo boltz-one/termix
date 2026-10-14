@@ -18,8 +18,8 @@ fn assemble(dir: &Path) -> (EngineCore, EngineProfile) {
     let registry = Arc::new(HarnessRegistry::new());
     registry.register(Arc::new(CodexHarness::new().with_executable(fixture)));
     let profile = EngineProfile::local(dir).unwrap();
-    let core = EngineCore::assemble_with_profile(profile.clone(), registry, HarnessId::Codex)
-        .unwrap();
+    let core =
+        EngineCore::assemble_with_profile(profile.clone(), registry, HarnessId::Codex).unwrap();
     (core, profile)
 }
 

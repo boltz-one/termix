@@ -1,8 +1,8 @@
 //! Explicit, user-requested CLI installation. Catalog probes never call this module's executor.
 use std::{path::PathBuf, time::Duration};
 
-use tokio::io::{AsyncRead, AsyncReadExt};
 use termix_proto::HarnessId;
+use tokio::io::{AsyncRead, AsyncReadExt};
 
 use crate::{
     CancellationToken, Harness, HarnessError, StderrTail,

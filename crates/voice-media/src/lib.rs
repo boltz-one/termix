@@ -7,11 +7,11 @@ use std::{
     process::Stdio,
     time::Duration,
 };
+use termix_proto::voice::VoiceRejection;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     process::{ChildStdin, ChildStdout, Command},
 };
-use termix_proto::voice::VoiceRejection;
 const MAX_FRAME: usize = 128 * 1024;
 
 pub struct NativeHost {

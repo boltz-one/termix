@@ -21,8 +21,8 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde_json::Value;
-use tokio::sync::{mpsc, oneshot};
 use termix_proto::{AgentEvent, DoneStatus, ToolCall};
+use tokio::sync::{mpsc, oneshot};
 
 use crate::HarnessError;
 

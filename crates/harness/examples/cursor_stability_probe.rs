@@ -6,9 +6,9 @@ use std::{
     path::PathBuf,
     time::{Duration, Instant},
 };
-use tokio::sync::{mpsc, oneshot};
 use termix_harness::{CancellationToken, CursorHarness, Harness, RunControls};
 use termix_proto::{AgentEvent, DoneStatus, RunRequest, SandboxLevel};
+use tokio::sync::{mpsc, oneshot};
 
 async fn turn(
     harness: &CursorHarness,
@@ -92,8 +92,10 @@ async fn turn(
                             let dir =
                                 std::fs::read_to_string(root.join("by-agent").join(&id)).unwrap();
                             let owner: serde_json::Value = serde_json::from_slice(
-                                &std::fs::read(PathBuf::from(dir.trim()).join(".termix-owner.json"))
-                                    .unwrap(),
+                                &std::fs::read(
+                                    PathBuf::from(dir.trim()).join(".termix-owner.json"),
+                                )
+                                .unwrap(),
                             )
                             .unwrap();
                             assert!(

@@ -1326,8 +1326,7 @@ impl AppState {
         if Some(chat.device_id.as_str()) == self.local_device_id.as_deref() {
             return false;
         }
-        if self.connectivity.state == S::Offline
-            || !self.device_online(&chat.device_id, Utc::now())
+        if self.connectivity.state == S::Offline || !self.device_online(&chat.device_id, Utc::now())
         {
             return true;
         }
@@ -2190,7 +2189,8 @@ impl AppState {
             .filter(|session| {
                 matches!(
                     session.status,
-                    termix_proto::SessionStatus::Working | termix_proto::SessionStatus::AwaitingInput
+                    termix_proto::SessionStatus::Working
+                        | termix_proto::SessionStatus::AwaitingInput
                 )
             })
             // `age_ms > SESSION_STALE_MS` first holds one millisecond past it.
@@ -2622,10 +2622,9 @@ impl AppState {
         let Some(link) = self.pending_deep_link.clone() else {
             return false;
         };
-        let Some(locator) = crate::links::workspace_locator(
-            self.workspace_scope,
-            self.local_device_id.as_deref(),
-        ) else {
+        let Some(locator) =
+            crate::links::workspace_locator(self.workspace_scope, self.local_device_id.as_deref())
+        else {
             return false;
         };
         if locator != link.workspace {
@@ -2883,7 +2882,10 @@ impl AppState {
         cx.spawn(async move |_, _| {
             if let Err(error) = handle
                 .client()
-                .call(methods::FOCUS_CHAT, serde_json::json!({ "chatId": chat_id }))
+                .call(
+                    methods::FOCUS_CHAT,
+                    serde_json::json!({ "chatId": chat_id }),
+                )
                 .await
             {
                 tracing::debug!(%chat_id, %error, "chat focus sync hint unavailable");
@@ -3487,10 +3489,7 @@ mod tests {
 
         assert_eq!(info.device_id, "legacy-device");
         assert_eq!(info.workspace_scope, WorkspaceScope::Local);
-        assert_eq!(
-            gate_phase(&ConnectionStatus::Ready),
-            GatePhase::Ready
-        );
+        assert_eq!(gate_phase(&ConnectionStatus::Ready), GatePhase::Ready);
     }
 
     #[tokio::test]
@@ -3824,10 +3823,7 @@ mod tests {
                 url: format!("ws://127.0.0.1:{port}")
             }
         );
-        assert_eq!(
-            handle.engine_info().workspace_scope,
-            WorkspaceScope::Local
-        );
+        assert_eq!(handle.engine_info().workspace_scope, WorkspaceScope::Local);
         let harnesses = handle
             .client()
             .call(methods::LIST_HARNESSES, serde_json::json!({}))

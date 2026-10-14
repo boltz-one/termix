@@ -157,10 +157,7 @@ mod tests {
 
     #[test]
     fn local_workspace_locator_waits_for_device_identity() {
-        assert_eq!(
-            workspace_locator(Some(WorkspaceScope::Local), None),
-            None
-        );
+        assert_eq!(workspace_locator(Some(WorkspaceScope::Local), None), None);
         let first = workspace_locator(Some(WorkspaceScope::Local), Some("device-a"));
         let second = workspace_locator(Some(WorkspaceScope::Local), Some("device-b"));
         assert!(first.is_some());

@@ -6,9 +6,9 @@ use futures::StreamExt;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tokio::sync::{mpsc, oneshot};
 use termix_harness::{AcpHarness, CancellationToken, Harness, RunControls};
 use termix_proto::{AgentEvent, DoneStatus, HarnessId, RunRequest, SandboxLevel};
+use tokio::sync::{mpsc, oneshot};
 
 #[test]
 fn managed_process_protocol_progresses_with_one_blocking_worker() {
@@ -18,8 +18,8 @@ fn managed_process_protocol_progresses_with_one_blocking_worker() {
         .build()
         .unwrap();
     runtime.block_on(async {
-        use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
         use termix_harness::process::Stdio;
+        use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
         let mut command =
             termix_harness::process::Command::new(env!("CARGO_BIN_EXE_harness-native-fixture"));
         command

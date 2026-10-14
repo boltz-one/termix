@@ -1499,7 +1499,10 @@ mod mcp_injection_tests {
                 .collect(),
         };
         let parsed: Value = serde_json::from_str(&mcp_config_arg(&mcp)).unwrap();
-        assert_eq!(parsed["mcpServers"]["termix"]["command"], "/opt/termix/termix");
+        assert_eq!(
+            parsed["mcpServers"]["termix"]["command"],
+            "/opt/termix/termix"
+        );
         assert_eq!(
             parsed["mcpServers"]["termix"]["args"],
             serde_json::json!(["mcp"])

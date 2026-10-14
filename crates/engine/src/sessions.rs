@@ -3479,7 +3479,11 @@ mod tests {
             ),
             ("a1", termix_doc::MessageRole::Assistant, "partial output"),
             ("u2", termix_doc::MessageRole::User, "current request"),
-            ("u3", termix_doc::MessageRole::User, "future pending request"),
+            (
+                "u3",
+                termix_doc::MessageRole::User,
+                "future pending request",
+            ),
         ] {
             doc.push_message(&termix_doc::SessionMessageEntry {
                 id: id.into(),
@@ -4089,8 +4093,7 @@ mod tests {
         }));
         let dir = tempfile::tempdir().unwrap();
         let core =
-            crate::EngineCore::assemble(dir.path(), Arc::new(registry), HarnessId::Mock)
-                .unwrap();
+            crate::EngineCore::assemble(dir.path(), Arc::new(registry), HarnessId::Mock).unwrap();
         let chat = "chat-sink-spin";
         core.sessions
             .dispatch(chat, HarnessId::Mock, request(), None)

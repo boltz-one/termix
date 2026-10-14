@@ -80,12 +80,9 @@ mod tests {
     fn unresolved_identity_does_not_select_a_shared_persistent_profile() {
         let root = Path::new("/unused");
         assert!(BrowserProfile::for_workspace(root, None, None).is_none());
-        assert!(
-            BrowserProfile::for_workspace(root, Some(WorkspaceScope::Local), None).is_none()
-        );
-        let local = |device| {
-            BrowserProfile::for_workspace(root, Some(WorkspaceScope::Local), Some(device))
-        };
+        assert!(BrowserProfile::for_workspace(root, Some(WorkspaceScope::Local), None).is_none());
+        let local =
+            |device| BrowserProfile::for_workspace(root, Some(WorkspaceScope::Local), Some(device));
         assert_eq!(local("one"), local("one"));
         assert_ne!(local("one"), local("two"));
     }

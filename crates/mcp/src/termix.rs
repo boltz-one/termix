@@ -12,7 +12,6 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, anyhow, bail};
 use serde::Deserialize;
 use serde_json::{Value, json};
-use tokio::sync::Mutex;
 use termix_doc::{
     SessionCommandPayload, SessionMessageEntry, TranscriptFrame, apply_transcript_frame,
 };
@@ -20,6 +19,7 @@ use termix_proto::{
     Chat, Device, HarnessId, Model, ReasoningLevel, Session, SessionStatus, Space, SteeringMode,
 };
 use termix_rpc::{RpcClient, RpcError, RpcSubscription, connect_ws, methods};
+use tokio::sync::Mutex;
 
 /// First-item wait for a watch snapshot. Localhost; the engine answers
 /// watch attaches in milliseconds unless it is still assembling stores.

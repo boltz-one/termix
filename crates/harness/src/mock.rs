@@ -536,7 +536,9 @@ impl Harness for MockHarness {
                                     std::cmp::Ordering::Equal => {
                                         termix_proto::TodoStatus::InProgress
                                     }
-                                    std::cmp::Ordering::Greater => termix_proto::TodoStatus::Pending,
+                                    std::cmp::Ordering::Greater => {
+                                        termix_proto::TodoStatus::Pending
+                                    }
                                 },
                             )
                         })

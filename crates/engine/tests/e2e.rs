@@ -407,8 +407,7 @@ async fn pending_update_does_not_block_dispatch_or_other_harnesses() {
     for id in [HarnessId::ClaudeCode, HarnessId::Codex] {
         registry.register(Arc::new(RecordingHarness(id, started.clone())));
     }
-    let core =
-        EngineCore::assemble(dir.path(), registry.clone(), HarnessId::ClaudeCode).unwrap();
+    let core = EngineCore::assemble(dir.path(), registry.clone(), HarnessId::ClaudeCode).unwrap();
     let active_turn = registry.execution_lease(HarnessId::ClaudeCode).await;
     registry.begin_update(HarnessId::ClaudeCode);
     // These awaits model the shared queue watcher's serial dispatch calls.

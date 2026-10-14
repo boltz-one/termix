@@ -8,7 +8,6 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use futures::{StreamExt, stream::BoxStream};
-use tokio::sync::mpsc;
 use termix_doc::{MessagePart, MessageRole};
 use termix_engine::doc_host::{
     BeginQueueEditOutcome, FinishQueueEditAction, FinishQueueEditOutcome,
@@ -21,6 +20,7 @@ use termix_proto::{
     SteeringMode,
 };
 use termix_rpc::RpcService;
+use tokio::sync::mpsc;
 
 const CHAT: &str = "rich-delivery";
 const HARNESSES: [HarnessId; 9] = [
@@ -233,8 +233,7 @@ async fn setup(
     });
     let registry = HarnessRegistry::new();
     registry.register(harness.clone());
-    let core =
-        EngineCore::assemble(&tmp.path().join("data"), Arc::new(registry), id).unwrap();
+    let core = EngineCore::assemble(&tmp.path().join("data"), Arc::new(registry), id).unwrap();
     let client = termix_rpc::memory_client(core.rpc_service());
     client
         .call(

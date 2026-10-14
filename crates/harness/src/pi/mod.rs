@@ -19,11 +19,11 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
+use termix_proto::{AgentEvent, HarnessId, Model, ReasoningLevel, RunRequest, SteeringMode};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::mpsc,
 };
-use termix_proto::{AgentEvent, HarnessId, Model, ReasoningLevel, RunRequest, SteeringMode};
 
 pub struct PiHarness {
     models_cache: crate::catalog::Catalog,

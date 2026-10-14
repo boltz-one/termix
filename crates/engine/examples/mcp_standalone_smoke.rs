@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use futures::stream::BoxStream;
 use termix_engine::{EngineCore, HarnessRegistry};
 use termix_harness::{Harness, HarnessError, RunControls, mock::MockHarness};
-use termix_mcp::{Origin, Tools, Termix};
+use termix_mcp::{Origin, Termix, Tools};
 use termix_proto::{
     AgentEvent, DoneStatus, HarnessId, Model, ReasoningLevel, RunRequest, SteeringMode,
 };

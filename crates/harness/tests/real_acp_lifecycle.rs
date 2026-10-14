@@ -5,9 +5,9 @@
 
 use futures::StreamExt;
 use std::time::{Duration, Instant};
-use tokio::sync::{mpsc, oneshot};
 use termix_harness::{CancellationToken, Harness, RunControls, SteerMessage};
 use termix_proto::{AgentEvent, DoneStatus, RunRequest, SandboxLevel};
+use tokio::sync::{mpsc, oneshot};
 
 async fn live_run(cancel: bool) {
     let cwd = tempfile::tempdir().unwrap();

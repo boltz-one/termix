@@ -349,4 +349,3 @@ async fn remote_cancel_before_prepare_and_owner_drop_preserve_other_calls() {
     drop(next_owner);
     core.sessions.shutdown().await;
 }
-

@@ -19,8 +19,8 @@ use termix_proto::{
     Space, UserInputAnswer,
 };
 
+use crate::termix::{HarnessInfo, Termix, TurnOutcome, session_for, short};
 use crate::transcript::{RenderOptions, RenderedMessage, render_entries};
-use crate::termix::{HarnessInfo, TurnOutcome, Termix, session_for, short};
 
 /// Default and ceiling for the blocking waits.
 const MAX_BATCH: usize = 32;
@@ -614,7 +614,10 @@ impl Tools {
             chats.retain(|c| c.space_id.as_deref() == Some(space.id.as_str()));
         }
         if args.device.is_some() {
-            let device = self.termix.resolve_device_id(args.device.as_deref()).await?;
+            let device = self
+                .termix
+                .resolve_device_id(args.device.as_deref())
+                .await?;
             chats.retain(|c| c.device_id == device);
         }
         if !args.include_archived {

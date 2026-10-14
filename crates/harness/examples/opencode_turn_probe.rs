@@ -11,9 +11,9 @@
 //!         "Reply with exactly: PONG"
 
 use futures::StreamExt;
-use tokio::sync::mpsc;
 use termix_harness::{CancellationToken, Harness, OpencodeHarness, RunControls};
 use termix_proto::{AgentEvent, RunRequest, SandboxLevel};
+use tokio::sync::mpsc;
 
 #[tokio::main]
 async fn main() {

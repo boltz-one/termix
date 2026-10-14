@@ -455,8 +455,8 @@ mod tests {
         let registry = Arc::new(HarnessRegistry::new());
         let recorder = Arc::new(RecordingTitleHarness(Default::default()));
         registry.register(recorder.clone());
-        let core = crate::EngineCore::assemble(dir.path(), registry.clone(), HarnessId::Mock)
-            .unwrap();
+        let core =
+            crate::EngineCore::assemble(dir.path(), registry.clone(), HarnessId::Mock).unwrap();
         registry
             .set_title_settings(crate::registry::TitleSettings {
                 harness: Some(HarnessId::ClaudeCode),

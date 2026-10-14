@@ -3,11 +3,11 @@ pub(crate) mod remote;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use termix_harness::codex::realtime::{RealtimeHandle, VoiceCommand};
+use termix_proto::{SessionStatus, voice::*};
 use tokio::sync::mpsc;
 use tokio::time::Instant;
 use tokio_util::sync::CancellationToken;
-use termix_harness::codex::realtime::{RealtimeHandle, VoiceCommand};
-use termix_proto::{SessionStatus, voice::*};
 
 #[derive(Clone, Default)]
 pub struct VoiceManager {

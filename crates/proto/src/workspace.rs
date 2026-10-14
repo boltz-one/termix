@@ -72,9 +72,7 @@ mod tests {
 
     #[test]
     fn workspace_scope_uses_wire_safe_names() {
-        for (scope, encoded) in [
-            (WorkspaceScope::Local, "\"local\""),
-        ] {
+        for (scope, encoded) in [(WorkspaceScope::Local, "\"local\"")] {
             assert_eq!(serde_json::to_string(&scope).unwrap(), encoded);
             assert_eq!(
                 serde_json::from_str::<WorkspaceScope>(encoded).unwrap(),

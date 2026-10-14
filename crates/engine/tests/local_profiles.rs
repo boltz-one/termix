@@ -3,10 +3,7 @@
 use std::path::Path;
 use std::sync::{Arc, Barrier};
 
-use termix_engine::{
-    Engine, EngineConfig, EngineCore, EngineProfile, HarnessId,
-    default_registry,
-};
+use termix_engine::{Engine, EngineConfig, EngineCore, EngineProfile, HarnessId, default_registry};
 
 fn config(data_dir: &Path) -> EngineConfig {
     EngineConfig {

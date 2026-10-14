@@ -260,8 +260,7 @@ async fn setup_with(
 fn assemble_at(path: &std::path::Path, harness: Arc<HeldHarness>) -> EngineCore {
     let registry = HarnessRegistry::new();
     registry.register(harness);
-    EngineCore::assemble(path, Arc::new(registry), HarnessId::Mock)
-        .expect("engine core assembles")
+    EngineCore::assemble(path, Arc::new(registry), HarnessId::Mock).expect("engine core assembles")
 }
 
 async fn create_chat(core: &EngineCore) {

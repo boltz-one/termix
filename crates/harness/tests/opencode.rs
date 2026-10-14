@@ -11,14 +11,14 @@ use std::time::Duration;
 
 use futures::StreamExt;
 use serde_json::{Value, json};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::sync::{broadcast, mpsc, oneshot};
 use termix_harness::{
     CancellationToken, Harness, HarnessError, OpencodeHarness, RunControls, SteerMessage,
 };
 use termix_proto::{
     AgentEvent, DoneStatus, ReasoningLevel, RunRequest, SandboxLevel, ToolCall, UserInputAnswer,
 };
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::sync::{broadcast, mpsc, oneshot};
 
 // ---------------------------------------------------------------------------
 // Fake server
