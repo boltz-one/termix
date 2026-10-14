@@ -3780,25 +3780,19 @@ impl Shell {
             return div().flex_none().h(px(4.0)).into_any_element();
         }
         let filter = self.settings.space_filter.clone();
-        // The filtered project's artwork and name, as its dropdown row
-        // draws them, plus the offline glyph when no host is reachable.
-        let (label, space, offline): (SharedString, Option<termix_proto::Space>, bool) = {
+        // The filtered project's artwork and name, as its dropdown row draws them.
+        let (label, space): (SharedString, Option<termix_proto::Space>) = {
             let state = self.state.read(cx);
             match filter.as_deref().and_then(|id| state.space_row(id)) {
-                Some(space) => {
-                    let members = state.project_members(space);
-                    let (_, offline) = state.project_device_tag(&members, Utc::now());
-                    (
-                        state
-                            .representative_space(space)
-                            .display_name()
-                            .to_string()
-                            .into(),
-                        Some(space.clone()),
-                        offline,
-                    )
-                }
-                None => (SharedString::from("All projects"), None, false),
+                Some(space) => (
+                    state
+                        .representative_space(space)
+                        .display_name()
+                        .to_string()
+                        .into(),
+                    Some(space.clone()),
+                ),
+                None => (SharedString::from("All projects"), None),
             }
         };
         let art = match &space {
@@ -3870,16 +3864,7 @@ impl Shell {
                         "spaces-filter-label".into(),
                         false,
                         label,
-                    ))
-                    // Disconnected glyph, not the word (user request).
-                    .when(offline, |el| {
-                        el.child(
-                            icon(icons::WIFI_OFF)
-                                .size(px(12.0))
-                                .flex_none()
-                                .text_color(theme.warning.opacity(0.8)),
-                        )
-                    }),
+                    )),
             );
         let trigger = if self.spaces_menu.get().is_some() {
             let closing = self.spaces_menu.closing_since();
@@ -4010,16 +3995,9 @@ impl Shell {
         let scrollbar = popover::rail(self, "spaces-menu-scrollbar", theme, cx);
         let filter = self.settings.space_filter.clone();
         let filter_key = self.space_filter_key(cx);
-        // Each row is a whole repository: its artwork and name, plus the
-        // offline glyph when no device holding it is reachable. Consume
+        // Each row is a whole repository: its artwork and name. Consume
         // `rows` to avoid cloning the list children per frame.
-        let details: Vec<(
-            SpacesMenuRow,
-            SharedString,
-            Option<termix_proto::Space>,
-            bool,
-            bool,
-        )> = {
+        let details: Vec<(SpacesMenuRow, SharedString, Option<termix_proto::Space>, bool)> = {
             let state = self.state.read(cx);
             rows.into_iter()
                 .map(|row| match row {
@@ -4027,15 +4005,12 @@ impl Shell {
                         SpacesMenuRow::All,
                         SharedString::from("All projects"),
                         None,
-                        false,
                         filter.is_none(),
                     ),
                     SpacesMenuRow::Space(id) => match state.space_row(&id) {
                         Some(space) => {
                             let key = termix_proto::view::project_key(space);
                             let selected = filter_key.as_deref() == Some(key.as_str());
-                            let members = state.project_members(space);
-                            let (_, offline) = state.project_device_tag(&members, Utc::now());
                             (
                                 SpacesMenuRow::Space(id),
                                 state
@@ -4044,7 +4019,6 @@ impl Shell {
                                     .to_string()
                                     .into(),
                                 Some(space.clone()),
-                                offline,
                                 selected,
                             )
                         }
@@ -4054,7 +4028,6 @@ impl Shell {
                                 SpacesMenuRow::Space(id),
                                 SharedString::from("?"),
                                 None,
-                                false,
                                 selected,
                             )
                         }
@@ -4071,7 +4044,7 @@ impl Shell {
         let profile = self.active_sidebar_pin_profile_key(cx);
         let icons: Vec<AnyElement> = details
             .iter()
-            .map(|(_, _, space, _, selected)| match space {
+            .map(|(_, _, space, selected)| match space {
                 Some(space) => self.project_icons.render(
                     &self.state,
                     Some(space),
@@ -4097,7 +4070,7 @@ impl Shell {
                     // Same scroll budget as the composer project menu.
                     .max_h(px(224.0))
                     .children(details.into_iter().zip(icons).enumerate().map(
-                        |(ix, ((row, label, _, offline, selected), art))| {
+                        |(ix, ((row, label, _, selected), art))| {
                             let menu_space = match &row {
                                 SpacesMenuRow::Space(id) => Some(id.clone()),
                                 _ => None,
@@ -4124,15 +4097,6 @@ impl Shell {
                             })
                             .child(popover::picker_icon_slot(art))
                             .child(div().flex_1().min_w_0().truncate().child(label))
-                            // Disconnected glyph, not the word (user request).
-                            .when(offline, |el| {
-                                el.child(
-                                    icon(icons::WIFI_OFF)
-                                        .size(px(12.0))
-                                        .flex_none()
-                                        .text_color(theme.warning.opacity(0.8)),
-                                )
-                            })
                             // No check glyph — the selected row's glass plate
                             // is the selection signal.
                         },
@@ -6310,23 +6274,11 @@ impl Shell {
         match step {
             ProjectStep::Devices => {
                 for (ix, device) in self.add_space_devices(cx).into_iter().enumerate() {
-                    let online = self.state.read(cx).device_online(&device.id, Utc::now());
                     let name = device.name.clone();
                     rows.push(
                         row(ix)
                             .child(glyph_el(device_glyph(&device.platform)))
                             .child(label_el(name))
-                            .child(
-                                div()
-                                    .size(px(5.0))
-                                    .flex_none()
-                                    .rounded_full()
-                                    .bg(if online {
-                                        theme.success
-                                    } else {
-                                        theme.text_faint
-                                    }),
-                            )
                             .on_click(cx.listener(move |this, _, _, cx| {
                                 this.add_space_pick_device(device.clone(), cx)
                             }))

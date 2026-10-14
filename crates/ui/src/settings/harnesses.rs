@@ -374,13 +374,7 @@ impl HarnessesPage {
     }
 
     fn can_control_updates(&self, cx: &Context<Self>) -> bool {
-        self.supports_updates(cx)
-            && matches!(self.updates, Loadable::Ready(_))
-            && self.target_device.as_ref().is_none_or(|device| {
-                self.state
-                    .read(cx)
-                    .device_online(device, chrono::Utc::now())
-            })
+        self.supports_updates(cx) && matches!(self.updates, Loadable::Ready(_))
     }
 
     /// Retarget the page at another device: a different device is a different

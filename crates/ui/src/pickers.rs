@@ -2807,26 +2807,17 @@ impl Pickers {
     }
 
     /// The device popover: search + one row per device (name, muted path when
-    /// a device holds several checkouts of the project, offline glyph, check
-    /// on the canvas's target).
+    /// a device holds several checkouts of the project, check on the canvas's
+    /// target).
     fn render_device_popover(&mut self, cx: &mut Context<Self>) -> AnyElement {
         let theme = Theme::of(cx).for_popup();
-        let now = chrono::Utc::now();
         let rows = self.filtered_device_rows(cx);
-        let (selected_space, effective, local, online): (
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Vec<bool>,
-        ) = {
+        let (selected_space, effective, local): (Option<String>, Option<String>, Option<String>) = {
             let state = self.state.read(cx);
             (
                 state.selected_space_row().map(|s| s.id.clone()),
                 state.effective_device_id(),
                 state.local_device_id.clone(),
-                rows.iter()
-                    .map(|row| state.device_online(&row.device_id, now))
-                    .collect(),
             )
         };
         let active = self.active;
@@ -2848,8 +2839,8 @@ impl Pickers {
                         .flex_col()
                         .gap(px(2.0))
                         .max_h(px(self.list_budget(64.0)))
-                        .children(rows.into_iter().zip(online).enumerate().map(
-                            |(ix, (row, online))| {
+                        .children(rows.into_iter().enumerate().map(
+                            |(ix, row)| {
                                 let is_local = local.as_deref() == Some(row.device_id.as_str());
                                 let label: SharedString = row.name.clone().into();
                                 let is_selected = match &row.space {
@@ -2898,15 +2889,6 @@ impl Pickers {
                                             .text_size(crate::typography::ui_rems(10.0))
                                             .text_color(theme.text_muted)
                                             .child(SharedString::from("You")),
-                                    )
-                                })
-                                // Disconnected glyph, not the word (user request).
-                                .when(!online, |el| {
-                                    el.child(
-                                        crate::icons::icon(crate::icons::WIFI_OFF)
-                                            .size(px(12.0))
-                                            .flex_none()
-                                            .text_color(theme.warning.opacity(0.8)),
                                     )
                                 })
                             },
@@ -3645,7 +3627,7 @@ impl Pickers {
             }
             _ => None,
         };
-        let (device_label, project_label, offline) = {
+        let (device_label, project_label) = {
             let state = self.state.read(cx);
             let device_id = state.effective_device_id();
             let device_label: SharedString = device_id
@@ -3654,26 +3636,21 @@ impl Pickers {
                 .map(str::to_string)
                 .unwrap_or_else(|| "This device".to_string())
                 .into();
-            let offline = device_id
-                .as_deref()
-                .is_some_and(|id| !state.device_online(id, chrono::Utc::now()));
             let project_label: SharedString = state
                 .selected_space_row()
                 .map(|s| s.display_name().to_string())
                 .unwrap_or_else(|| "No project".to_string())
                 .into();
-            (device_label, project_label, offline)
+            (device_label, project_label)
         };
-        let device_chip = self
-            .footer_chip(
-                PickerKind::Device,
-                "picker-device",
-                crate::icons::MONITOR,
-                device_label,
-                &theme,
-                cx,
-            )
-            .when(offline, |el| el.text_color(theme.warning.opacity(0.8)));
+        let device_chip = self.footer_chip(
+            PickerKind::Device,
+            "picker-device",
+            crate::icons::MONITOR,
+            device_label,
+            &theme,
+            cx,
+        );
         let project_chip = self.footer_chip(
             PickerKind::Space,
             "picker-project",

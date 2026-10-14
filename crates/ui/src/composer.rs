@@ -7441,20 +7441,8 @@ impl Composer {
         let engine = state
             .engine()
             .map(|engine| engine.client() as *const _ as usize);
-        let target = state
-            .selected_chat_row()
-            .map(|chat| chat.device_id.clone())
-            .or_else(|| {
-                state
-                    .selected_space_row()
-                    .map(|space| space.device_id.clone())
-            })
-            .or_else(|| state.effective_device_id());
-        let online = target
-            .as_deref()
-            .is_none_or(|device| state.device_online(device, chrono::Utc::now()));
         format!(
-            "{engine:?}:{:?}:{:?}:{online}",
+            "{engine:?}:{:?}:{:?}",
             state.connection, state.connectivity.state
         )
     }
@@ -10835,11 +10823,7 @@ impl Render for Composer {
                     let remote_target = state
                         .effective_device_id()
                         .is_some_and(|id| state.local_device_id.as_deref() != Some(id.as_str()));
-                    remote_target
-                        && (matches!(state.connectivity.state, S::Offline | S::Reconnecting)
-                            || state
-                                .effective_device_id()
-                                .is_some_and(|id| !state.device_online(&id, chrono::Utc::now())))
+                    remote_target && matches!(state.connectivity.state, S::Offline | S::Reconnecting)
                 }
             };
             let offline = state.connectivity.state == S::Offline;

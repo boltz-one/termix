@@ -33,7 +33,6 @@ const MAX_MARKS: usize = 3;
 
 #[derive(Default)]
 pub(super) struct DeviceUpdates {
-    online: bool,
     connected: bool,
     statuses: Vec<HarnessUpdateStatus>,
     watch: Option<Task<()>>,
@@ -51,17 +50,13 @@ struct UpdateRow {
 // updates. Removed/unsupported devices leave the inventory entirely.
 fn reconcile_devices(
     devices: &mut std::collections::BTreeMap<String, DeviceUpdates>,
-    desired: &std::collections::BTreeMap<String, bool>,
+    desired: &std::collections::BTreeSet<String>,
 ) -> Vec<String> {
-    devices.retain(|id, _| desired.contains_key(id));
+    devices.retain(|id, _| desired.contains(id));
     let mut start = Vec::new();
-    for (id, online) in desired {
+    for id in desired {
         let updates = devices.entry(id.clone()).or_default();
-        updates.online = *online;
-        if !online {
-            updates.watch = None;
-            updates.connected = false;
-        } else if updates.watch.is_none() {
+        if updates.watch.is_none() {
             start.push(id.clone());
         }
     }
@@ -83,7 +78,7 @@ fn visible_rows(
                 .map(move |status| UpdateRow {
                     device_id: id.clone(),
                     device_name: name.clone(),
-                    connected: updates.online && updates.connected,
+                    connected: updates.connected,
                     status: status.clone(),
                 })
         })
@@ -810,16 +805,12 @@ impl Shell {
         };
         // Include the connected engine before its registry row arrives. Selection
         // of a chat, project, or composer host must not affect this inventory.
-        let devices: std::collections::BTreeMap<_, _> = state
+        let devices: std::collections::BTreeSet<_> = state
             .devices
             .iter()
             .map(|device| device.id.clone())
             .chain(std::iter::once(engine.engine_info().device_id.clone()))
             .filter(|id| state.device_supports(id, termix_proto::capabilities::HARNESS_UPDATES_V1))
-            .map(|id| {
-                let online = state.device_online(&id, Utc::now());
-                (id, online)
-            })
             .collect();
         for device in reconcile_devices(&mut self.harness_update_devices, &devices) {
             let updates = self.harness_update_devices.get_mut(&device).unwrap();
@@ -891,8 +882,7 @@ impl Shell {
         if !self
             .harness_update_devices
             .get(&device)
-            .is_some_and(|updates| updates.online && updates.connected)
-            || !state.device_online(&device, Utc::now())
+            .is_some_and(|updates| updates.connected)
             || !state.device_supports(&device, termix_proto::capabilities::HARNESS_UPDATES_V1)
         {
             return;
@@ -924,7 +914,7 @@ impl Shell {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, BTreeSet};
 
     fn status(phase: Phase) -> HarnessUpdateStatus {
         HarnessUpdateStatus {
@@ -945,7 +935,6 @@ mod tests {
 
     fn device(phase: Phase) -> DeviceUpdates {
         DeviceUpdates {
-            online: true,
             connected: true,
             statuses: vec![status(phase)],
             watch: None,
@@ -987,27 +976,7 @@ mod tests {
     }
 
     #[test]
-    fn disconnect_retains_notice_but_reconnect_waits_for_fresh_status() {
-        let mut devices = BTreeMap::from([("laptop".into(), device(Phase::Available))]);
-        assert!(
-            reconcile_devices(&mut devices, &BTreeMap::from([("laptop".into(), false)])).is_empty()
-        );
-        let rows = visible_rows(&devices, str::to_owned);
-        assert_eq!(rows.len(), 1);
-        assert!(!rows[0].connected);
-        assert_eq!(rows[0].status.phase, Phase::Available);
-
-        assert_eq!(
-            reconcile_devices(&mut devices, &BTreeMap::from([("laptop".into(), true)])),
-            ["laptop"]
-        );
-        assert!(!visible_rows(&devices, str::to_owned)[0].connected);
-        devices.get_mut("laptop").unwrap().connected = true;
-        assert!(visible_rows(&devices, str::to_owned)[0].connected);
-    }
-
-    #[test]
-    fn presence_changes_only_restart_the_affected_host() {
+    fn reconcile_devices_keeps_an_existing_watch_running() {
         let mut devices = BTreeMap::from([
             ("desktop".into(), device(Phase::Available)),
             ("laptop".into(), device(Phase::Available)),
@@ -1015,15 +984,10 @@ mod tests {
         for updates in devices.values_mut() {
             updates.watch = Some(Task::ready(()));
         }
-        let mut desired = BTreeMap::from([("desktop".into(), true), ("laptop".into(), true)]);
-        assert!(reconcile_devices(&mut devices, &desired).is_empty());
-        desired.insert("laptop".into(), false);
+        let desired = BTreeSet::from(["desktop".into(), "laptop".into()]);
         assert!(reconcile_devices(&mut devices, &desired).is_empty());
         assert!(devices["desktop"].watch.is_some());
-        assert!(devices["desktop"].connected);
-        assert!(devices["laptop"].watch.is_none());
-        desired.insert("laptop".into(), true);
-        assert_eq!(reconcile_devices(&mut devices, &desired), ["laptop"]);
+        assert!(devices["laptop"].watch.is_some());
     }
 
     #[test]
@@ -1034,11 +998,7 @@ mod tests {
         ]);
         let start = reconcile_devices(
             &mut devices,
-            &BTreeMap::from([
-                ("current".into(), true),
-                ("new".into(), true),
-                ("offline".into(), false),
-            ]),
+            &BTreeSet::from(["current".into(), "new".into()]),
         );
         assert_eq!(start, ["current", "new"]);
         assert!(!devices.contains_key("removed"));

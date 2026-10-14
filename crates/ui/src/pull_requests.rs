@@ -47,7 +47,6 @@ enum PullRequestsPageError {
     Authentication,
     RateLimited,
     Network,
-    RemoteOffline(String),
     UpdateRequired(String),
 }
 
@@ -1003,14 +1002,6 @@ impl PullRequestsPage {
             cx.notify();
             return;
         };
-        if !state.device_online(&device, Utc::now()) {
-            crate::toast::error(
-                cx,
-                "This device is offline. Reconnect it to open the project.",
-            );
-            cx.notify();
-            return;
-        }
         let local = state
             .local_device_id
             .as_deref()
@@ -1130,7 +1121,6 @@ impl PullRequestsPage {
                                 .device_name(&space.device_id)
                                 .unwrap_or("This device")
                                 .to_owned(),
-                            state.device_online(&space.device_id, Utc::now()),
                         )
                     })
                     .collect();
@@ -1225,7 +1215,7 @@ impl PullRequestsPage {
                     !projects
                         .iter()
                         .flat_map(|(_, members)| members)
-                        .any(|(space, _, _)| {
+                        .any(|(space, _)| {
                             let project = ProjectRef {
                                 path: space.path.clone(),
                                 device: space.device_id.clone(),
@@ -1246,7 +1236,7 @@ impl PullRequestsPage {
                 options.push(popover::menu_heading(theme, "Projects").into_any_element());
                 for (name, members) in projects {
                     let multiple = members.len() > 1;
-                    for (space, device, online) in members {
+                    for (space, device) in members {
                         let project = ProjectRef {
                             path: space.path.clone(),
                             device: space.device_id.clone(),
@@ -1275,11 +1265,7 @@ impl PullRequestsPage {
                             .role(gpui::Role::Button)
                             .aria_selected(selected)
                             .tab_index(0)
-                            .aria_label(format!(
-                                "Open {name} repository on {device}: {}{}",
-                                space.path,
-                                if online { "" } else { ", offline" }
-                            ))
+                            .aria_label(format!("Open {name} repository on {device}: {}", space.path))
                             .tooltip(widgets::text_tooltip(format!(
                                 "{name}\n{device}\n{}",
                                 space.path
@@ -1318,15 +1304,6 @@ impl PullRequestsPage {
                                     cx.entity_id(),
                                     cx,
                                 ))
-                            })
-                            // Disconnected glyph, as the device picker shows it.
-                            .when(!loading && !online, |el| {
-                                el.child(
-                                    icon(icons::WIFI_OFF)
-                                        .size(px(12.0))
-                                        .flex_none()
-                                        .text_color(theme.warning.opacity(0.8)),
-                                )
                             })
                             .on_click(cx.listener(move |page, _, _, cx| {
                                 cx.stop_propagation();
@@ -1612,15 +1589,6 @@ impl PullRequestsPage {
         };
 
         let target_name = selected_device_name(self.state.read(cx), self.target_device.as_deref());
-        if let Some(target) = self.target_device.as_deref()
-            && !self.state.read(cx).device_online(target, Utc::now())
-        {
-            self.load_state =
-                PullRequestsLoadState::Failed(PullRequestsPageError::RemoteOffline(target_name));
-            cx.notify();
-            return;
-        }
-
         self.generation = self.generation.wrapping_add(1);
         let generation = self.generation;
         let mut params = params_for_target(self.target_device.as_deref());
@@ -1957,16 +1925,11 @@ impl PullRequestsPage {
                     let local = local_id.as_deref() == Some(device.id.as_str());
                     let device_id = device.id.clone();
                     let name: SharedString = device.name.clone().into();
-                    let online = self.state.read(cx).device_online(&device.id, Utc::now());
                     popover::menu_row(theme, active, format!("pull-requests-device-row-{index}"))
                         .id(("pull-requests-device-row", index))
                         .when(active, |row| row.track_focus(&self.option_focus))
                         .role(gpui::Role::Button)
-                        .aria_label(format!(
-                            "{}{}",
-                            device.name,
-                            if online { "" } else { ", offline" }
-                        ))
+                        .aria_label(device.name.clone())
                         .aria_selected(active)
                         .tab_index(0)
                         .on_click(cx.listener(move |page, _, _, cx| {
@@ -1987,19 +1950,6 @@ impl PullRequestsPage {
                                     .child("This device"),
                             )
                         })
-                        .when(!online, |element| {
-                            element.child(
-                                div()
-                                    .text_size(crate::typography::ui_rems(10.5))
-                                    .text_color(theme.text_muted)
-                                    .child("Offline"),
-                            )
-                        })
-                        .child(div().size(px(6.0)).rounded_full().bg(if online {
-                            theme.success
-                        } else {
-                            crate::theme::ink(0.2)
-                        }))
                 }));
             trigger = trigger.child(popover::anchored_menu(
                 "pull-requests-device-menu",
@@ -2015,9 +1965,6 @@ impl PullRequestsPage {
         let glyph = match &self.load_state {
             PullRequestsLoadState::Failed(PullRequestsPageError::Authentication) => {
                 icons::KEY_MINIMALISTIC
-            }
-            PullRequestsLoadState::Failed(PullRequestsPageError::RemoteOffline(_)) => {
-                icons::WIFI_OFF
             }
             PullRequestsLoadState::Failed(_) => icons::INFO_CIRCLE,
             _ => icons::PULL_REQUEST,
@@ -3367,15 +3314,10 @@ fn recent_git_projects(state: &AppState, local: &str) -> Vec<ProjectRef> {
                 .filter_map(|chat| chat.last_message_at)
                 .max()
                 .unwrap_or(space.created_at);
-            (
-                space.device_id != local,
-                space.device_id != local && !state.device_online(&space.device_id, Utc::now()),
-                std::cmp::Reverse(active),
-                space,
-            )
+            (space.device_id != local, std::cmp::Reverse(active), space)
         })
         .collect();
-    projects.sort_by_key(|a| (a.0, a.1, a.2));
+    projects.sort_by_key(|a| (a.0, a.1));
     let mut seen = HashSet::new();
     let (primary, alternatives): (Vec<_>, Vec<_>) = projects
         .into_iter()
@@ -3475,10 +3417,6 @@ fn error_copy(error: &PullRequestsPageError) -> (String, String) {
         PullRequestsPageError::Network => (
             "Couldn’t load pull requests".into(),
             "Check the repository name and your connection, then try again.".into(),
-        ),
-        PullRequestsPageError::RemoteOffline(name) => (
-            format!("{name} is offline"),
-            "Reconnect the device and try again.".into(),
         ),
         PullRequestsPageError::UpdateRequired(name) => (
             format!("Update Termix on {name}"),

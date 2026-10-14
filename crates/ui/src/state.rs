@@ -702,9 +702,6 @@ pub struct AppState {
     /// local-only build; kept as an option for the pre-bootstrap state.
     pub workspace_scope: Option<WorkspaceScope>,
     pub devices: Vec<Device>,
-    // Last published device presentation. Heartbeats refresh the underlying
-    // timestamps without invalidating every view when no displayed value changed.
-    device_presentation: Option<Vec<(Device, bool, String)>>,
     // Presence ticks also retire stale remote session indicators. Remember
     // their last published appearance even when the device rows stay online.
     session_presence_presentation: Vec<(Indicator, u32)>,
@@ -846,47 +843,19 @@ fn session_presence_at(sessions: &[Session], now: DateTime<Utc>) -> Vec<(Indicat
         .collect()
 }
 
-/// A device that pinged within this window shows a presence dot (engines
-/// heartbeat every 15s; 70s tolerates a couple of missed beats).
-const DEVICE_ONLINE_WINDOW_SECS: i64 = 70;
-
-/// Presence: last-seen within the online window (future timestamps count). Pure.
-fn device_last_seen_online(last_seen: Option<DateTime<Utc>>, now: DateTime<Utc>) -> bool {
-    last_seen.is_some_and(|at| now.signed_duration_since(at).num_seconds() <= DEVICE_ONLINE_WINDOW_SECS)
-}
-
-/// Compact last-seen line. Pure.
-fn format_last_seen(last_seen: Option<DateTime<Utc>>, now: DateTime<Utc>) -> String {
-    let Some(at) = last_seen else {
-        return "never seen".to_string();
-    };
-    let secs = now.signed_duration_since(at).num_seconds();
-    if secs < 60 {
-        "just now".to_string()
-    } else if secs < 3600 {
-        format!("{}m ago", secs / 60)
-    } else if secs < 86_400 {
-        format!("{}h ago", secs / 3600)
-    } else {
-        format!("{}d ago", secs / 86_400)
-    }
-}
-
-/// Device rows as rendered at `now`: the heartbeat timestamp only through its
-/// online state and last-seen label.
-fn device_presentation_at(devices: &[Device], now: DateTime<Utc>) -> Vec<(Device, bool, String)> {
-    devices
-        .iter()
-        .map(|device| {
-            let mut metadata = device.clone();
-            metadata.last_seen_at = None;
-            (
-                metadata,
-                device_last_seen_online(device.last_seen_at, now),
-                format_last_seen(device.last_seen_at, now),
-            )
+/// Whether two device lists differ in anything but the heartbeat timestamp,
+/// so a 15s heartbeat alone does not thrash views/watches that don't read it.
+fn devices_changed(current: &[Device], next: &[Device]) -> bool {
+    current.len() != next.len()
+        || current.iter().zip(next).any(|(a, b)| {
+            a.id != b.id
+                || a.name != b.name
+                || a.platform != b.platform
+                || a.created_at != b.created_at
+                || a.version != b.version
+                || a.cursor_sdk_version != b.cursor_sdk_version
+                || a.capabilities != b.capabilities
         })
-        .collect()
 }
 
 impl Default for AppState {
@@ -901,7 +870,6 @@ impl AppState {
             connection: ConnectionStatus::Connecting,
             workspace_scope: None,
             devices: Vec::new(),
-            device_presentation: None,
             session_presence_presentation: Vec::new(),
             connectivity: termix_proto::Connectivity::default(),
             connectivity_observed: false,
@@ -1336,9 +1304,9 @@ impl AppState {
     /// reach its executor promptly? Locally-hosted chats are never degraded
     /// (a queued command executes on this device even fully offline). Remote
     /// chats degrade when the OS is offline, when registry recovery is needed
-    /// to restore their delivery path, when an active room stays down, or when
-    /// the host device has gone presence-dark. A Local sync state is normal
-    /// dormancy while the global connection and remote host are healthy.
+    /// to restore their delivery path, or when an active room stays down. A
+    /// Local sync state is normal dormancy while the global connection and
+    /// remote host are healthy.
     pub fn chat_delivery_degraded(&self, chat_id: &str) -> bool {
         use termix_proto::ConnectivityState as S;
         if self.connectivity.state == S::Disabled {
@@ -1352,8 +1320,7 @@ impl AppState {
         if Some(chat.device_id.as_str()) == self.local_device_id.as_deref() {
             return false;
         }
-        if self.connectivity.state == S::Offline || !self.device_online(&chat.device_id, Utc::now())
-        {
+        if self.connectivity.state == S::Offline {
             return true;
         }
         let net = self
@@ -1398,11 +1365,9 @@ impl AppState {
             self.change_requests
                 .clear_unsupported_on_version_change(&device.id, device.version.as_deref());
         }
-        let presentation = device_presentation_at(&devices, now);
         let session_presence = session_presence_at(&self.sessions, now);
-        let changed = self.device_presentation.as_ref() != Some(&presentation)
+        let changed = devices_changed(&self.devices, &devices)
             || self.session_presence_presentation != session_presence;
-        self.device_presentation = Some(presentation);
         self.session_presence_presentation = session_presence;
         // Freshness must advance even when the heartbeat does not redraw:
         // delivery gating and later renders still need the newest timestamp.
@@ -2016,30 +1981,13 @@ impl AppState {
             .map(|d| d.name.as_str())
     }
 
-    /// Host-presence check: is this device's 15s presence heartbeat fresh?
-    /// Distinguishes "host offline" (its queued work syncs when it returns)
-    /// from slow sync. The local device is trivially online; unknown devices
-    /// get the benefit of the doubt (no evidence — don't cry wolf).
-    pub fn device_online(&self, device_id: &str, now: DateTime<Utc>) -> bool {
-        if self.local_device_id.as_deref() == Some(device_id) {
-            return true;
-        }
-        match self.devices.iter().find(|d| d.id == device_id) {
-            Some(d) => device_last_seen_online(d.last_seen_at, now),
-            None => true,
-        }
-    }
-
     /// The "@ device" tag for a space — shared by the space pickers' rows,
-    /// the sidebar filter trigger, and the composer's space chip. Returns
-    /// `(tag, offline)`; staleness renders as a disconnected GLYPH at the
-    /// call sites (user request), never words in the tag.
-    pub fn space_device_tag(&self, space: &Space, now: DateTime<Utc>) -> (String, bool) {
-        let offline = !self.device_online(&space.device_id, now);
+    /// the sidebar filter trigger, and the composer's space chip.
+    pub fn space_device_tag(&self, space: &Space) -> String {
         let device = self
             .device_name(&space.device_id)
             .unwrap_or("Unknown device");
-        (format!("@ {device}"), offline)
+        format!("@ {device}")
     }
 
     /// Does the selected space's folder have git? Drives the branch picker and
@@ -2139,8 +2087,8 @@ impl AppState {
     }
 
     /// A project's host tag: its one device as in [`Self::space_device_tag`],
-    /// else the devices holding a checkout. Offline only when every one is.
-    pub fn project_device_tag(&self, members: &[&Space], now: DateTime<Utc>) -> (String, bool) {
+    /// else the devices holding a checkout.
+    pub fn project_device_tag(&self, members: &[&Space]) -> String {
         let mut devices: Vec<&str> = Vec::new();
         for member in members {
             if !devices.contains(&member.device_id.as_str()) {
@@ -2148,10 +2096,9 @@ impl AppState {
             }
         }
         match devices.as_slice() {
-            [] => (String::new(), false),
-            [_] => self.space_device_tag(members[0], now),
+            [] => String::new(),
+            [_] => self.space_device_tag(members[0]),
             _ => {
-                let offline = devices.iter().all(|d| !self.device_online(d, now));
                 let tag = if devices.len() == 2 {
                     devices
                         .iter()
@@ -2161,7 +2108,7 @@ impl AppState {
                 } else {
                     format!("{} devices", devices.len())
                 };
-                (format!("@ {tag}"), offline)
+                format!("@ {tag}")
             }
         }
     }
@@ -2188,11 +2135,10 @@ impl AppState {
 
     /// The earliest moment after `now` at which a clock-derived value flips
     /// with no frame to announce it: a Working/AwaitingInput session going
-    /// stale ([`SESSION_STALE_MS`]), a remote device leaving its online window
-    /// (offline glyphs, degraded delivery, Queued badges), or a pending send's
-    /// grace expiring into "Not delivered". Each deadline is the first instant
-    /// the predicate reads differently. Relative-time labels are excluded:
-    /// they advance on the views' minute heartbeat. Pure.
+    /// stale ([`SESSION_STALE_MS`]), or a pending send's grace expiring into
+    /// "Not delivered". Each deadline is the first instant the predicate reads
+    /// differently. Relative-time labels are excluded: they advance on the
+    /// views' minute heartbeat. Pure.
     pub fn next_clock_transition(&self, now: DateTime<Utc>) -> Option<DateTime<Utc>> {
         self.clock_deadlines()
             .filter(|deadline| *deadline > now)
@@ -2200,9 +2146,9 @@ impl AppState {
     }
 
     /// Whether any clock-driven transition fell in `(from, to]`. Heartbeats
-    /// that move a deadline later without notifying (session and device
-    /// liveness leases) leave an armed timer early; this tells a real
-    /// transition from such an obsolete wake. Pure.
+    /// that move a deadline later without notifying (the session liveness
+    /// lease) leave an armed timer early; this tells a real transition from
+    /// such an obsolete wake. Pure.
     fn clock_transition_between(&self, from: DateTime<Utc>, to: DateTime<Utc>) -> bool {
         self.clock_deadlines()
             .any(|deadline| from < deadline && deadline <= to)
@@ -2223,24 +2169,17 @@ impl AppState {
             .map(|session| {
                 session.updated_at + chrono::TimeDelta::milliseconds(SESSION_STALE_MS + 1)
             });
-        let offline = self
-            .devices
-            .iter()
-            .filter(|device| self.local_device_id.as_deref() != Some(device.id.as_str()))
-            .filter_map(|device| device.last_seen_at)
-            // Whole seconds `<= DEVICE_ONLINE_WINDOW_SECS` stay online.
-            .map(|at| at + chrono::TimeDelta::seconds(DEVICE_ONLINE_WINDOW_SECS + 1));
         let grace = self.pending_sends.values().map(|pending| {
             pending.started + chrono::TimeDelta::milliseconds(UNDELIVERED_GRACE_MS + 1)
         });
-        stale.chain(offline).chain(grace)
+        stale.chain(grace)
     }
 
     /// Notify this entity at every clock-driven transition, so each state
     /// observer (composer interrupts, session sounds, views) sees a session
-    /// go stale, a device go dark or a send's grace expire on time — no state
-    /// frame announces those. Idempotent; every notify re-arms a single
-    /// one-shot timer for the next deadline, so idle state never polls.
+    /// go stale or a send's grace expire on time — no state frame announces
+    /// those. Idempotent; every notify re-arms a single one-shot timer for the
+    /// next deadline, so idle state never polls.
     pub fn watch_clock_transitions(&mut self, cx: &mut Context<Self>) {
         if self.clock.observation.is_none() {
             self.clock.observation =
@@ -2252,9 +2191,6 @@ impl AppState {
     /// Re-evaluate the clock-dependent parts of the change-detection caches.
     fn refresh_clock_presentations(&mut self, now: DateTime<Utc>) {
         self.session_presence_presentation = session_presence_at(&self.sessions, now);
-        if self.device_presentation.is_some() {
-            self.device_presentation = Some(device_presentation_at(&self.devices, now));
-        }
     }
 
     fn arm_clock_transition(&mut self, cx: &mut Context<Self>) {
@@ -2335,7 +2271,6 @@ impl AppState {
         self.connection = ConnectionStatus::Connecting;
         self.workspace_scope = None;
         self.devices.clear();
-        self.device_presentation = None;
         self.session_presence_presentation.clear();
         self.spaces.clear();
         self.chats.clear();
@@ -4215,7 +4150,7 @@ mod tests {
     }
 
     #[test]
-    fn device_heartbeats_keep_freshness_without_repainting_unchanged_presentation() {
+    fn device_heartbeats_keep_freshness_without_repainting_unchanged_metadata() {
         let mut state = AppState::new();
         let now = Utc::now();
         let mut row = device("host", "Host");
@@ -4224,14 +4159,6 @@ mod tests {
         row.last_seen_at = Some(now + TimeDelta::seconds(15));
         assert!(!state.apply_devices_at(vec![row.clone()], now + TimeDelta::seconds(15)));
         assert_eq!(state.devices[0].last_seen_at, row.last_seen_at);
-        // The settings label still advances even before the presence dot expires.
-        assert!(state.apply_devices_at(vec![row.clone()], now + TimeDelta::seconds(75)));
-        // An identical frame must redraw when presence crosses the expiry boundary.
-        assert!(state.apply_devices_at(vec![row.clone()], now + TimeDelta::seconds(86)));
-        assert!(!state.device_online("host", now + TimeDelta::seconds(86)));
-        row.last_seen_at = Some(now + TimeDelta::seconds(90));
-        assert!(state.apply_devices_at(vec![row.clone()], now + TimeDelta::seconds(90)));
-        assert!(state.device_online("host", now + TimeDelta::seconds(90)));
         row.name = "Renamed".into();
         assert!(state.apply_devices_at(vec![row.clone()], now + TimeDelta::seconds(90)));
         row.version = Some("9.0.0".into());
@@ -4854,12 +4781,12 @@ mod tests {
         // A two-device project tags both hosts; a one-device one keeps the
         // plain host tag.
         let anara = state.projects().into_iter().next().unwrap();
-        let (tag, _) = state.project_device_tag(&anara, Utc::now());
+        let tag = state.project_device_tag(&anara);
         assert!(tag.starts_with("@ ") && tag.contains(" · "), "{tag}");
         let notes = state.projects().into_iter().nth(1).unwrap();
         assert_eq!(
-            state.project_device_tag(&notes, Utc::now()).0,
-            state.space_device_tag(notes[0], Utc::now()).0
+            state.project_device_tag(&notes),
+            state.space_device_tag(notes[0])
         );
     }
 
@@ -4949,26 +4876,6 @@ mod tests {
         );
         assert_eq!(probe.indicator_for("row", cutoff), Indicator::None);
         assert_state_notifies_at(cx, now, cutoff, |state| state.sessions = vec![row]);
-    }
-
-    #[gpui::test]
-    fn remote_device_notifies_state_when_it_goes_offline(cx: &mut gpui::TestAppContext) {
-        let now = clock_epoch();
-        let seen = now - TimeDelta::seconds(40);
-        let mut remote = device("remote", "Remote");
-        remote.last_seen_at = Some(seen);
-        // The local device is always online; its stale heartbeat is no deadline.
-        let mut local = device("local", "Local");
-        local.last_seen_at = Some(now - TimeDelta::seconds(65));
-        let offline = seen + TimeDelta::seconds(DEVICE_ONLINE_WINDOW_SECS + 1);
-        let mut probe = AppState::new();
-        probe.devices = vec![remote.clone()];
-        assert!(probe.device_online("remote", offline - TimeDelta::milliseconds(1)));
-        assert!(!probe.device_online("remote", offline));
-        assert_state_notifies_at(cx, now, offline, |state| {
-            state.local_device_id = Some("local".into());
-            state.devices = vec![local, remote];
-        });
     }
 
     #[gpui::test]
@@ -5653,16 +5560,6 @@ mod tests {
         let mut local = chat("c-local", 0, None);
         local.device_id = "local".into();
         s.chats = vec![remote, local];
-        s.devices = vec![Device {
-            id: "remote".into(),
-            name: "vps".into(),
-            platform: "linux".into(),
-            last_seen_at: Some(now),
-            created_at: None,
-            version: None,
-            cursor_sdk_version: None,
-            capabilities: Vec::new(),
-        }];
         s.connectivity.state = ConnectivityState::Connected;
         s.connectivity.chats = vec![ChatConnectivity {
             sync_state: termix_proto::ChatSyncState::Unknown,
@@ -5722,12 +5619,6 @@ mod tests {
         assert!(s.send_queued("c-remote", now));
         s.connectivity.chats[0].connected = true;
         s.connectivity.state = ConnectivityState::Connected;
-
-        // Host gone presence-dark → degraded (a send would queue at best).
-        s.connectivity.chats[0].delivery_live = true;
-        s.devices[0].last_seen_at = Some(now - TimeDelta::minutes(10));
-        assert!(s.chat_delivery_degraded("c-remote"));
-        s.devices[0].last_seen_at = Some(now);
 
         // OS offline: remote degrades; a locally-hosted chat NEVER does (the
         // queued command executes on this device even fully offline).
