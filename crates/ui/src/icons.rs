@@ -218,6 +218,9 @@ icon_assets![
     (STAR, "star"),
     (STAR_BOLD, "star-bold"),
     (TERMIX_LOGO, "termix-logo"),
+    // Full-colour app badge: render with `gpui::img(icons::LOGO)`, not `icon`
+    // (`svg()` would flatten it to a tinted silhouette).
+    (LOGO, "logo"),
     // Harness brand marks (icons.tsx).
     (CLAUDE_MARK, "claude-mark"),
     (OPENAI_MARK, "openai-mark"),

@@ -9438,9 +9438,9 @@ impl Shell {
                         .flex_col()
                         .items_center()
                         .child(
-                            icon(icons::TERMIX_LOGO)
-                                .size(px(48.0))
-                                .text_color(theme.text.opacity(0.09)),
+                            gpui::img(icons::LOGO)
+                                .size(px(72.0))
+                                .rounded(px(16.0)),
                         )
                         .child(
                             div()
