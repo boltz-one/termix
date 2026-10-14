@@ -71,10 +71,10 @@ impl RealtimeHandle {
     }
     /// Immediately closes native capture even if the control actor is waiting on I/O.
     pub fn abort_voice(&self, generation: u64) {
-        if let Some((current, cancel)) = self.audio_abort.lock().unwrap().as_ref() {
-            if *current == generation {
-                cancel.cancel();
-            }
+        if let Some((current, cancel)) = self.audio_abort.lock().unwrap().as_ref()
+            && *current == generation
+        {
+            cancel.cancel();
         }
     }
 
