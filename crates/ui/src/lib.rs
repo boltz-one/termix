@@ -180,6 +180,13 @@ pub fn run_app(config: UiConfig) {
             ui_settings.surface,
             cx,
         );
+        history::init(
+            ui_settings.git_history_columns,
+            ui_settings.git_history_column_widths,
+            ui_settings.git_history_column_order.clone(),
+            ui_settings.git_history_author_display,
+            cx,
+        );
 
         let state = cx.new(|cx| {
             let mut state = state::AppState::new();
