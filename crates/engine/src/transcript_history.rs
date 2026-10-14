@@ -208,6 +208,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::cloned_ref_to_slice_refs)]
     fn interleaved_replay_preserves_live_prefix_and_joins_continuations() {
         let source = SessionDoc::init("chat").unwrap();
         let doc = Arc::new(SessionDoc::from_doc(loro::LoroDoc::new()));

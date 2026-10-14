@@ -1,4 +1,6 @@
 //! Native Pi JSONL RPC driver. See PROTOCOL.md for the legacy ACK barrier.
+#![allow(clippy::collapsible_if)]
+
 mod catalog;
 mod mcp;
 mod normalize;
@@ -119,14 +121,13 @@ impl PiHarness {
         mcp: Option<&termix_proto::McpServer>,
     ) -> Result<Process, HarnessError> {
         let exe = self.resolve_executable()?;
-        if self.executable.is_none() {
-            if let Some(version) = crate::executable::binary_version(&exe) {
-                if version < semver::Version::new(0, 85, 1) {
-                    return Err(HarnessError::Protocol(format!(
-                        "Pi {version} is unsupported; update Pi to 0.85.1 or newer"
-                    )));
-                }
-            }
+        if self.executable.is_none()
+            && let Some(version) = crate::executable::binary_version(&exe)
+            && version < semver::Version::new(0, 85, 1)
+        {
+            return Err(HarnessError::Protocol(format!(
+                "Pi {version} is unsupported; update Pi to 0.85.1 or newer"
+            )));
         }
         let mut cmd = Command::new(&exe);
         // Process group plus the same env scrubbing the ACP launch applied.
@@ -491,9 +492,7 @@ impl Runner {
         .await
     }
     fn control_command(&self, text: &str) -> Option<Value> {
-        let name = text
-            .trim()
-            .split_whitespace()
+        let name = text.split_whitespace()
             .next()
             .unwrap_or("")
             .trim_start_matches('/');
@@ -684,8 +683,7 @@ impl Runner {
                             | Pending::EmptyState(..)
                     )
                 })
-            {
-                if !self.queued.front().is_some_and(|s| {
+                && !self.queued.front().is_some_and(|s| {
                     (self.active && self.control_command(&s.prompt).is_some())
                         || (!self.deliveries.is_empty()
                             && s.prompt.strip_prefix('/').is_some_and(|command| {
@@ -721,7 +719,6 @@ impl Runner {
                         });
                     }
                 }
-            }
             if !self.active && !open && self.queued.is_empty() {
                 return Ok(());
             }

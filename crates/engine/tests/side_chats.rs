@@ -689,6 +689,7 @@ async fn warm_side_chat_sends_owed_fork_history_once() {
 /// A runtime that answers its first turn, then exits once released without
 /// reading its mailbox: sends routed into it are orphaned and re-dispatched.
 struct Dropping {
+    #[allow(clippy::type_complexity)]
     runs: Arc<Mutex<Vec<(String, Option<String>)>>>,
     release: Arc<tokio::sync::Notify>,
 }

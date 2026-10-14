@@ -982,8 +982,8 @@ pub(crate) mod tests {
         // Same failure as the supplied Chrome capture: a wider PNG canvas than
         // visible content, with transparent columns exclusively on the right.
         let mut pixels = vec![0; 302 * 165 * 4];
-        for row in pixels.chunks_exact_mut(302 * 4) {
-            for pixel in row[..264 * 4].chunks_exact_mut(4) {
+        for row in pixels.as_chunks_mut::<{ 302 * 4 }>().0 {
+            for pixel in row[..264 * 4].as_chunks_mut::<4>().0 {
                 pixel.copy_from_slice(&[22, 33, 44, 255]);
             }
         }
@@ -1009,7 +1009,7 @@ pub(crate) mod tests {
         }
         // A rounded corner, a transparent interior hole, and the faintest
         // possible nonzero-alpha edge must survive unchanged.
-        pixels[(1 * 8 + 2) * 4 + 3] = 0;
+        pixels[(8 + 2) * 4 + 3] = 0;
         pixels[(3 * 8 + 4) * 4 + 3] = 0;
         pixels[(3 * 8 + 2) * 4 + 3] = 1;
         let png = fixture_png(8, 7, &pixels, png::BitDepth::Eight);
@@ -1190,7 +1190,7 @@ pub(crate) mod tests {
         let paths: Vec<String> = vec!["/host/image.png".into()];
         let valid = with_appshots(
             "",
-            &[original.clone()],
+            std::slice::from_ref(&original),
             &HashMap::from([(original.screenshot.id.clone(), paths[0].clone())]),
         );
         for invalid in [
@@ -1200,7 +1200,7 @@ pub(crate) mod tests {
             format!("{valid}\n{}", valid.split_once(CONTEXT_MARKER).unwrap().1),
         ] {
             assert!(
-                restore_queued_appshots(&invalid, &paths, &[original.screenshot.clone()]).is_err()
+                restore_queued_appshots(&invalid, &paths, std::slice::from_ref(&original.screenshot)).is_err()
             );
         }
         let (ordinary, shots) =

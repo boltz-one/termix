@@ -1,5 +1,7 @@
 //! Ephemeral native subscription voice in the same app-server process as text/MCP.
 //! WebSocket appendAudio is deliberately unavailable: in Codex 0.159 it needs an API key.
+#![allow(clippy::collapsible_if, clippy::possible_missing_else)]
+
 #[path = "realtime_host.rs"]
 mod host;
 use crate::jsonrpc::{Incoming, RpcClient};

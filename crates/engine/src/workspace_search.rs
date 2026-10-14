@@ -1007,6 +1007,7 @@ mod tests {
     }
 }
 
+#[allow(clippy::items_after_test_module)]
 /// Whether `relative` (an index result under `root`) reaches outside the
 /// root through a symlink. fff's watcher follows links created after the
 /// first scan, so results are re-checked with ReadWorkspaceFile's rule: no

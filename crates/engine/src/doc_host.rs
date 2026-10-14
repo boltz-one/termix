@@ -1478,6 +1478,7 @@ impl DocHost {
         .await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn finish_queued_message_edit_with_attachments(
         &self,
         chat_id: &str,
@@ -2091,9 +2092,9 @@ impl DocHost {
     ///    grace to ack;
     /// 3. rows still not at the edge but the peer link alive → relay-forward
     ///    the entry itself ([`termix_rpc::methods::RELAY_COMMAND`]). The
-    /// Local-only: commands never travel a relay — they drain straight from
-    /// the local doc. This is a no-op (the drain already fired when the
-    /// command was queued).
+    ///    Local-only: commands never travel a relay — they drain straight from
+    ///    the local doc. This is a no-op (the drain already fired when the
+    ///    command was queued).
     fn spawn_command_delivery(
         &self,
         chat_id: &str,

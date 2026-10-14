@@ -1,5 +1,7 @@
 //! Host-side discovery for providers without a typed skills catalog. Only
 //! configured skill roots are traversed; bodies stay on the host until invoked.
+#![allow(clippy::collapsible_if, clippy::possible_missing_else)]
+
 use crate::HarnessError;
 use std::{
     collections::{BTreeMap, HashSet},
@@ -166,31 +168,30 @@ fn discover_at(harness: HarnessId, cwd: &Path, home: &Path) -> Result<Vec<Skill>
             roots.push((config.join("commands"), String::new()));
             roots.push((config.join("skills"), String::new()));
             // Only installed plugin locations; never crawl caches or marketplaces.
-            if let Ok(bytes) = std::fs::read(config.join("plugins/installed_plugins.json")) {
-                if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
-                    if let Some(plugins) = value.get("plugins").and_then(|v| v.as_object()) {
-                        for (id, installs) in plugins {
-                            let namespace = id.split('@').next().unwrap_or(id);
-                            for install in installs.as_array().into_iter().flatten() {
-                                if let Some(project) =
-                                    install.get("projectPath").and_then(|v| v.as_str())
-                                {
-                                    if !cwd.starts_with(project) {
-                                        continue;
-                                    }
-                                }
-                                if let Some(path) =
-                                    install.get("installPath").and_then(|v| v.as_str())
-                                {
+            if let Ok(bytes) = std::fs::read(config.join("plugins/installed_plugins.json"))
+                && let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes)
+            {
+                if let Some(plugins) = value.get("plugins").and_then(|v| v.as_object()) {
+                    for (id, installs) in plugins {
+                        let namespace = id.split('@').next().unwrap_or(id);
+                        for install in installs.as_array().into_iter().flatten() {
+                            if let Some(project) =
+                                install.get("projectPath").and_then(|v| v.as_str())
+                                && !cwd.starts_with(project)
+                            {
+                                continue;
+                            }
+                            if let Some(path) =
+                                install.get("installPath").and_then(|v| v.as_str())
+                            {
                                     roots.push((
                                         Path::new(path).join("skills"),
                                         format!("{namespace}:"),
                                     ));
                                     roots.push((
-                                        Path::new(path).join("commands"),
-                                        format!("{namespace}:"),
-                                    ));
-                                }
+                                    Path::new(path).join("commands"),
+                                    format!("{namespace}:"),
+                                ));
                             }
                         }
                     }
@@ -871,7 +872,7 @@ mod tests {
             home.join(".agents/skills/private"),
         ] {
             std::fs::create_dir_all(&denied).unwrap();
-            std::fs::set_permissions(&denied, std::fs::Permissions::from_mode(0)).unwrap();
+            std::fs::set_permissions(&denied, std::fs::Permissions::from_mode(0o0)).unwrap();
             let result = discover_at(HarnessId::Cursor, &repo, &home);
             std::fs::set_permissions(&denied, std::fs::Permissions::from_mode(0o700)).unwrap();
             let skills = result.unwrap();
@@ -908,7 +909,7 @@ mod tests {
         symlink("SKILL.md", cycle.join("SKILL.md")).unwrap();
 
         let denied = write(&repo, ".agents/skills/denied/SKILL.md", "Private");
-        std::fs::set_permissions(&denied, std::fs::Permissions::from_mode(0)).unwrap();
+        std::fs::set_permissions(&denied, std::fs::Permissions::from_mode(0o0)).unwrap();
         // Root can read mode-000 files; missing and cyclic links still exercise
         // per-file I/O failures on privileged test runners.
         let denied_is_readable = std::fs::File::open(&denied).is_ok();

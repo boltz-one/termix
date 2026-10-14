@@ -328,7 +328,7 @@ mod tests {
                     std::fs::write(format!("{dir}/{name}-{mode}.svg"), svg).unwrap();
                     let size = prepared_raster.size(0);
                     let mut rgba = prepared_raster.as_bytes(0).unwrap().to_vec();
-                    for pixel in rgba.chunks_exact_mut(4) {
+                    for pixel in rgba.as_chunks_mut::<4>().0 {
                         pixel.swap(0, 2);
                     }
                     image::save_buffer(

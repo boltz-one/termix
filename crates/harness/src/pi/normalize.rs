@@ -101,13 +101,13 @@ impl Normalizer {
             "tool_execution_start" => {
                 let id = string(frame, "toolCallId").to_owned();
                 let name = string(frame, "toolName");
-                if !self.tools.contains_key(&id) {
+                if let std::collections::hash_map::Entry::Vacant(entry) = self.tools.entry(id.clone()) {
                     let args = frame["args"].clone();
                     events.push(AgentEvent::ToolCall {
                         id: id.clone(),
                         call: tool(name, &args),
                     });
-                    self.tools.insert(id, (name.into(), args));
+                    entry.insert((name.into(), args));
                 }
             }
             "tool_execution_end" => {

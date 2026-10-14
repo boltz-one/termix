@@ -355,6 +355,7 @@ pub struct GitHubCli {
     /// (tests, and engines without a data directory).
     store: Option<crate::change_request_store::ChangeRequestStore>,
     /// The active `gh` account and when it was read, keying the store.
+    #[allow(clippy::type_complexity)]
     account: Arc<tokio::sync::Mutex<Option<(Instant, Option<String>)>>>,
 }
 
@@ -2896,6 +2897,7 @@ mod tests {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn search_pull_request(
         repository: &str,
         number: u64,

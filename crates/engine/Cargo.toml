@@ -50,3 +50,6 @@ termix-harness = { workspace = true, features = ["installer-fixture"] }
 tokio = { workspace = true, features = ["test-util"] }
 zip.workspace = true
 tokio-tungstenite.workspace = true
+
+[lints]
+workspace = true

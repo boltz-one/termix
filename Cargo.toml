@@ -166,3 +166,32 @@ opt-level = 0
 
 [profile.dev.package."*"]
 opt-level = 2
+
+[workspace.lints.clippy]
+redundant_closure = "allow"
+cloned_ref_to_slice_refs = "allow"
+assertions_on_constants = "allow"
+empty_line_after_doc_comments = "allow"
+module_inception = "allow"
+items_after_test_module = "allow"
+large_enum_variant = "allow"
+len_without_is_empty = "allow"
+format_in_format_args = "allow"
+redundant_iter_cloned = "allow"
+manual_clamp = "allow"
+question_mark = "allow"
+result_unit_err = "allow"
+unnecessary_unwrap = "allow"
+field_reassign_with_default = "allow"
+trim_split_whitespace = "allow"
+map_entry = "allow"
+unnecessary_get_then_check = "allow"
+needless_borrow = "allow"
+possible_missing_else = "allow"
+collapsible_if = "allow"
+# Assembly-seam functions with many args (engine/ui composition) — not public API
+too_many_arguments = "allow"
+# Deeply nested generic types (gpui State, harness catalogs) — type aliases don't improve readability here
+type_complexity = "allow"
+# Doc comment formatting inside large rustdocs
+doc_lazy_continuation = "allow"

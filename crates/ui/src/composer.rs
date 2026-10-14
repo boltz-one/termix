@@ -12789,7 +12789,7 @@ mod tests {
                 input.move_to(0, cx);
                 input.end(&End, window, cx);
                 input.backspace(&Backspace, window, cx);
-                let previous = first.grapheme_indices(true).last().unwrap().0;
+                let previous = first.grapheme_indices(true).next_back().unwrap().0;
                 assert_eq!(input.text(), format!("{}\r\nnext", &first[..previous]));
                 input.undo(&Undo, window, cx);
                 input.move_to(first.len(), cx);
@@ -16274,7 +16274,7 @@ mod appshot_rebase_tests {
             fresh.id = "fresh".into();
             composer.stage_appshot_for("minted".into(), original.clone(), cx);
             composer.stage_appshot(fresh, cx);
-            composer.restore_failed_appshots(&[original.clone()], "minted", "");
+            composer.restore_failed_appshots(std::slice::from_ref(&original), "minted", "");
             assert_eq!(composer.staged_appshots().len(), 2);
             assert_eq!(
                 composer.staged_appshots()[0].accessibility,

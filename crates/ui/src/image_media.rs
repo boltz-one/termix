@@ -320,7 +320,7 @@ mod tests {
         let visible_pixels = raster
             .as_bytes(0)
             .unwrap()
-            .chunks_exact(4)
+            .as_chunks::<4>().0.iter()
             .filter(|pixel| pixel[3] > 128)
             .count();
         assert!(

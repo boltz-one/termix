@@ -35,6 +35,7 @@ const HARNESSES: [HarnessId; 9] = [
     HarnessId::Opencode,
 ];
 
+#[allow(clippy::large_enum_variant)]
 enum Delivery {
     Run(RunRequest),
     Steer(String, Vec<String>),

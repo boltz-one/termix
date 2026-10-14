@@ -5532,7 +5532,7 @@ mod tests {
         expected.line = 9;
         expected.body = "Revised".into();
         assert_eq!(state.review_comments("chat-1"), &[expected]);
-        assert_eq!(state.review_comments("chat-2"), &[original.clone()]);
+        assert_eq!(state.review_comments("chat-2"), std::slice::from_ref(&original));
         assert!(state.review_comment_flush_pending("chat-1"));
         state.remove_review_comment("chat-1", &original.id);
         state.update_review_comment_body("chat-1", &original.id, "Stale".into());

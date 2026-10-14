@@ -48,6 +48,7 @@ struct Chat<'a> {
     id: String,
     sends: Arc<Mutex<Vec<Instant>>>,
     /// (when, status, last_completed_turn) at every observed change.
+    #[allow(clippy::type_complexity)]
     timeline: Arc<Mutex<Vec<(Instant, SessionStatus, Option<String>)>>>,
     sentinels: Vec<String>,
     /// Every message sent: each must start a steer boundary or a process.

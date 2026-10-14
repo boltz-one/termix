@@ -22,3 +22,6 @@ termix-doc.workspace = true
 
 # Deterministic stalled-transport deadlines.
 tokio = { workspace = true, features = ["test-util"] }
+
+[lints]
+workspace = true

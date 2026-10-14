@@ -1352,6 +1352,20 @@ fn refresh_system(cx: &mut App) {
     .detach();
 }
 
+#[cfg(windows)]
+#[path = "motion/windows_pulse.rs"]
+mod windows_pulse;
+
+/// A bounded activation sheen for Fast service tier; GPUI handles reduced motion.
+pub fn fast_tier(
+    id: impl Into<ElementId>,
+    element: impl IntoElement + gpui::Styled + 'static,
+) -> impl IntoElement {
+    element.with_animation(id, Animation::new(Duration::from_millis(700)), |el, t| {
+        el.opacity(1.0 - 0.35 * (1.0 - t) * (std::f32::consts::PI * t).sin())
+    })
+}
+
 #[cfg(not(any(target_os = "macos", windows, target_os = "linux")))]
 fn refresh_system(_cx: &mut App) {}
 
@@ -1951,18 +1965,4 @@ mod tests {
             assert!(!reduced_motion(cx));
         });
     }
-}
-
-#[cfg(windows)]
-#[path = "motion/windows_pulse.rs"]
-mod windows_pulse;
-
-/// A bounded activation sheen for Fast service tier; GPUI handles reduced motion.
-pub fn fast_tier(
-    id: impl Into<ElementId>,
-    element: impl IntoElement + gpui::Styled + 'static,
-) -> impl IntoElement {
-    element.with_animation(id, Animation::new(Duration::from_millis(700)), |el, t| {
-        el.opacity(1.0 - 0.35 * (1.0 - t) * (std::f32::consts::PI * t).sin())
-    })
 }

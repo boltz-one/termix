@@ -167,6 +167,10 @@ pub fn validate_shortcut(combo: &str) -> Result<(), ()> {
     Shortcut::parse(combo).map(|_| ())
 }
 
+pub(crate) fn capture_allowed() -> bool {
+    current().is_some()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -192,8 +196,4 @@ mod tests {
             "CTRL+SHIFT+Page_Up"
         );
     }
-}
-
-pub(crate) fn capture_allowed() -> bool {
-    current().is_some()
 }

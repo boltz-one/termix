@@ -304,6 +304,14 @@ fn label_fade_outset(overflow: f32, band: f32) -> f32 {
     band * (1.0 - eased)
 }
 
+impl IntoElement for EdgeFaded {
+    type Element = Self;
+
+    fn into_element(self) -> Self::Element {
+        self
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -521,13 +529,5 @@ mod tests {
             assert!(previous - edge_alpha < 0.02);
             previous = edge_alpha;
         }
-    }
-}
-
-impl IntoElement for EdgeFaded {
-    type Element = Self;
-
-    fn into_element(self) -> Self::Element {
-        self
     }
 }

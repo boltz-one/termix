@@ -699,6 +699,7 @@ mod device_name_tests {
     }
 }
 
+#[allow(clippy::items_after_test_module)]
 /// Stable per-installation device id, persisted at `{data_dir}/device-id`.
 fn load_or_create_device_id(data_dir: &Path) -> Result<String, EngineError> {
     std::fs::create_dir_all(data_dir)?;
