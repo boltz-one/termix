@@ -1,0 +1,12 @@
+gantt
+    title Project Schedule
+    dateFormat YYYY-MM-DD
+    section Design
+        Requirements :done, req, 2026-01-01, 7d
+        Architecture :active, arch, after req, 10d
+    section Development
+        Backend :dev1, after arch, 14d
+        Frontend :dev2, after arch, 14d
+    section Testing
+        Integration :test1, after dev1, 7d
+        Acceptance :test2, after test1, 5d
