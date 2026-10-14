@@ -36,6 +36,7 @@ pub enum SessionCommandStatus {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
+#[allow(clippy::large_enum_variant)]
 pub enum SessionCommandPayload {
     #[serde(rename_all = "camelCase")]
     Run {

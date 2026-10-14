@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Termix
+Comment=Termix — terminal workspace
+Exec=termix
+Icon=termix
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+StartupWMClass=termix

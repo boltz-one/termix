@@ -372,6 +372,7 @@ pub fn verify_runtime(root: &Path) -> Result<std::path::PathBuf, VoiceRejection>
     Ok(root.join(HELPER))
 }
 
+#[allow(clippy::items_after_test_module)]
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -13,6 +13,7 @@
 //! - [`loaders`] — termix pulse loader, gradient spinner, boot splash.
 
 mod account_usage;
+pub mod app_icon;
 pub mod app_menus;
 pub mod appearance;
 pub mod appshots;
@@ -414,6 +415,8 @@ fn open_main_window(
                 // — if these two ever disagree, vibrancy dies on the first theme
                 // change and never comes back.
                 window_background: theme::Theme::of(cx).window_background_appearance(),
+                #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+                icon: crate::app_icon::window_icon(),
                 app_id: Some("termix".into()),
                 ..Default::default()
             },
