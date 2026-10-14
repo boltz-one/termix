@@ -41,7 +41,6 @@ use crate::rail;
 use crate::settings::accounts::AccountsPage;
 use crate::settings::appearance::{AppearancePage, AppearanceSettingsEvent};
 use crate::settings::archived::ArchivedPage;
-use crate::settings::devices::DevicesPage;
 use crate::settings::files::{FilesSettingsEvent, FilesSettingsPage};
 use crate::settings::harnesses::HarnessesPage;
 use crate::settings::notifications::{NotificationsEvent, NotificationsPage};
@@ -533,7 +532,6 @@ pub fn apply_keymap(
 /// The settings sections (feature-inventory §1.5 routes).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SettingsSection {
-    Devices,
     /// Which harnesses the composer offers (enable/disable toggles) —
     /// labeled "Providers".
     Harnesses,
@@ -553,14 +551,13 @@ pub enum SettingsSection {
 
 impl SettingsSection {
     /// Sections shown in Settings. `Agents` is a legacy Accounts route alias.
-    pub const ALL: [SettingsSection; 10] = [
+    pub const ALL: [SettingsSection; 9] = [
         SettingsSection::General,
         SettingsSection::Appearance,
         SettingsSection::Notifications,
         SettingsSection::Voice,
         SettingsSection::Shortcuts,
         SettingsSection::Harnesses,
-        SettingsSection::Devices,
         SettingsSection::Files,
         SettingsSection::Appshots,
         SettingsSection::Archived,
@@ -595,7 +592,6 @@ impl SettingsSection {
     /// Stable name shared by `ui-settings.json` and `TERMIX_OPEN_ROUTE`.
     fn slug(self) -> &'static str {
         match self {
-            SettingsSection::Devices => "devices",
             SettingsSection::Harnesses => "providers",
             SettingsSection::Agents => "agents",
             SettingsSection::Appearance => "appearance",
@@ -612,7 +608,6 @@ impl SettingsSection {
     /// Inverse of [`Self::slug`], plus the pages' former names.
     fn from_slug(slug: &str) -> Option<Self> {
         Some(match slug {
-            "devices" => SettingsSection::Devices,
             "providers" | "harnesses" => SettingsSection::Harnesses,
             "agents" => SettingsSection::Agents,
             "appearance" => SettingsSection::Appearance,
@@ -637,7 +632,6 @@ impl SettingsSection {
     /// `settingsTitle` — the same strings in both places).
     pub fn label(self) -> &'static str {
         match self {
-            SettingsSection::Devices => "Devices",
             SettingsSection::Harnesses => "Providers",
             SettingsSection::Agents => "Accounts",
             SettingsSection::Appearance => "Appearance",
@@ -1744,7 +1738,6 @@ pub struct Shell {
     pending_pull_request: Option<(String, Option<String>)>,
     pull_request_cache:
         std::rc::Rc<std::cell::RefCell<crate::pull_request_detail::PullRequestCache>>,
-    devices_page: Option<Entity<DevicesPage>>,
     archived_page: Option<Entity<ArchivedPage>>,
     appearance_page: Option<Entity<AppearancePage>>,
     files_settings_page: Option<Entity<FilesSettingsPage>>,
@@ -2243,7 +2236,6 @@ impl Shell {
             pull_request_detail_subscription: None,
             pending_pull_request: None,
             pull_request_cache: Default::default(),
-            devices_page: None,
             archived_page: None,
             appearance_page: None,
             files_settings_page: None,
@@ -4539,15 +4531,19 @@ impl Shell {
         self.command_palette = None;
         let was_pull_requests = matches!(self.route, Route::PullRequests);
         let will_show_pull_requests = matches!(route, Route::PullRequests);
-        if was_pull_requests && !will_show_pull_requests
-            && let Some(page) = self.pull_requests_page.as_ref().cloned() {
-                page.update(cx, |page, _| page.on_hidden());
-            }
+        if was_pull_requests
+            && !will_show_pull_requests
+            && let Some(page) = self.pull_requests_page.as_ref().cloned()
+        {
+            page.update(cx, |page, _| page.on_hidden());
+        }
         self.route = route;
-        if !was_pull_requests && will_show_pull_requests
-            && let Some(page) = self.pull_requests_page.as_ref().cloned() {
-                page.update(cx, |page, cx| page.on_visible(cx));
-            }
+        if !was_pull_requests
+            && will_show_pull_requests
+            && let Some(page) = self.pull_requests_page.as_ref().cloned()
+        {
+            page.update(cx, |page, cx| page.on_visible(cx));
+        }
     }
 
     /// Close the user menu through the exit animation (no-op when closed).
@@ -5003,10 +4999,6 @@ impl Shell {
             return false;
         };
         match section.canonical() {
-            SettingsSection::Devices => self
-                .devices_page
-                .as_ref()
-                .is_some_and(|page| page.update(cx, |page, cx| page.dismiss_on_escape(cx))),
             SettingsSection::Harnesses => self
                 .harnesses_page
                 .as_ref()
@@ -5180,16 +5172,6 @@ impl Shell {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         match section {
-            SettingsSection::Devices => {
-                if self.devices_page.is_none() {
-                    let state = self.state.clone();
-                    self.devices_page = Some(cx.new(|cx| DevicesPage::new(state, cx)));
-                }
-                match &self.devices_page {
-                    Some(page) => page.clone().into_any_element(),
-                    None => Empty.into_any_element(),
-                }
-            }
             SettingsSection::Harnesses => {
                 if self.harnesses_page.is_none() {
                     let state = self.state.clone();
@@ -6422,9 +6404,25 @@ impl Shell {
             ),
         ) + CLUSTER_BUTTONS_WIDTH
             + TITLEBAR_ACTION_SLOT_WIDTH * self.titlebar_plus_alpha(cx);
-        let left = (sidebar - Theme::SPACE_SM - 24.0).max(cluster_end + TITLEBAR_GROUP_GAP);
+        let left_floor = cluster_end + TITLEBAR_GROUP_GAP;
+        // The view-options trigger keeps its exact long-standing position
+        // (trailing edge of the sidebar, or clamped beside the left cluster
+        // when the sidebar is narrow). Settings joins to its left only when
+        // there's room for both without crowding the left cluster.
+        let more_left = (sidebar - Theme::SPACE_SM - 24.0).max(left_floor);
+        let settings_left = more_left - TITLEBAR_CONTROL_GAP - 24.0;
+        let show_settings = settings_left >= left_floor;
         let theme = Theme::of(cx).clone();
-        let trigger = self.render_sidebar_view_trigger(&theme, cx);
+        let more_trigger = self.render_sidebar_view_trigger(&theme, cx);
+        let settings_trigger =
+            show_settings.then(|| self.render_sidebar_settings_trigger(&theme, cx));
+        let left = if show_settings { settings_left } else { more_left };
+        let row = div()
+            .flex()
+            .items_center()
+            .gap(px(TITLEBAR_CONTROL_GAP))
+            .children(settings_trigger)
+            .child(more_trigger);
         Some(
             div()
                 .absolute()
@@ -6435,9 +6433,82 @@ impl Shell {
                 .flex()
                 .items_center()
                 .opacity(reveal)
-                .child(trigger)
+                .child(row)
                 .into_any_element(),
         )
+    }
+
+    /// Settings toggle pinned beside the sidebar view-options trigger (the
+    /// "…" button), at the titlebar's trailing edge. Styled to match that
+    /// sibling rather than the old footer pill it replaces.
+    fn render_sidebar_settings_trigger(
+        &mut self,
+        theme: &Theme,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let settings_open = matches!(self.route, Route::Settings(_));
+        let settings_tooltip: SharedString = match (settings_open, cfg!(target_os = "macos")) {
+            (false, true) => "Settings · ⌘,".into(),
+            (false, false) => "Settings · Ctrl+,".into(),
+            (true, true) => "Close settings · ⌘,".into(),
+            (true, false) => "Close settings · Ctrl+,".into(),
+        };
+        div()
+            .id("settings-trigger")
+            .debug_selector(|| "settings-trigger".into())
+            .role(gpui::Role::Button)
+            .aria_label(if settings_open {
+                "Close settings"
+            } else {
+                "Settings"
+            })
+            .aria_toggled(if settings_open {
+                gpui::Toggled::True
+            } else {
+                gpui::Toggled::False
+            })
+            .tab_index(0)
+            .size(px(24.0))
+            .flex_none()
+            .flex()
+            .items_center()
+            .justify_center()
+            .rounded(px(6.0))
+            .border_1()
+            .border_color(theme.border.opacity(0.0))
+            .focus_visible(|el| el.border_color(theme.border_strong))
+            .cursor_pointer()
+            .bg(if settings_open {
+                theme.glass_hover()
+            } else {
+                theme.glass_hover().opacity(0.0)
+            })
+            .hover(|el| el.bg(theme.glass_hover()))
+            // Over the titlebar's drag strip, like its sibling: block the
+            // drag so the click lands instead.
+            .occlude()
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|_, _, window, _| window.prevent_default()),
+            )
+            .on_click(cx.listener(|this, _, _, cx| {
+                cx.stop_propagation();
+                this.toggle_settings(cx);
+            }))
+            .tooltip(move |_, cx| {
+                let text = settings_tooltip.clone();
+                cx.new(|_| SurfaceTabTooltip { text }).into()
+            })
+            .child(
+                icon(icons::SETTINGS).size(px(16.0)).text_color(
+                    if settings_open {
+                        theme.text
+                    } else {
+                        theme.text_muted
+                    },
+                ),
+            )
+            .into_any_element()
     }
 
     /// The titlebar owns new-session creation regardless of sidebar state. It
@@ -6956,7 +7027,6 @@ impl Shell {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let section_icon = |item: SettingsSection| match item {
-            SettingsSection::Devices => icons::MONITOR,
             SettingsSection::Harnesses => icons::WIDGET,
             SettingsSection::Agents => icons::KEY_MINIMALISTIC,
             SettingsSection::Appearance => icons::TUNING,
@@ -8619,15 +8689,6 @@ impl Shell {
                 closing,
             ));
         }
-        // Settings is a toggle: while its page is up the button keeps the
-        // hover wash + full-strength glyph, and a click returns to chat.
-        let settings_open = matches!(self.route, Route::Settings(_));
-        let settings_tooltip: SharedString = match (settings_open, cfg!(target_os = "macos")) {
-            (false, true) => "Settings · ⌘,".into(),
-            (false, false) => "Settings · Ctrl+,".into(),
-            (true, true) => "Close settings · ⌘,".into(),
-            (true, false) => "Close settings · Ctrl+,".into(),
-        };
         let voice_trigger = self.render_voice_trigger(theme, cx);
         div()
             .w_full()
@@ -8643,58 +8704,7 @@ impl Shell {
                     .items_center()
                     .gap(px(2.0))
                     .children(voice_trigger)
-                    .child(pull_requests)
-                    .child(
-                        div()
-                            .id("settings-trigger")
-                            .debug_selector(|| "settings-trigger".into())
-                            .role(gpui::Role::Button)
-                            .aria_label(if settings_open {
-                                "Close settings"
-                            } else {
-                                "Settings"
-                            })
-                            .aria_toggled(if settings_open {
-                                gpui::Toggled::True
-                            } else {
-                                gpui::Toggled::False
-                            })
-                            .tooltip(move |_, cx| {
-                                let text = settings_tooltip.clone();
-                                cx.new(|_| SurfaceTabTooltip { text }).into()
-                            })
-                            .tab_index(0)
-                            .size(px(SIDEBAR_FOOTER_BUTTON_SIZE))
-                            .flex_none()
-                            .rounded(px(8.0))
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .cursor_pointer()
-                            .bg(if settings_open {
-                                theme.glass_hover()
-                            } else {
-                                motion::hover_blend(
-                                    "settings-trigger",
-                                    theme.glass_hover().opacity(0.0),
-                                    theme.glass_hover(),
-                                )
-                            })
-                            .on_hover(motion::hover_listener("settings-trigger"))
-                            .focus_visible(|s| s.border_2().border_color(theme.accent))
-                            .on_click(cx.listener(|this, _, _, cx| this.toggle_settings(cx)))
-                            .child(icon(icons::SETTINGS).size(px(15.0)).text_color(
-                                if settings_open {
-                                    theme.text
-                                } else {
-                                    motion::hover_blend(
-                                        "settings-trigger",
-                                        theme.text_muted,
-                                        theme.text,
-                                    )
-                                },
-                            )),
-                    ),
+                    .child(pull_requests),
             )
             .into_any_element()
     }
@@ -9435,11 +9445,7 @@ impl Shell {
                         .flex()
                         .flex_col()
                         .items_center()
-                        .child(
-                            gpui::img(icons::LOGO)
-                                .size(px(72.0))
-                                .rounded(px(16.0)),
-                        )
+                        .child(gpui::img(icons::LOGO).size(px(72.0)).rounded(px(16.0)))
                         .child(
                             div()
                                 .mt(px(24.0))
@@ -12524,7 +12530,7 @@ mod tests {
             (Route::Chat, None, Indicator::Working, false),
             (Route::Chat, Some("chat-a"), Indicator::Working, true),
             (
-                Route::Settings(SettingsSection::Devices),
+                Route::Settings(SettingsSection::Shortcuts),
                 Some("chat-a"),
                 Indicator::Working,
                 false,
@@ -12593,11 +12599,11 @@ mod tests {
         assert_eq!(titlebar_new_session_alpha(&Route::PullRequests, false), 1.0);
         assert_eq!(titlebar_new_session_alpha(&Route::PullRequests, true), 1.0);
         assert_eq!(
-            titlebar_new_session_alpha(&Route::Settings(SettingsSection::Devices), true),
+            titlebar_new_session_alpha(&Route::Settings(SettingsSection::Shortcuts), true),
             0.0
         );
         assert_eq!(
-            titlebar_new_session_alpha(&Route::Settings(SettingsSection::Devices), false),
+            titlebar_new_session_alpha(&Route::Settings(SettingsSection::Shortcuts), false),
             0.0
         );
     }
@@ -13054,7 +13060,7 @@ mod tests {
     fn nav_push_then_back_and_forward() {
         let mut nav = NavHistory::new(chat("a"));
         nav.push(chat("b"));
-        nav.push(NavEntry::Settings(SettingsSection::Devices));
+        nav.push(NavEntry::Settings(SettingsSection::Shortcuts));
         assert!(nav.can_back());
         assert!(!nav.can_forward());
 
@@ -13073,7 +13079,7 @@ mod tests {
         assert_eq!(nav.forward(), Some(chat("b")));
         assert_eq!(
             nav.forward(),
-            Some(NavEntry::Settings(SettingsSection::Devices))
+            Some(NavEntry::Settings(SettingsSection::Shortcuts))
         );
         assert!(!nav.can_forward());
         assert_eq!(nav.forward(), None);
@@ -13122,13 +13128,10 @@ mod tests {
     #[test]
     fn nav_settings_sections_are_distinct_entries() {
         let mut nav = NavHistory::new(chat("a"));
-        nav.push(NavEntry::Settings(SettingsSection::Devices));
+        nav.push(NavEntry::Settings(SettingsSection::Files));
         nav.push(NavEntry::Settings(SettingsSection::Shortcuts));
         assert_eq!(nav.len(), 3, "section changes are navigations");
-        assert_eq!(
-            nav.back(),
-            Some(NavEntry::Settings(SettingsSection::Devices))
-        );
+        assert_eq!(nav.back(), Some(NavEntry::Settings(SettingsSection::Files)));
         assert_eq!(nav.back(), Some(chat("a")));
     }
 
@@ -13147,7 +13150,7 @@ mod tests {
 
     #[test]
     fn pull_request_route_can_open_from_and_return_to_settings() {
-        let settings = NavEntry::Settings(SettingsSection::Devices);
+        let settings = NavEntry::Settings(SettingsSection::Shortcuts);
         let mut nav = NavHistory::new(settings.clone());
         nav.push(NavEntry::PullRequests);
         assert_eq!(nav.back(), Some(settings));
@@ -13813,14 +13816,16 @@ mod exit_regressions {
 
     #[gpui::test]
     fn sidebar_settings_trigger_toggles_the_settings_route(cx: &mut TestAppContext) {
-        // Just the footer row: the full shell's settings modal would cover it.
+        // Just the trigger itself: the full shell's settings modal would
+        // cover it, and the titlebar overlay around it needs no exercising
+        // here (that geometry has its own test).
         struct FooterHost(Entity<Shell>);
         impl Render for FooterHost {
             fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
                 self.0.update(cx, |shell, cx| {
                     div()
                         .w(px(256.0))
-                        .child(shell.render_sidebar_footer(&Theme::default(), cx))
+                        .child(shell.render_sidebar_settings_trigger(&Theme::default(), cx))
                 })
             }
         }
@@ -13849,7 +13854,6 @@ mod exit_regressions {
         let shell = host.read_with(cx, |host, _| host.0.clone());
         for expect_open in [true, false] {
             cx.update(|window, cx| window.draw(cx).clear());
-            assert!(cx.debug_bounds("user-menu-label").is_some());
             let trigger = cx.debug_bounds("settings-trigger").unwrap().center();
             cx.simulate_click(trigger, gpui::Modifiers::default());
             shell.read_with(cx, |shell, _| {
@@ -13910,10 +13914,7 @@ mod exit_regressions {
         let entry = cx
             .debug_bounds("open-pull-requests")
             .expect("Settings keeps the Pull requests entry");
-        let gear = cx.debug_bounds("settings-trigger").unwrap();
-        // Just left of Settings, in the same action group.
-        assert!(entry.right() <= gear.left() && entry.left() >= row.left());
-        assert!((entry.center().y - gear.center().y).abs() < px(1.0));
+        assert!(entry.left() >= row.left() && entry.right() <= row.right());
         cx.simulate_click(entry.center(), gpui::Modifiers::default());
         shell.read_with(cx, |shell, _| {
             assert!(
@@ -14242,7 +14243,7 @@ mod exit_regressions {
                     "new" => shell.open_new_session(None, cx),
                     "back" => shell.apply_nav(NavEntry::Chat("existing-session".into()), cx),
                     "settings" => {
-                        shell.open_settings(SettingsSection::Devices, cx);
+                        shell.open_settings(SettingsSection::Shortcuts, cx);
                         shell.close_settings(cx);
                     }
                     _ => {}
@@ -15206,7 +15207,7 @@ impl Shell {
         self.toggle_right_pane_expand(cx);
     }
     pub fn fixture_blur_browser(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.route = Route::Settings(SettingsSection::Devices);
+        self.route = Route::Settings(SettingsSection::Shortcuts);
         window.blur();
         cx.notify();
     }
@@ -15879,7 +15880,6 @@ mod settings_modal_regressions {
             Some(SettingsSection::Harnesses)
         );
         for (route, section) in [
-            ("settings/devices", SettingsSection::Devices),
             ("settings/providers", SettingsSection::Harnesses),
             ("settings/agents", SettingsSection::Harnesses),
             ("settings/harnesses", SettingsSection::Harnesses),
@@ -16157,24 +16157,10 @@ mod settings_modal_regressions {
         shell.update(cx, |shell, cx| {
             // No engine in tests: render the workspace, not the boot gate.
             shell.debug_gate = Some(GatePhase::Ready);
-            shell.open_settings(SettingsSection::Devices, cx)
+            shell.open_settings(SettingsSection::Shortcuts, cx)
         });
         cx.run_until_parked();
         cx.update(|window, cx| window.draw(cx).clear());
-
-        // A dialog that does not hold focus (the rename input was never
-        // clicked) still closes before Settings does.
-        let devices = shell.read_with(cx, |shell, _| shell.devices_page.clone().unwrap());
-        devices.update(cx, |page, cx| {
-            page.open_rename("device-1".into(), "Studio".into(), cx)
-        });
-        cx.run_until_parked();
-        cx.update(|window, cx| window.draw(cx).clear());
-        cx.simulate_keystrokes("escape");
-        assert!(!devices.update(cx, |page, cx| page.dismiss_on_escape(cx)));
-        shell.read_with(cx, |shell, _| {
-            assert_eq!(shell.route, Route::Settings(SettingsSection::Devices));
-        });
 
         // So does the account menu opened from the settings footer.
         shell.update(cx, |shell, cx| {
@@ -16186,7 +16172,7 @@ mod settings_modal_regressions {
         cx.simulate_keystrokes("escape");
         shell.read_with(cx, |shell, _| {
             assert!(!shell.user_menu.is_open());
-            assert_eq!(shell.route, Route::Settings(SettingsSection::Devices));
+            assert_eq!(shell.route, Route::Settings(SettingsSection::Shortcuts));
         });
         // The exit animation's reap runs on wall-clock time; stand in for it.
         shell.update(cx, |shell, cx| {
@@ -16199,7 +16185,7 @@ mod settings_modal_regressions {
         cx.simulate_keystrokes("escape");
         shell.read_with(cx, |shell, _| {
             assert_eq!(shell.route, Route::Chat);
-            assert_eq!(shell.settings.settings_section, SettingsSection::Devices);
+            assert_eq!(shell.settings.settings_section, SettingsSection::Shortcuts);
         });
     }
 }

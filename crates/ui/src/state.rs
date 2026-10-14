@@ -846,6 +846,32 @@ fn session_presence_at(sessions: &[Session], now: DateTime<Utc>) -> Vec<(Indicat
         .collect()
 }
 
+/// A device that pinged within this window shows a presence dot (engines
+/// heartbeat every 15s; 70s tolerates a couple of missed beats).
+const DEVICE_ONLINE_WINDOW_SECS: i64 = 70;
+
+/// Presence: last-seen within the online window (future timestamps count). Pure.
+fn device_last_seen_online(last_seen: Option<DateTime<Utc>>, now: DateTime<Utc>) -> bool {
+    last_seen.is_some_and(|at| now.signed_duration_since(at).num_seconds() <= DEVICE_ONLINE_WINDOW_SECS)
+}
+
+/// Compact last-seen line. Pure.
+fn format_last_seen(last_seen: Option<DateTime<Utc>>, now: DateTime<Utc>) -> String {
+    let Some(at) = last_seen else {
+        return "never seen".to_string();
+    };
+    let secs = now.signed_duration_since(at).num_seconds();
+    if secs < 60 {
+        "just now".to_string()
+    } else if secs < 3600 {
+        format!("{}m ago", secs / 60)
+    } else if secs < 86_400 {
+        format!("{}h ago", secs / 3600)
+    } else {
+        format!("{}d ago", secs / 86_400)
+    }
+}
+
 /// Device rows as rendered at `now`: the heartbeat timestamp only through its
 /// online state and last-seen label.
 fn device_presentation_at(devices: &[Device], now: DateTime<Utc>) -> Vec<(Device, bool, String)> {
@@ -856,8 +882,8 @@ fn device_presentation_at(devices: &[Device], now: DateTime<Utc>) -> Vec<(Device
             metadata.last_seen_at = None;
             (
                 metadata,
-                crate::settings::devices::device_online(device.last_seen_at, now),
-                crate::settings::devices::format_last_seen(device.last_seen_at, now),
+                device_last_seen_online(device.last_seen_at, now),
+                format_last_seen(device.last_seen_at, now),
             )
         })
         .collect()
@@ -1999,7 +2025,7 @@ impl AppState {
             return true;
         }
         match self.devices.iter().find(|d| d.id == device_id) {
-            Some(d) => crate::settings::devices::device_online(d.last_seen_at, now),
+            Some(d) => device_last_seen_online(d.last_seen_at, now),
             None => true,
         }
     }
@@ -2203,11 +2229,7 @@ impl AppState {
             .filter(|device| self.local_device_id.as_deref() != Some(device.id.as_str()))
             .filter_map(|device| device.last_seen_at)
             // Whole seconds `<= DEVICE_ONLINE_WINDOW_SECS` stay online.
-            .map(|at| {
-                at + chrono::TimeDelta::seconds(
-                    crate::settings::devices::DEVICE_ONLINE_WINDOW_SECS + 1,
-                )
-            });
+            .map(|at| at + chrono::TimeDelta::seconds(DEVICE_ONLINE_WINDOW_SECS + 1));
         let grace = self.pending_sends.values().map(|pending| {
             pending.started + chrono::TimeDelta::milliseconds(UNDELIVERED_GRACE_MS + 1)
         });
@@ -4938,8 +4960,7 @@ mod tests {
         // The local device is always online; its stale heartbeat is no deadline.
         let mut local = device("local", "Local");
         local.last_seen_at = Some(now - TimeDelta::seconds(65));
-        let offline =
-            seen + TimeDelta::seconds(crate::settings::devices::DEVICE_ONLINE_WINDOW_SECS + 1);
+        let offline = seen + TimeDelta::seconds(DEVICE_ONLINE_WINDOW_SECS + 1);
         let mut probe = AppState::new();
         probe.devices = vec![remote.clone()];
         assert!(probe.device_online("remote", offline - TimeDelta::milliseconds(1)));
@@ -5532,7 +5553,10 @@ mod tests {
         expected.line = 9;
         expected.body = "Revised".into();
         assert_eq!(state.review_comments("chat-1"), &[expected]);
-        assert_eq!(state.review_comments("chat-2"), std::slice::from_ref(&original));
+        assert_eq!(
+            state.review_comments("chat-2"),
+            std::slice::from_ref(&original)
+        );
         assert!(state.review_comment_flush_pending("chat-1"));
         state.remove_review_comment("chat-1", &original.id);
         state.update_review_comment_body("chat-1", &original.id, "Stale".into());
