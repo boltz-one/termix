@@ -861,7 +861,6 @@ mod storage_tests {
         let profile = super::super::profile::BrowserProfile::for_workspace(
             root.path(),
             Some(termix_proto::WorkspaceScope::Local),
-            None,
             Some("device"),
         )
         .unwrap();

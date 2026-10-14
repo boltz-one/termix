@@ -198,6 +198,7 @@ pub(super) fn pinned_drag_scroll_delta(
 
 #[cfg(test)]
 mod pinned_session_tests {
+    #[allow(dead_code)]
     fn pin_change(id: &str) -> termix_proto::SidebarPinChange {
         termix_proto::SidebarPinChange::Pin {
             session_id: id.into(),

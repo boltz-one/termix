@@ -151,6 +151,9 @@ ignore = "0.4"
 # Pinned exactly: crates.io also carries `0.11.1-nightly.*` prereleases.
 fff-search = "=0.11.0"
 
+[patch.crates-io]
+proc-macro-error2 = { path = "patches/proc-macro-error2" }
+
 [profile.release]
 # Distribution profile (scripts/package-linux.sh): thin LTO buys most of fat
 # LTO's size/speed win at a fraction of the link time; strip debug symbols.
