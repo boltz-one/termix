@@ -9,11 +9,14 @@
 //! `SetWindowTitle`, `SetClipboard`, `ResizeWindow`, `NotifyBufferChange`,
 //! `WarningBell`) với default `todo!()`.
 //!
-//! Phase 4.0-pre — xem `IInteractDispatch.hpp:33-42`thêm 8 method port verbatim
+//! Phase 4.0-pre — xem `IInteractDispatch.hpp:33-42` thêm 9 method port verbatim
 //! từ WT interface: `set_device_attributes`, `write_input`, `write_ctrl_key`,
 //! `write_string`, `write_string_raw`, `window_manipulation`, `move_cursor`,
-//! `is_vt_input_enabled`. Tổng 15 method với default `todo!()` body.
-//! Lane C sẽ impl cho adapter để gọi native GPUI / Win2 host.
+//! `is_vt_input_enabled`, `focus_changed`. Lane B = no-op default (conhost
+//! out-of-scope); lane C impl cho adapter để gọi native GPUI / Win2 host.
+//! 7 essential method còn dùng `todo!()` default (`write_file`,
+//! `notify_cursor_change`, `set_window_title`, `set_clipboard`, `resize_window`,
+//! `notify_buffer_change`, `warning_bell`) — per WT `IInteractDispatch.hpp`.
 
 use super::VtInt;
 
@@ -94,11 +97,12 @@ pub trait InteractDispatch {
         false // TODO(P03): real VT-input mode; until then not enabled
     }
 
-    /// `SetDeviceAttributes(attributes)` (`IInteractDispatch.hpp:35`).
-    /// Set device attribute bitset gửi cho conhost (DA response).
+    /// `SetDeviceAttributes(attributes)` (`IInteractDispatch.hpp:35`,
+    /// `InteractDispatch.cpp:30-33`). WT `gci.GetVtIo()->SetDeviceAttributes`
+    /// — VtIo out-of-scope (lane C). Lane B = no-op default.
     fn set_device_attributes(&mut self, attributes: DeviceAttributeSet) {
         let _ = attributes;
-        todo!("InteractDispatch::SetDeviceAttributes")
+        // lane C pending VtIo — no-op instead of panicking
     }
 
     /// `WriteInput(inputEvents)` (`IInteractDispatch.hpp:36`).
@@ -147,6 +151,14 @@ pub trait InteractDispatch {
     fn move_cursor(&mut self, row: VtInt, col: VtInt) {
         let _ = (row, col);
         // TODO(P03): no-op instead of panicking
+    }
+
+    /// `FocusChanged(focused)` (`IInteractDispatch.hpp:42`,
+    /// `InteractDispatch.cpp:197-211`). Conhost set `CONSOLE_HAS_FOCUS` +
+    /// `WriteFocusEvent` — out-of-scope (lane C). Lane B = pure interface
+    /// port, default no-op; lane C inject gpui Window focus event.
+    fn focus_changed(&mut self, focused: bool) {
+        let _ = focused;
     }
 
     // ===== Phase 5 Wave 2 — terminal_input mode get/set (9 set + 9 get) +
