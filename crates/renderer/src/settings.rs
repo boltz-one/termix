@@ -125,10 +125,10 @@ impl RenderSettings {
     /// `(fg, bg)` cho attribute — port verbatim `GetAttributeColors`
     /// (`RenderSettings.cpp:183`). Packed ABGR với alpha 0xFF.
     ///
-    /// **Không có** `ColorFix::GetPerceivableColor` step (port WT
-    /// `Feature_AdjustIndistinguishableText`) — gating bằng
-    /// `RenderModeFlags::ALWAYS_DISTINGUISHABLE`/`INDEXED_DISTINGUISHABLE`
-    /// để đảm bảo parity signature; phase 3 mới paint thật.
+    /// Adjust fg nếu gần bg (ΔEOK² < 0.25) khi `ALWAYS_DISTINGUISHABLE` /
+    /// `INDEXED_DISTINGUISHABLE` trong `render_mode` bật — port WT
+    /// `Feature_AdjustIndistinguishableText` (`RenderSettings.cpp:215-225`).
+    /// ADR-0015. Flag default empty → adjust path skip (backwards-compat).
     pub fn get_attribute_colors(&self, attr: &core::TextAttribute) -> (u32, u32) {
         let brighten_fg = attr.is_intense()
             && self
@@ -155,6 +155,22 @@ impl RenderSettings {
         }
         if attr.is_invisible() {
             fg = bg;
+        }
+        // Port WT `RenderSettings.cpp:215-225` (`Feature_AdjustIndistinguishableText`).
+        // `IsDefaultOrLegacy` ≡ default (idx==0 và raw==0, lookup_color nhánh fallback)
+        // OR legacy (16-color index). Mirror lookup_color branch logic (line 99-122).
+        let fg_default_or_legacy =
+            attr.is_legacy || (attr.fg_index == 0 && attr.foreground == 0);
+        let bg_default_or_legacy =
+            attr.is_legacy || (attr.bg_index == 0 && attr.background == 0);
+        let mode = self.render_mode;
+        let always = mode.contains(RenderModeFlags::ALWAYS_DISTINGUISHABLE);
+        let indexed = mode.contains(RenderModeFlags::INDEXED_DISTINGUISHABLE);
+        if (always || indexed)
+            && fg != bg
+            && (always || (fg_default_or_legacy && bg_default_or_legacy))
+        {
+            fg = crate::colorfix::get_perceivable_color(fg, bg, 0.5 * 0.5); // = 0.25
         }
         (fg, bg)
     }
@@ -185,6 +201,10 @@ impl RenderSettings {
     /// (`RenderSettings.cpp:259`). WT ưu tiên `TextAttribute::GetUnderlineColor`,
     /// fallback fg color. Nếu `attr.underline_color==0` (Default), trả fg.
     /// Nếu `attr.invisible`, trả bg.
+    ///
+    /// Adjust ul nếu gần bg (ΔEOK² < 0.25) khi `ALWAYS_DISTINGUISHABLE` /
+    /// `INDEXED_DISTINGUISHABLE` bật — port WT `RenderSettings.cpp:280-286`.
+    /// ADR-0015. Flag default empty → adjust path skip (backwards-compat).
     pub fn get_attribute_underline_color(&self, attr: &core::TextAttribute) -> u32 {
         let (fg, bg) = self.get_attribute_colors(attr);
         if attr.get_underline_color() == 0 {
@@ -201,6 +221,16 @@ impl RenderSettings {
         }
         if attr.is_invisible() {
             ul = bg;
+        }
+        // Port WT `RenderSettings.cpp:280-286`.
+        let ul_default_or_legacy = attr.underline_color == 0 || attr.is_legacy;
+        let bg_default_or_legacy =
+            attr.is_legacy || (attr.bg_index == 0 && attr.background == 0);
+        let mode = self.render_mode;
+        let always = mode.contains(RenderModeFlags::ALWAYS_DISTINGUISHABLE);
+        let indexed = mode.contains(RenderModeFlags::INDEXED_DISTINGUISHABLE);
+        if ul != bg && (always || (indexed && ul_default_or_legacy && bg_default_or_legacy)) {
+            ul = crate::colorfix::get_perceivable_color(ul, bg, 0.5 * 0.5); // = 0.25
         }
         ul
     }
@@ -347,5 +377,105 @@ mod tests {
         let (_, bg) = s.get_attribute_colors(&a);
         // WT: `if (attr.IsInvisible()) ul = bg;`
         assert_eq!(s.get_attribute_underline_color(&a), bg);
+    }
+
+    // === T5 — AdjustIndistinguishable behavioral (loop 03) — port WT
+    // `Feature_AdjustIndistinguishableText` (`RenderSettings.cpp:215-225`,
+    // `:280-286`). ADR-0015. `render_mode` flags gate adjust path.
+
+    /// VR3 — flag default empty → adjust path skip (backwards-compat).
+    #[test]
+    fn get_attribute_colors_no_adjust_when_flags_off() {
+        let s = RenderSettings::default(); // render_mode empty
+        let a = TextAttribute::new(); // fg/bg default (idx 0, raw 0)
+        let (fg, bg) = s.get_attribute_colors(&a);
+        // Flag off → trả palette defaults verbatim (no nudge).
+        assert_eq!(fg, s.color_table[s.default_fg_index as usize]);
+        assert_eq!(bg, s.color_table[s.default_bg_index as usize]);
+    }
+
+    /// VR1 — `ALWAYS_DISTINGUISHABLE` nudges fg khi gần bg.
+    #[test]
+    fn get_attribute_colors_always_distinguishable_nudges_close_pair() {
+        // near pair: fg=0xFF555555, bg=0xFF575757 (ΔEOK² < 0.25).
+        let mut s = RenderSettings::default();
+        s.render_mode |= RenderModeFlags::ALWAYS_DISTINGUISHABLE;
+        // FG = RGB literal non-default (near bg); BG = literal.
+        let mut a = TextAttribute::new();
+        a.set_color(0xFF555555, true); // fg
+        a.set_color(0xFF575757, false); // bg
+        let (fg, bg) = s.get_attribute_colors(&a);
+        assert_ne!(fg, 0xFF555555, "fg must be nudged (≠ input)");
+        assert_ne!(fg, bg, "nudged fg must differ from bg");
+        // Idempotent: re-call với nudged fg → ΔEOK² ≥ 0.25 → no nudge → unchanged.
+        let mut a2 = TextAttribute::new();
+        a2.set_color(fg, true);
+        a2.set_color(0xFF575757, false);
+        let (fg2, _) = s.get_attribute_colors(&a2);
+        assert_eq!(fg2, fg, "idempotent — nudged fg already distinguishable");
+    }
+
+    /// VR4 — `INDEXED_DISTINGUISHABLE` only (no `ALWAYS`) — adjust khi
+    /// fg/bg default-or-legacy; KHÔNG adjust khi fg = RGB literal non-legacy.
+    #[test]
+    fn get_attribute_colors_indexed_distinguishable_only_default_or_legacy() {
+        let mut s = RenderSettings::default();
+        s.render_mode |= RenderModeFlags::INDEXED_DISTINGUISHABLE;
+
+        // Case A: fg/bg cả hai RGB literal non-legacy (near pair) →
+        // guard `(fg_default_or_legacy && bg_default_or_legacy)` = false →
+        // skip → fg trả raw RGB literal (lookup nhánh `raw|0xFF000000`).
+        let mut a = TextAttribute::new();
+        a.set_color(0xFF555555, true); // fg RGB non-legacy
+        a.set_color(0xFF575757, false); // bg RGB non-legacy
+        let (fg, _) = s.get_attribute_colors(&a);
+        // RGB literal non-legacy → guard false → skip nudge → fg = raw.
+        assert_eq!(fg, 0xFF555555, "indexed-only skip cho RGB literal non-legacy");
+
+        // Case B: khi chỉ một trong fg/bg default-or-legacy thì AND false →
+        // skip. Verify bằng default attr (fg/bg đều default: idx=0 raw=0
+        // is_legacy=false → guard fg_default=true && bg_default=true →
+        // adjust path reach, nhưng palette[15] White vs palette[0] Black ΔE
+        // lớn → `get_perceivable_color` early-return (ΔEOK² ≥ 0.25) → fg
+        // unchanged = palette[15]. Mirror WT: default pair không cần nudge.
+        let a2 = TextAttribute::new(); // pure default
+        let (fg2, bg2) = s.get_attribute_colors(&a2);
+        assert_eq!(fg2, s.color_table[s.default_fg_index as usize],
+            "default fg → palette[15] (already distinguishable vs Black → no nudge)");
+        assert_eq!(bg2, s.color_table[s.default_bg_index as usize]);
+        // Indexed flag không break default lookup path (P3 tên = verbatim).
+    }
+
+    /// VR5 — guard `fg != bg`: identical pair → unchanged.
+    #[test]
+    fn get_attribute_colors_skip_when_fg_equals_bg() {
+        let mut s = RenderSettings::default();
+        s.render_mode |= RenderModeFlags::ALWAYS_DISTINGUISHABLE;
+        let mut a = TextAttribute::new();
+        a.set_color(0xFF555555, true);
+        a.set_color(0xFF555555, false); // fg == bg literal
+        let (fg, bg) = s.get_attribute_colors(&a);
+        assert_eq!(fg, bg, "fg == bg unchanged (guard fg != bg)");
+        assert_eq!(fg, 0xFF555555, "no nudge when fg == bg");
+    }
+
+    /// VR6/VR2 — ul close to bg, `ALWAYS_DISTINGUISHABLE` on → nudge.
+    #[test]
+    fn get_attribute_underline_color_distinguishable_nudges() {
+        let mut s = RenderSettings::default();
+        s.render_mode |= RenderModeFlags::ALWAYS_DISTINGUISHABLE;
+        // underline_color = literal gần bg (non-legacy, non-default).
+        let mut a = TextAttribute::new();
+        a.set_underline_color(0xFF555555); // ul literal
+        a.set_color(0xFF575757, false); // bg literal near ul
+        let ul = s.get_attribute_underline_color(&a);
+        // ALWAYS path: ul != bg → nudge.
+        assert_ne!(ul, 0xFF575757, "ul must be nudged (≠ bg)");
+        // Idempotent: re-call với nudged ul → ΔEOK² ≥ 0.25 → unchanged.
+        let mut a2 = TextAttribute::new();
+        a2.set_underline_color(ul);
+        a2.set_color(0xFF575757, false);
+        let ul2 = s.get_attribute_underline_color(&a2);
+        assert_eq!(ul2, ul, "idempotent — nudged ul already distinguishable");
     }
 }

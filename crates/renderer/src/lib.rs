@@ -34,6 +34,7 @@ pub mod colorfix;
 pub mod grid;
 pub mod paint;
 pub mod payload;
+pub mod renderer;
 pub mod settings;
 
 pub use cell::{Cluster, CursorOptions, CursorShape, GridLineSet, GridLines};
@@ -42,5 +43,6 @@ pub use grid::{
     ShapedRow,
 };
 pub use paint::{RenderData, RenderEngine, RenderFrameInfo, Renderer};
+pub use renderer::{InvalidRect, RendererState};
 pub use settings::{RenderModeFlags, RenderSettings};
 pub use colorfix::{adjust_lightness, get_lightness, get_perceivable_color};

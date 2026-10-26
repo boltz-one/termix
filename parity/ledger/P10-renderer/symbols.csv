@@ -1,0 +1,14 @@
+id,symbol,wt_anchor,kind,rust_path,status,test_ids,adr,notes
+s001,srgbToRgbLUT,ColorFix.cpp:29,const,crates/renderer/src/colorfix.rs,partial,test_srgb_lut_length_256,ADR-0015,256-entry sRGB→linear LUT
+s002,cbrtf_est,ColorFix.cpp:58,fn,crates/renderer/src/colorfix.rs,partial,test_cbrt_est_within_6e4_of_std_cbrt,ADR-0015,fast cube root bit-hack + 1 round Newton
+s003,oklab::linear_srgb_to_oklab,ColorFix.cpp:104,fn,crates/renderer/src/colorfix.rs,partial,test_linear_srgb_oklab_roundtrip,ADR-0015,OKlab transform
+s004,oklab::oklab_to_linear_srgb,ColorFix.cpp:121,fn,crates/renderer/src/colorfix.rs,partial,test_linear_srgb_oklab_roundtrip,ADR-0015,OKlab inverse
+s005,GetPerceivableColor,ColorFix.cpp:167,fn,crates/renderer/src/colorfix.rs,partial,wt_colorfix__perceivable_color_distinguishable,ADR-0015,ΔEOK nudge
+s006,GetLightness,ColorFix.cpp:219,fn,crates/renderer/src/colorfix.rs,partial,test_get_lightness_black_white_red,ADR-0015,OKlab L
+s007,AdjustLightness,ColorFix.cpp:212,fn,crates/renderer/src/colorfix.rs,partial,,ADR-0015,OKlab L+offset
+s008,GetAttributeColors,RenderSettings.cpp:183,fn,crates/renderer/src/settings.rs,partial,wt_renderer__always_distinguishable_nudges_close_pair,ADR-0015;ADR-0003,AdjustIndistinguishable wire (loop 03)
+s009,GetAttributeUnderlineColor,RenderSettings.cpp:259,fn,crates/renderer/src/settings.rs,partial,test_get_attribute_underline_color_distinguishable_nudges,ADR-0015,ul adjust
+s010,Renderer::TriggerRedraw,renderer.cpp:656,fn,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_sets_invalid_rect_and_used,ADR-0003,viewport invalidation bbox union
+s011,Renderer::TriggerRedrawAll,renderer.cpp:704,fn,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_all_clears_rect_sets_all_invalidated,ADR-0003,all-invalidated + bg/frame flags
+s012,Renderer::TriggerTeardown,renderer.cpp:110,fn,crates/renderer/src/renderer.rs,partial,test_trigger_teardown_sets_flag,ADR-0003,teardown state flag
+s013,Renderer::_fInvalidRect,renderer.hpp:181,field,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_accumulates_bbox_union,ADR-0003,accumulated invalid bbox
