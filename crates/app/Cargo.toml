@@ -1,0 +1,43 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["downstream-lane-b"]
+# Khi Lane B đã fix, dùng feature `default` để wire real crate.
+downstream-lane-b = ["dep:control", "dep:connection", "dep:renderer"]
+# Stub Lane B downstream (`control`, `connection`, `renderer`) khi
+# build bị block do windows-rs 0.61 API drift (`connection` chưa finalize).
+# Phase 3 tiêu chí brief #6: nếu chưa finalize, gói downstream vào stub impl.
+# Khi Lane B fix xong, gỡ feature.
+# Standalone stub build: `cargo check -p app --no-default-features --features stub-downstream`
+# (lệnh `--features stub-downstream` đơn thuần vẫn enable `default`, kéo theo
+# downstream-lane-b — không standalone; cần `--no-default-features` để cắt).
+stub-downstream = ["bitflags"]
+
+[[bin]]
+name = "termix"
+path = "src/main.rs"
+
+[dependencies]
+gpui = { workspace = true }
+gpui_platform = { workspace = true }
+settings = { path = "../settings" }
+core = { path = "../core" }
+renderer = { path = "../renderer", optional = true }
+connection = { path = "../connection", optional = true }
+control = { path = "../control", optional = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+uuid = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bitflags = { workspace = true, optional = true }
+
+[dev-dependencies]
+# Enable gpui `test-support` cho `TestApp` (entity spawn trong unit tests).
+gpui = { workspace = true, features = ["test-support"] }
+
+[build-dependencies]
+embed-resource = "3.0"

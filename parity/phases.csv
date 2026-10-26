@@ -1,0 +1,20 @@
+phase,crates,owned_paths,wave,verify_command,depends_on
+P01,,.cargo/**;Cargo.toml;crates/xtask/**;docs/decisions/*;NOTICE;dispatch/seams.rs;dispatch/headless_host.rs;dispatch/mod.rs;dispatch/interact_impl.rs;dispatch/interact.rs;dispatch/td/modes.rs;terminal_input/events.rs;settings-model/src/terminal_settings.rs;parity/{exclusions,phases,e2e}.csv;parity/{baseline-ref.txt,summary.json};renderer/src/paint.rs;parity-{exclusions,phases,e2e}.csv;core/src/lib.rs;core/{app}Cargo.toml-pre-declared-deps;reports/audit-001.md,0,cargo xtask ledger-check,
+P02,app;control,apps/terminal/**;app/src/{app,downstream}.rs;app/src/page/mod.rs;app/Cargo.toml;control/src/{control,core}.rs;control/tests/e2e_shell_smoke.rs,1,smoke e2e,P01
+P03,core,core/src/dispatch/**;core/src/lib.rs;parity/golden/vt-*,1,"cargo test -p core -- wt_adapter__",P01
+P04,core,core/src/{parser,terminal_input}/**;parity/golden/parser-*,1,"cargo test -p core -- wt_parser__ wt_input__",P01
+P05,types,crates/types/**,1,"cargo test -p types",P01
+P06,connection,crates/connection/**,1,"cargo test -p connection",P01
+P07,settings-model;css-length,crates/settings-model/**;crates/css-length/**,1,"cargo test -p settings-model",P01
+P08,core,core/src/{buffer/**,attrs,cursor,screen,color_table,sgr_stack}.rs;dispatch/buffer_ext.rs;dispatch/mod.rs,2,"cargo test -p core -- wt_textbuffer__","P03,P05"
+P09,core,core/src/terminal/**;parity/golden/terminal-*,3,"cargo test -p core -- wt_terminalcore__","P03,P04,P08"
+P10,renderer;font,crates/renderer/**;crates/font/**;parity/golden/render-*,3,"cargo test -p renderer -p font","P05,P07,P08"
+P11,control,crates/control/**,4,"cargo test -p control","P02,P06,P07,P09,P10"
+P12,app,app/src/{pane,tab,page}/**,5,"cargo test -p app -- wt_app__",P11
+P13,app,app/src/{actions,cmdline,remoting}/**;app/tests/e2e_forward.rs,6,"cargo test -p app -- wt_cmdline__ wt_actions__","P07,P12"
+P14,app,app/src/ui/**;app/tests/e2e_palette.rs;parity/golden/ui-*,6,"cargo test -p app -- wt_ui__",P12
+P15,a11y,crates/a11y/**,5,"cargo test -p a11y","P10,P11"
+P16,host,crates/host/**;apps/terminal/**;app/src/app.rs,7,"cargo test -p host","P12,P13,P14,P15"
+P17,settings-editor,crates/settings-editor/**;parity/golden/editor-*,7,"cargo test -p settings-editor","P07,P14"
+P18,extras,crates/extras/**;packaging/**,8,"cargo test -p extras","P13,P16"
+P19,,crates/xtask/**;parity/merged/**;parity/golden/** additions;fuzz/**;reports/audit-*.md;plan Audit Log,9,cargo xtask audit --final,all

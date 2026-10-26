@@ -1,0 +1,13 @@
+scenario,phase,command,kind
+ledger-orphan-roundtrip,P01,cargo xtask ledger-check,ci
+ledger-no-dangling-exclusions,P01,cargo xtask include-graph,ci
+p01-buffer-gaps,P01,cargo xtask audit --wave 0,manual
+shell-smoke,P02,cargo test -p control --test e2e_shell_smoke -- --nocapture,ci
+shell-smoke-manual,P02,cargo run -p app -- --smoke shell,manual
+hello-world-parser,P04,cargo test -p core -- wt_parser__hello_world,ci
+vttest-goldens,P09,cargo xtask vttest --goldens parity/golden/terminal-*,manual
+vttest-replay,P09,cargo xtask vttest --replay,manual
+render-snapshots,P10,cargo test -p renderer -- --snapshot,ci
+render-baseline-diff,P10,cargo xtask render --diff parity/golden/render-*,manual
+palette,P14,cargo test -p app --test e2e_palette -- --nocapture,manual
+editor-baseline,P17,cargo test -p settings-editor -- --snapshot,ci

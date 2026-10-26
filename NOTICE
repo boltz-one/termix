@@ -1,0 +1,5 @@
+This product includes software developed by Microsoft Corporation
+under the MIT License (windows/src, https://github.com/microsoft/terminal).
+
+Ported to Rust + GPUI. Original MIT license and copyright notices retained
+in ported source files.

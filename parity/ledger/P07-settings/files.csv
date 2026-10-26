@@ -1,0 +1,5 @@
+id,wt_path,wt_loc,module,phase,rust_path,status,test_ids,adr,author,reviewed_by,reviewed_at,notes
+f00446,cascadia/TerminalSettingsModel/CascadiaSettings.cpp,0,cascadia,P07,,not-started,,,,,,
+f00447,cascadia/TerminalSettingsModel/CascadiaSettings.h,0,cascadia,P07,,not-started,,,,,,
+f00448,cascadia/TerminalSettingsModel/CascadiaSettings.idl,0,cascadia,P07,,not-started,,,,,,
+f00449,cascadia/TerminalSettingsModel/CascadiaSettingsSerialization.cpp,0,cascadia,P07,,not-started,,,,,,

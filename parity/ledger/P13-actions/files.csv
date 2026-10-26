@@ -1,0 +1,11 @@
+id,wt_path,wt_loc,module,phase,rust_path,status,test_ids,adr,author,reviewed_by,reviewed_at,notes
+f00050,cascadia/LocalTests_TerminalApp/CommandlineTest.cpp,0,cascadia,P13,,not-started,,,,,,
+f00078,cascadia/TerminalApp/AppCommandlineArgs.cpp,0,cascadia,P13,,not-started,,,,,,
+f00079,cascadia/TerminalApp/AppCommandlineArgs.h,0,cascadia,P13,,not-started,,,,,,
+f00092,cascadia/TerminalApp/Commandline.cpp,0,cascadia,P13,,not-started,,,,,,
+f00093,cascadia/TerminalApp/Commandline.h,0,cascadia,P13,,not-started,,,,,,
+f00138,cascadia/TerminalApp/Remoting.cpp,0,cascadia,P13,,not-started,,,,,,
+f00139,cascadia/TerminalApp/Remoting.h,0,cascadia,P13,,not-started,,,,,,
+f00140,cascadia/TerminalApp/Remoting.idl,0,cascadia,P13,,not-started,,,,,,
+f00425,cascadia/TerminalSettingsModel/ActionAndArgs.cpp,0,cascadia,P13,,not-started,,,,,,
+f00426,cascadia/TerminalSettingsModel/ActionAndArgs.h,0,cascadia,P13,,not-started,,,,,,

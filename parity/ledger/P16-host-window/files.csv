@@ -1,0 +1,6 @@
+id,wt_path,wt_loc,module,phase,rust_path,status,test_ids,adr,author,reviewed_by,reviewed_at,notes
+f00168,cascadia/TerminalApp/TaskbarState.cpp,0,cascadia,P16,,not-started,,,,,,
+f00169,cascadia/TerminalApp/TaskbarState.h,0,cascadia,P16,,not-started,,,,,,
+f00170,cascadia/TerminalApp/TaskbarState.idl,0,cascadia,P16,,not-started,,,,,,
+f00611,cascadia/WindowsTerminal/WindowEmperor.cpp,0,cascadia,P16,,not-started,,,,,,
+f00612,cascadia/WindowsTerminal/WindowEmperor.h,0,cascadia,P16,,not-started,,,,,,

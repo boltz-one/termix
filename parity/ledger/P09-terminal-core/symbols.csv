@@ -1,0 +1,8 @@
+file_id,symbol,wt_anchor,kind,rust_path,status,test_ids,adr,notes
+f00263,Terminal::Terminal(TestDummyMarker),Terminal.hpp:83,ctor,crates/core/src/terminal/mod.rs,partial,,,seam marker constructor (loop 01)
+f00263,Terminal::set_scroll_position_changed_callback,Terminal.cpp:1170,method,crates/core/src/terminal/scroll.rs,partial,,ADR-0014,Box<dyn Fn> thay std::function (idiomatic Rust)
+f00263,Terminal::always_notify_on_buffer_rotation,Terminal.hpp:127,property,crates/core/src/terminal/mod.rs,partial,,,field bool + setter
+f00263,Terminal::_notify_scroll_event,Terminal.cpp:1135,method,crates/core/src/terminal/scroll.rs,partial,,ADR-0014,"compute (top,height,bottom) viewport + fire callback"
+f00263,Terminal::trigger_scroll,terminalApi.cpp:1127,method,crates/core/src/terminal/scroll.rs,partial,,ADR-0014,accumulate scroll delta (i64) no SHORT overflow (GH#5540)
+f00263,Terminal::process_string,Terminal.hpp:106,method,crates/core/src/terminal/mod.rs,partial,,ADR-0014,简化 — direct TextBuffer writes (lane-C wire deferred)
+f00263,Terminal::TestDummyMarker,Terminal.hpp:83,struct,crates/core/src/terminal/mod.rs,partial,,,test-only constructor seam marker

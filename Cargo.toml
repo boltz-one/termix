@@ -1,0 +1,71 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/settings",
+    "crates/font",
+    "crates/types",
+    "crates/core",
+    "crates/connection",
+    "crates/renderer",
+    "crates/control",
+    "crates/app",
+    "crates/a11y",
+    "crates/host",
+    "crates/extras",
+    "crates/xtask",
+    "apps/terminal",
+]
+
+# Path to the vendored GPUI from Zed. We depend on it via path, mirroring zed's
+# `crates/gpui` and its platform crates.
+[workspace.dependencies]
+# Keep gpui default features (font-kit + windows-manifest on Windows). The
+# platform entry point `gpui_platform::application()` resolves the native
+# backend at runtime.
+gpui = { path = "../zed_gpui/crates/gpui" }
+gpui_platform = { path = "../zed_gpui/crates/gpui_platform" }
+gpui_windows = { path = "../zed_gpui/crates/gpui_windows" }
+
+# Windows API bindings for ConPTY host integration (Windows-only).
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_Console",
+    "Win32_System_Threading",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Pipes",
+    "Win32_System_IO",
+    "Win32_Storage_FileSystem",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_DirectWrite",
+    "Win32_Graphics_Direct2D_Common",
+] }
+
+# VT parser — we use `vte` for the low-level state machine (battle-tested), and
+# the WT adapter dispatch semantics are ported on top.
+vte = "0.13"
+
+# Unicode shaping / width — used by core cho width-aware line layout
+# (port của `CodepointWidthDetector` từ `windows/src/types/utils.cpp`).
+unicode-width = "0.2"
+unicode-segmentation = "1.13"
+
+# Bitflags, parking_lot, smallvec, serde, uuid, crossbeam-channel — common deps.
+bitflags = "2"
+parking_lot = "0.12"
+smallvec = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+log = "0.4"
+
+# UUID — substitute cho WinRT `Windows::Foundation::GuidHelper::CreateNewGuid`
+# (Win32_System_Com thiếu trong windows-rs 0.61). Dùng crate `uuid` thay thế.
+uuid = { version = "1", features = ["v4"] }
+# Channel thay cho WinRT `TerminalOutput`/`StateChanged` event tokens.
+crossbeam-channel = "0.5"
+# Async streams cho output-thread pump (gpui `cx.spawn` await).
+futures = "0.3"
+
+[profile.release]
+debug = true

@@ -1,0 +1,13 @@
+id,wt_path,wt_loc,module,phase,rust_path,status,test_ids,adr,author,reviewed_by,reviewed_at,notes
+f00214,cascadia/TerminalControl/ControlCore.cpp,0,cascadia,P11,,not-started,,,,,,
+f00215,cascadia/TerminalControl/ControlCore.h,0,cascadia,P11,,not-started,,,,,,
+f00216,cascadia/TerminalControl/ControlInteractivity.cpp,0,cascadia,P11,,not-started,,,,,,
+f00217,cascadia/TerminalControl/ControlInteractivity.h,0,cascadia,P11,,not-started,,,,,,
+f00246,cascadia/TerminalControl/TermControl.cpp,0,cascadia,P11,,not-started,,,,,,
+f00247,cascadia/TerminalControl/TermControl.h,0,cascadia,P11,,not-started,,,,,,
+f00248,cascadia/TerminalControl/TermControl.idl,0,cascadia,P11,,not-started,,,,,,
+f00249,cascadia/TerminalControl/TermControl.xaml,0,cascadia,P11,,not-started,,,,,,
+f00250,cascadia/TerminalControl/TermControlAutomationPeer.cpp,0,cascadia,P11,,not-started,,,,,,
+f00251,cascadia/TerminalControl/TermControlAutomationPeer.h,0,cascadia,P11,,not-started,,,,,,
+f00561,cascadia/UnitTests_Control/ControlCoreTests.cpp,0,cascadia,P11,,not-started,,,,,,
+f00562,cascadia/UnitTests_Control/ControlInteractivityTests.cpp,0,cascadia,P11,,not-started,,,,,,

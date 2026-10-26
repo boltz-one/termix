@@ -1,0 +1,16 @@
+[package]
+name = "renderer"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+gpui = { workspace = true }
+core = { path = "../core" }
+font = { path = "../font" }
+settings = { path = "../settings" }
+bitflags = { workspace = true }
+smallvec = { workspace = true }
+anyhow = { workspace = true }

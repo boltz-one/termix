@@ -1,0 +1,20 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2021"
+# P01 frozen: std + csv + serde + serde_json only (report 02 §3).
+# P19 có thể append summary/fuzz glue nhưng không thêm dep ngoài std.
+publish = false
+
+[dependencies]
+csv = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lib]
+name = "xtask"
+path = "src/lib.rs"
+
+[[bin]]
+name = "xtask"
+path = "src/main.rs"

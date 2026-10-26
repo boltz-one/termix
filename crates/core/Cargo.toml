@@ -1,0 +1,11 @@
+[package]
+name = "core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+settings = { path = "../settings" }
+vte = { workspace = true }
+unicode-width = { workspace = true }
+unicode-segmentation = { workspace = true }
+smallvec = { workspace = true }

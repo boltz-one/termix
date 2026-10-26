@@ -1,0 +1,9 @@
+# Build output
+/target/
+
+# One-off generated scratch (ColorFix LUT conversion)
+/convert_lut.py
+/lut_decimal.txt
+
+# Generated audit-loop logs (large, reproducible)
+/reports/audit-*.md

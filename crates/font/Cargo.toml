@@ -1,0 +1,24 @@
+[package]
+name = "font"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["directwrite"]
+# Native DirectWrite-backed metrics resolution (Windows only).
+directwrite = ["windows"]
+
+[dependencies]
+log = { workspace = true }
+anyhow = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+workspace = true
+features = [
+    "Win32_Graphics_DirectWrite",
+    "Win32_Graphics_Direct2D_Common",
+]
+optional = true

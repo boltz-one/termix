@@ -1,0 +1,3 @@
+# baseline git ref to be set by operator before P01 step 8 (xtask never commits)
+# Ghi ref (commit SHA hoac tag) cua upstream `terminal/windows` de so sanh parity.
+# Xtask doc-only: khong commit thay doi file nay.

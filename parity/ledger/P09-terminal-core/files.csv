@@ -1,0 +1,2 @@
+id,wt_path,wt_loc,module,phase,rust_path,status,test_ids,adr,author,reviewed_by,reviewed_at,notes
+f00263,cascadia/TerminalCore/Terminal.hpp,0,cascadia,P09,crates/core/src/terminal/mod.rs,partial,wt_terminalcore__test_notify_scrolling,ADR-0014,P09-worker,,,Loop 01: Terminal struct + scroll-notification seam (1/54)

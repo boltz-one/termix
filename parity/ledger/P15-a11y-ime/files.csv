@@ -1,0 +1,9 @@
+id,wt_path,wt_loc,module,phase,rust_path,status,test_ids,adr,author,reviewed_by,reviewed_at,notes
+f00255,cascadia/TerminalControl/XamlUiaTextRange.cpp,0,cascadia,P15,,not-started,,,,,,
+f00256,cascadia/TerminalControl/XamlUiaTextRange.h,0,cascadia,P15,,not-started,,,,,,
+f00886,interactivity/win32/screenInfoUiaProvider.cpp,0,interactivity,P15,,not-started,,,,,,
+f00887,interactivity/win32/screenInfoUiaProvider.hpp,0,interactivity,P15,,not-started,,,,,,
+f00892,interactivity/win32/ut_interactivity_win32/GeneratedUiaTextRangeMovementTests.g.cpp,0,interactivity,P15,,not-started,,,,,,
+f00893,interactivity/win32/ut_interactivity_win32/UiaTextRangeTests.cpp,0,interactivity,P15,,not-started,,,,,,
+f00903,interactivity/win32/windowUiaProvider.cpp,0,interactivity,P15,,not-started,,,,,,
+f00904,interactivity/win32/windowUiaProvider.hpp,0,interactivity,P15,,not-started,,,,,,
