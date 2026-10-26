@@ -165,14 +165,20 @@ impl InteractDispatch for TerminalInteractDispatch {
     /// push to `write_buffer` (port-faithful response-path intent — mirror
     /// `write_file`).
     fn write_string(&mut self, string: &str) {
-        self.host.borrow_mut().write_buffer.extend(string.as_bytes());
+        self.host
+            .borrow_mut()
+            .write_buffer
+            .extend(string.as_bytes());
     }
 
     /// `WriteStringRaw(string)` (`IInteractDispatch.hpp:39`,
     /// `InteractDispatch.cpp:106-108` — `WriteString(string)` no-xfrm path).
     /// Lane B = raw bytes push to `write_buffer` (no encoding xfrm).
     fn write_string_raw(&mut self, string: &str) {
-        self.host.borrow_mut().write_buffer.extend(string.as_bytes());
+        self.host
+            .borrow_mut()
+            .write_buffer
+            .extend(string.as_bytes());
     }
 
     /// `WindowManipulation(function, parameter1, parameter2)`

@@ -1,4 +1,4 @@
-id,symbol,wt_anchor,kind,rust_path,status,test_ids,adr,notes
+file_id,symbol,wt_anchor,kind,rust_path,status,test_ids,adr,notes
 s001,srgbToRgbLUT,ColorFix.cpp:29,const,crates/renderer/src/colorfix.rs,partial,test_srgb_lut_length_256,ADR-0015,256-entry sRGB→linear LUT
 s002,cbrtf_est,ColorFix.cpp:58,fn,crates/renderer/src/colorfix.rs,partial,test_cbrt_est_within_6e4_of_std_cbrt,ADR-0015,fast cube root bit-hack + 1 round Newton
 s003,oklab::linear_srgb_to_oklab,ColorFix.cpp:104,fn,crates/renderer/src/colorfix.rs,partial,test_linear_srgb_oklab_roundtrip,ADR-0015,OKlab transform

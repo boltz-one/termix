@@ -103,7 +103,7 @@ pub fn read_csv<T: for<'de> Deserialize<'de>>(path: &Path) -> Rt<Vec<T>> {
     let mut rdr = csv::Reader::from_path(path)?;
     let mut out = Vec::new();
     for rec in rdr.deserialize() {
-        out.push(rec?);
+        out.push(rec.map_err(|e| format!("CSV deserialize error in {}: {}", path.display(), e))?);
     }
     Ok(out)
 }
@@ -215,7 +215,8 @@ pub fn cmd_check(args: &[String]) -> R {
     for s in &shards {
         let fp = s.join("files.csv");
         if fp.exists() {
-            let rows: Vec<FilesRow> = read_csv(&fp)?;
+            let rows: Vec<FilesRow> = read_csv(&fp)
+                .map_err(|e| format!("reading files.csv from {}: {}", s.display(), e))?;
             verify_files_rows(&rows, &mut errors);
             all_files.extend(rows);
         }

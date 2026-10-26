@@ -103,10 +103,7 @@ impl Terminal {
 
     /// `SetScrollPositionChangedCallback(pfn)` — port `Terminal.cpp:1170`.
     /// `ScrollSeam::set_callback` lưu `Box<dyn Fn(i32, i32, i32)>`.
-    pub fn set_scroll_position_changed_callback(
-        &mut self,
-        pfn: Box<dyn Fn(i32, i32, i32)>,
-    ) {
+    pub fn set_scroll_position_changed_callback(&mut self, pfn: Box<dyn Fn(i32, i32, i32)>) {
         self.scroll.set_callback(pfn);
     }
 

@@ -7,7 +7,7 @@
 //! Rust port: spawn `cmd.exe` run-via-`cmd /k` để keep alive, close() connection
 //! (đóng pipes), verify state transition Closed (không panic, không hang).
 
-use connection::{ConptyConnection, ConptySettings, ConnectionState, ITerminalConnection};
+use connection::{ConnectionState, ConptyConnection, ConptySettings, ITerminalConnection};
 
 #[allow(non_snake_case)]
 #[test]
@@ -24,6 +24,7 @@ fn winconpty__survives_on_break_output_no_panic_on_close() {
     conn.start().expect("spawn cmd /k phải OK");
     // Host-side close: đóng pipe (output broken). ConPTY process sẽ shutdown
     // qua conhost refcount drop, không panic.
-    conn.close().expect("close sau output break phải không panic");
+    conn.close()
+        .expect("close sau output break phải không panic");
     assert_eq!(conn.state(), ConnectionState::Closed);
 }

@@ -14,9 +14,17 @@ pub struct PaletteState<A> {
 
 impl<A> PaletteState<A> {
     pub fn new(commands: Vec<(PaletteItem, A)>) -> Self {
-        let all: Vec<_> = commands.into_iter().map(|(i, a)| (FilteredCommand::new(i), a)).collect();
+        let all: Vec<_> = commands
+            .into_iter()
+            .map(|(i, a)| (FilteredCommand::new(i), a))
+            .collect();
         let visible = (0..all.len()).collect();
-        Self { all, search: String::new(), visible, selected: 0 }
+        Self {
+            all,
+            search: String::new(),
+            visible,
+            selected: 0,
+        }
     }
 
     pub fn search(&self) -> &str {
@@ -100,13 +108,18 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__palette_empty_search_keeps_order() {
         let s = state();
-        assert_eq!(names(&s), ["New tab", "Close tab", "Next tab", "Split pane"]);
+        assert_eq!(
+            names(&s),
+            ["New tab", "Close tab", "Next tab", "Split pane"]
+        );
         assert_eq!(s.selected_action(), Some(&0));
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__palette_filter_drops_nonmatching_and_ranks() {
         let mut s = state();
         s.set_search("split");
@@ -120,6 +133,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__palette_selection_wraps_and_resets_on_search() {
         let mut s = state();
         s.move_selection(-1);

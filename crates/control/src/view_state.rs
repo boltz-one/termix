@@ -52,7 +52,10 @@ impl ViewState {
     /// First visible row as an absolute index into scrollback + page.
     pub fn top_abs(&self, buf: &TextBuffer) -> usize {
         let live = live_top(buf);
-        let id = self.scroll_top.unwrap_or(live).clamp(buf.scrollback_dropped, live);
+        let id = self
+            .scroll_top
+            .unwrap_or(live)
+            .clamp(buf.scrollback_dropped, live);
         id - buf.scrollback_dropped
     }
 
@@ -63,8 +66,12 @@ impl ViewState {
     /// Scroll by `rows` (negative = towards older output).
     pub fn scroll_by(&mut self, buf: &TextBuffer, rows: isize) {
         let live = live_top(buf);
-        let cur = self.scroll_top.unwrap_or(live).clamp(buf.scrollback_dropped, live);
-        let new = (cur as isize + rows).clamp(buf.scrollback_dropped as isize, live as isize) as usize;
+        let cur = self
+            .scroll_top
+            .unwrap_or(live)
+            .clamp(buf.scrollback_dropped, live);
+        let new =
+            (cur as isize + rows).clamp(buf.scrollback_dropped as isize, live as isize) as usize;
         self.scroll_top = (new != live).then_some(new);
     }
 
@@ -82,7 +89,9 @@ impl ViewState {
     pub fn refresh_search(&mut self, buf: &TextBuffer) {
         if let Some(s) = &mut self.search {
             s.matches = search::find_all(buf, &s.query, s.case_sensitive);
-            if s.current.is_some_and(|i| i >= search::group_count(&s.matches)) {
+            if s.current
+                .is_some_and(|i| i >= search::group_count(&s.matches))
+            {
                 s.current = None;
             }
         }
@@ -92,7 +101,12 @@ impl ViewState {
     pub fn step_search(&mut self, buf: &TextBuffer, forward: bool, page_rows: usize) {
         let Some(s) = &mut self.search else { return };
         s.current = search::step(&s.matches, s.current, forward);
-        let Some(m) = s.current.and_then(|g| s.matches.iter().find(|m| m.group == g).copied()) else { return };
+        let Some(m) = s
+            .current
+            .and_then(|g| s.matches.iter().find(|m| m.group == g).copied())
+        else {
+            return;
+        };
         let live = live_top(buf);
         let top = self.scroll_top.unwrap_or(live);
         // Keep the match inside the viewport, otherwise centre it.
@@ -152,8 +166,13 @@ mod tests {
     #[test]
     fn search_stepping_scrolls_match_into_view() {
         let b = buf_with_history(20, 4);
-        let mut v = ViewState::default();
-        v.search = Some(SearchState { query: "h2".into(), ..Default::default() });
+        let mut v = ViewState {
+            search: Some(SearchState {
+                query: "h2".into(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
         v.refresh_search(&b);
         let n = search::group_count(&v.search.as_ref().unwrap().matches);
         assert!(n >= 1);

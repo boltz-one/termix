@@ -16,9 +16,7 @@
 //! - Profile → settings::Profile         (Lane A — OK)
 
 #[cfg(not(feature = "stub-downstream"))]
-pub use connection::{
-    ConptyConnection, ConptySettings, ITerminalConnection, PseudoConsoleFlags,
-};
+pub use connection::{ConptyConnection, ConptySettings, ITerminalConnection, PseudoConsoleFlags};
 #[cfg(not(feature = "stub-downstream"))]
 pub use control::TermControl;
 #[cfg(not(feature = "stub-downstream"))]

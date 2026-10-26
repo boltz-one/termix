@@ -110,7 +110,6 @@ pub fn hard_reset(this: &mut TerminalDispatch, erase: bool) {
 
     // Reset internal modes to initial state: just PageCursorCoupling.
     this.modes = super::ModeSet::DEFAULT;
-
 }
 
 /// `ScreenAlignmentPattern()` (`:3155`).

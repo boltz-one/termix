@@ -20,8 +20,8 @@
 //! inclusive, so call sites convert `(left, top, right_excl, bottom_excl)` →
 //! `Viewport::new(left, top, right_excl - 1, bottom_excl - 1)`.
 
-use super::TerminalDispatch;
 use super::Mode;
+use super::TerminalDispatch;
 use crate::dispatch::types::EraseType;
 use crate::dispatch::VtInt;
 use crate::screen::Viewport;

@@ -49,25 +49,58 @@ pub fn default_commands() -> Vec<(PaletteItem, PaletteAction)> {
     vec![
         (item("New tab", "Ctrl+Shift+T"), PaletteAction::NewTab),
         (item("Close tab", ""), PaletteAction::CloseTab),
-        (item("Split pane right", "Alt+Shift++"), PaletteAction::SplitRight),
-        (item("Split pane down", "Alt+Shift+-"), PaletteAction::SplitDown),
+        (
+            item("Split pane right", "Alt+Shift++"),
+            PaletteAction::SplitRight,
+        ),
+        (
+            item("Split pane down", "Alt+Shift+-"),
+            PaletteAction::SplitDown,
+        ),
         (item("Close pane", "Ctrl+Shift+W"), PaletteAction::ClosePane),
-        (item("Duplicate tab", "Ctrl+Shift+D"), PaletteAction::DuplicateTab),
+        (
+            item("Duplicate tab", "Ctrl+Shift+D"),
+            PaletteAction::DuplicateTab,
+        ),
         // WT leaves zoom and swap unbound.
         (item("Toggle pane zoom", ""), PaletteAction::ZoomPane),
         (item("Swap pane left", ""), PaletteAction::SwapLeft),
         (item("Swap pane right", ""), PaletteAction::SwapRight),
         (item("Swap pane up", ""), PaletteAction::SwapUp),
         (item("Swap pane down", ""), PaletteAction::SwapDown),
-        (item("Move focus left", "Alt+Left"), PaletteAction::FocusLeft),
-        (item("Move focus right", "Alt+Right"), PaletteAction::FocusRight),
+        (
+            item("Move focus left", "Alt+Left"),
+            PaletteAction::FocusLeft,
+        ),
+        (
+            item("Move focus right", "Alt+Right"),
+            PaletteAction::FocusRight,
+        ),
         (item("Move focus up", "Alt+Up"), PaletteAction::FocusUp),
-        (item("Move focus down", "Alt+Down"), PaletteAction::FocusDown),
-        (item("Resize pane left", "Alt+Shift+Left"), PaletteAction::ResizeLeft),
-        (item("Resize pane right", "Alt+Shift+Right"), PaletteAction::ResizeRight),
-        (item("Resize pane up", "Alt+Shift+Up"), PaletteAction::ResizeUp),
-        (item("Resize pane down", "Alt+Shift+Down"), PaletteAction::ResizeDown),
+        (
+            item("Move focus down", "Alt+Down"),
+            PaletteAction::FocusDown,
+        ),
+        (
+            item("Resize pane left", "Alt+Shift+Left"),
+            PaletteAction::ResizeLeft,
+        ),
+        (
+            item("Resize pane right", "Alt+Shift+Right"),
+            PaletteAction::ResizeRight,
+        ),
+        (
+            item("Resize pane up", "Alt+Shift+Up"),
+            PaletteAction::ResizeUp,
+        ),
+        (
+            item("Resize pane down", "Alt+Shift+Down"),
+            PaletteAction::ResizeDown,
+        ),
         (item("Next tab", "Ctrl+Tab"), PaletteAction::NextTab),
-        (item("Previous tab", "Ctrl+Shift+Tab"), PaletteAction::PreviousTab),
+        (
+            item("Previous tab", "Ctrl+Shift+Tab"),
+            PaletteAction::PreviousTab,
+        ),
     ]
 }

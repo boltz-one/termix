@@ -3,12 +3,12 @@
 //! the find bar. Mirrors `TermControl::_KeyHandler`, `_PointerPressed…`,
 //! `ControlInteractivity` selection logic.
 
-use gpui::{
-    div, px, rgb, AnyElement, App, ClipboardItem, Context, InteractiveElement, IntoElement, KeyDownEvent,
-    Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement, Pixels, Point,
-    Render, ScrollWheelEvent, StatefulInteractiveElement, Styled, Window,
-};
 use core::dispatch::td::MouseModes;
+use gpui::{
+    div, px, rgb, AnyElement, App, ClipboardItem, Context, InteractiveElement, IntoElement,
+    KeyDownEvent, Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
+    ParentElement, Pixels, Point, Render, ScrollEvent, StatefulInteractiveElement, Styled, Window,
+};
 
 use crate::control::TermControl;
 use crate::mouse_report::{Button, Mods, Msg, Out};
@@ -52,7 +52,9 @@ impl TermControl {
     }
 
     pub(crate) fn copy_selection(&mut self, cx: &mut App) -> bool {
-        let Some(sel) = self.view.selection else { return false };
+        let Some(sel) = self.view.selection else {
+            return false;
+        };
         let text = sel.text(&self.interactivity.core.lock().engine.dispatch.terminal);
         if text.is_empty() {
             return false;
@@ -62,7 +64,9 @@ impl TermControl {
     }
 
     pub(crate) fn paste(&mut self, cx: &mut App) {
-        let Some(text) = cx.read_from_clipboard().and_then(|i| i.text()) else { return };
+        let Some(text) = cx.read_from_clipboard().and_then(|i| i.text()) else {
+            return;
+        };
         let text = text.replace("\r\n", "\r").replace('\n', "\r");
         // WT `multiLinePasteWarning`: ask before pasting several lines.
         if text.trim_end_matches('\r').contains('\r') {
@@ -73,8 +77,18 @@ impl TermControl {
     }
 
     pub(crate) fn send_paste(&mut self, text: &str) {
-        let bracketed = self.interactivity.core.lock().engine.dispatch.bracketed_paste;
-        let text = if bracketed { format!("\x1b[200~{text}\x1b[201~") } else { text.to_string() };
+        let bracketed = self
+            .interactivity
+            .core
+            .lock()
+            .engine
+            .dispatch
+            .bracketed_paste;
+        let text = if bracketed {
+            format!("\x1b[200~{text}\x1b[201~")
+        } else {
+            text.to_string()
+        };
         self.send_to_shell(&text);
     }
 
@@ -88,8 +102,19 @@ impl TermControl {
     }
 
     fn zoom_font(&mut self, delta_pt: f32, cx: &mut Context<Self>) {
-        let base = self.interactivity.core.lock().settings.default_appearance.font.size;
-        self.view.font_zoom_pt = if delta_pt == 0.0 { 0.0 } else { (self.view.font_zoom_pt + delta_pt).max(1.0 - base) };
+        let base = self
+            .interactivity
+            .core
+            .lock()
+            .settings
+            .default_appearance
+            .font
+            .size;
+        self.view.font_zoom_pt = if delta_pt == 0.0 {
+            0.0
+        } else {
+            (self.view.font_zoom_pt + delta_pt).max(1.0 - base)
+        };
         cx.notify();
     }
 
@@ -141,7 +166,8 @@ impl TermControl {
                     let core = self.interactivity.core.clone();
                     let core = core.lock();
                     let rows = self.page_rows();
-                    self.view.step_search(&core.engine.dispatch.terminal, !shift, rows);
+                    self.view
+                        .step_search(&core.engine.dispatch.terminal, !shift, rows);
                 }
                 ("backspace", _) => self.search_edit(|s| {
                     s.query.pop();
@@ -177,7 +203,8 @@ impl TermControl {
             ("pagedown", true, true, false) => self.scroll((self.page_rows() as isize).max(1), cx),
             ("home", true, true, false) => {
                 let core = self.interactivity.core.clone();
-                self.view.scroll_to_top(&core.lock().engine.dispatch.terminal);
+                self.view
+                    .scroll_to_top(&core.lock().engine.dispatch.terminal);
             }
             ("end", true, true, false) => self.view.snap_to_bottom(),
             // WT default: Enter with a selection copies it instead of sending Enter.
@@ -185,7 +212,9 @@ impl TermControl {
                 self.copy_selection(cx);
                 self.view.selection = None;
             }
-            ("escape", false, false, false) if self.view.selection.is_some() => self.view.selection = None,
+            ("escape", false, false, false) if self.view.selection.is_some() => {
+                self.view.selection = None
+            }
             // Chords the page binds bubble up untouched.
             _ if crate::shortcuts::is_app_shortcut(ks) => handled = false,
             _ => {
@@ -221,7 +250,10 @@ impl TermControl {
         let fy = f32::from(pos.y - m.origin.y) / f32::from(m.line_h).max(1.0);
         let col = (fx.floor().max(0.0) as usize).min((m.cols as usize).saturating_sub(1));
         let row = (fy.floor().max(0.0) as usize).min((m.rows as usize).saturating_sub(1));
-        Cell { id: m.top_id + row, col }
+        Cell {
+            id: m.top_id + row,
+            col,
+        }
     }
 
     fn mouse_modes(&self) -> MouseModes {
@@ -229,7 +261,12 @@ impl TermControl {
     }
 
     fn on_alt_screen(&self) -> bool {
-        self.interactivity.core.lock().engine.dispatch.using_alt_buffer
+        self.interactivity
+            .core
+            .lock()
+            .engine
+            .dispatch
+            .using_alt_buffer
     }
 
     /// `_canSendVTMouseInput`: the program tracks the mouse and Shift is not held.
@@ -238,13 +275,26 @@ impl TermControl {
     }
 
     /// `ControlInteractivity::_sendMouseEventHelper` → `TerminalInput::HandleMouse`.
-    fn report(&mut self, msg: Msg, pos: Point<Pixels>, mods: &Modifiers, delta: i32, held: Option<Button>) -> Out {
+    fn report(
+        &mut self,
+        msg: Msg,
+        pos: Point<Pixels>,
+        mods: &Modifiers,
+        delta: i32,
+        held: Option<Button>,
+    ) -> Out {
         let modes = self.mouse_modes();
         let alt = self.on_alt_screen();
         let cell = self.cell_at(pos);
         let row = cell.id.saturating_sub(self.metrics.get().top_id);
-        let m = Mods { shift: mods.shift, alt: mods.alt, ctrl: mods.control };
-        let out = self.reporter.handle(&modes, alt, msg, (cell.col, row), m, delta, held);
+        let m = Mods {
+            shift: mods.shift,
+            alt: mods.alt,
+            ctrl: mods.control,
+        };
+        let out = self
+            .reporter
+            .handle(&modes, alt, msg, (cell.col, row), m, delta, held);
         match &out {
             Out::Send(s) if !s.is_empty() => {
                 if let Err(e) = self.interactivity.core.lock().send_input(s) {
@@ -349,7 +399,9 @@ impl TermControl {
             }
             return;
         }
-        let Some(anchor) = self.drag_anchor else { return };
+        let Some(anchor) = self.drag_anchor else {
+            return;
+        };
         if ev.pressed_button != Some(MouseButton::Left) {
             self.drag_anchor = None;
             return;
@@ -362,18 +414,24 @@ impl TermControl {
         } else if ev.position.y > m.origin.y + m.line_h * m.rows as f32 {
             self.scroll(1, cx);
         }
-        let gran = self.view.selection.map_or(Granularity::Char, |s| s.granularity());
+        let gran = self
+            .view
+            .selection
+            .map_or(Granularity::Char, |s| s.granularity());
         if self.view.selection.is_none() && at == anchor {
             return;
         }
-        let mut sel = self.view.selection.unwrap_or_else(|| Selection::new(anchor, gran));
+        let mut sel = self
+            .view
+            .selection
+            .unwrap_or_else(|| Selection::new(anchor, gran));
         sel.extend(at);
         self.view.selection = Some(sel);
         cx.notify();
     }
 
     /// `ControlInteractivity::MouseWheel`.
-    fn wheel(&mut self, ev: &ScrollWheelEvent, cx: &mut Context<Self>) {
+    fn wheel(&mut self, ev: &ScrollEvent, cx: &mut Context<Self>) {
         let line_h = f32::from(self.metrics.get().line_h).max(1.0);
         let (lx, ly) = match ev.delta {
             gpui::ScrollDelta::Lines(p) => (p.x, p.y),
@@ -382,7 +440,11 @@ impl TermControl {
         let shift = ev.modifiers.shift;
         // GPUI reports Shift+wheel as horizontal and a real horizontal wheel
         // negated; undo both to get WT's vertical/horizontal wheel deltas.
-        let (vertical, lines) = if shift && ly == 0.0 { (true, lx) } else { (ly != 0.0, if ly != 0.0 { ly } else { -lx }) };
+        let (vertical, lines) = if shift && ly == 0.0 {
+            (true, lx)
+        } else {
+            (ly != 0.0, if ly != 0.0 { ly } else { -lx })
+        };
         // GPUI scales a notch by the system "lines per notch" (3): 40 delta per line.
         let delta = (lines * 40.0).round() as i32;
         if delta == 0 {
@@ -423,9 +485,22 @@ impl TermControl {
     fn paste_dialog(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
         let text = self.view.pending_paste.as_ref()?;
         let lines: Vec<&str> = text.split('\r').filter(|l| !l.is_empty()).collect();
-        let preview: String = lines.iter().take(5).map(|l| l.chars().take(80).collect::<String>()).collect::<Vec<_>>().join("\n");
-        let more = if lines.len() > 5 { format!("\n… (+{} more lines)", lines.len() - 5) } else { String::new() };
-        let button = |id: &'static str, label: &'static str, primary: bool, accept: bool, cx: &mut Context<Self>| {
+        let preview: String = lines
+            .iter()
+            .take(5)
+            .map(|l| l.chars().take(80).collect::<String>())
+            .collect::<Vec<_>>()
+            .join("\n");
+        let more = if lines.len() > 5 {
+            format!("\n… (+{} more lines)", lines.len() - 5)
+        } else {
+            String::new()
+        };
+        let button = |id: &'static str,
+                      label: &'static str,
+                      primary: bool,
+                      accept: bool,
+                      cx: &mut Context<Self>| {
             div()
                 .id(id)
                 .px(px(16.))
@@ -496,7 +571,11 @@ impl TermControl {
                 .bg(rgb(0x202020))
                 .text_color(rgb(0xFFFFFF))
                 .text_size(px(13.))
-                .child(div().child(if s.query.is_empty() { "Find…".to_string() } else { format!("{}\u{258F}", s.query) }))
+                .child(div().child(if s.query.is_empty() {
+                    "Find…".to_string()
+                } else {
+                    format!("{}\u{258F}", s.query)
+                }))
                 .child(
                     div()
                         .id("find-case")
@@ -515,13 +594,24 @@ impl TermControl {
 
 impl Render for TermControl {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let font = self.interactivity.core.lock().settings.default_appearance.font.clone();
+        let font = self
+            .interactivity
+            .core
+            .lock()
+            .settings
+            .default_appearance
+            .font
+            .clone();
         // DECSET 1004 + hollow cursor follow OS activation, not just element focus.
         let focused = self.focus_handle.is_focused(window) && window.is_window_active();
         if focused != self.last_focused {
             self.last_focused = focused;
             if self.mouse_modes().focus {
-                let _ = self.interactivity.core.lock().send_input(if focused { "\x1b[I" } else { "\x1b[O" });
+                let _ = self.interactivity.core.lock().send_input(if focused {
+                    "\x1b[I"
+                } else {
+                    "\x1b[O"
+                });
             }
         }
         let canvas = terminal_canvas(PaintInput {
@@ -544,14 +634,32 @@ impl Render for TermControl {
             .track_focus(&self.focus_handle)
             .key_context("Terminal")
             .on_key_down(cx.listener(|this, ev: &KeyDownEvent, _, cx| this.handle_key(ev, cx)))
-            .on_mouse_down(MouseButton::Left, cx.listener(|this, ev: &MouseDownEvent, w, cx| this.mouse_down(ev, w, cx)))
-            .on_mouse_down(MouseButton::Right, cx.listener(|this, ev: &MouseDownEvent, w, cx| this.mouse_down(ev, w, cx)))
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, ev: &MouseDownEvent, w, cx| this.mouse_down(ev, w, cx)),
+            )
+            .on_mouse_down(
+                MouseButton::Right,
+                cx.listener(|this, ev: &MouseDownEvent, w, cx| this.mouse_down(ev, w, cx)),
+            )
             .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, _, cx| this.mouse_move(ev, cx)))
-            .on_mouse_up(MouseButton::Left, cx.listener(|this, ev: &MouseUpEvent, _, cx| this.mouse_up(ev, cx)))
-            .on_mouse_up(MouseButton::Right, cx.listener(|this, ev: &MouseUpEvent, _, cx| this.mouse_up(ev, cx)))
-            .on_mouse_down(MouseButton::Middle, cx.listener(|this, ev: &MouseDownEvent, w, cx| this.mouse_down(ev, w, cx)))
-            .on_mouse_up(MouseButton::Middle, cx.listener(|this, ev: &MouseUpEvent, _, cx| this.mouse_up(ev, cx)))
-            .on_scroll_wheel(cx.listener(|this, ev: &ScrollWheelEvent, _, cx| this.wheel(ev, cx)))
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(|this, ev: &MouseUpEvent, _, cx| this.mouse_up(ev, cx)),
+            )
+            .on_mouse_up(
+                MouseButton::Right,
+                cx.listener(|this, ev: &MouseUpEvent, _, cx| this.mouse_up(ev, cx)),
+            )
+            .on_mouse_down(
+                MouseButton::Middle,
+                cx.listener(|this, ev: &MouseDownEvent, w, cx| this.mouse_down(ev, w, cx)),
+            )
+            .on_mouse_up(
+                MouseButton::Middle,
+                cx.listener(|this, ev: &MouseUpEvent, _, cx| this.mouse_up(ev, cx)),
+            )
+            .on_scroll(cx.listener(|this, ev: &ScrollEvent, _, cx| this.wheel(ev, cx)))
             .child(canvas)
             .children(search_bar)
             .children(paste_dialog)

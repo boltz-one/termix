@@ -29,14 +29,12 @@ pub fn dispatch(args: Vec<String>) -> R {
 }
 
 fn usage_err() -> R {
-    Err(
-        "usage: xtask <command> [args]\n\
+    Err("usage: xtask <command> [args]\n\
          commands: audit --wave N | --final, ledger-seed [--tests], merge,\n\
          cov --phase NN, e2e, stubs [--path DIR], ledger-check [--root DIR],\n\
          tests-check, include-graph, loc-ratio"
-            .to_string()
-            .into(),
-    )
+        .to_string()
+        .into())
 }
 
 #[cfg(test)]

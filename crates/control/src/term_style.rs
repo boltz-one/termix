@@ -38,7 +38,9 @@ pub struct Palette {
 
 impl Default for Palette {
     fn default() -> Self {
-        Self { table: campbell_color_table() }
+        Self {
+            table: campbell_color_table(),
+        }
     }
 }
 
@@ -50,7 +52,11 @@ impl Palette {
             ColorKind::Indexed256 => Some(rgb(xterm256(index, &self.table))),
             ColorKind::Indexed16 => {
                 // `intenseTextStyle: bright` — bold ANSI 0-7 shows as 8-15.
-                let i = if intense && index < 8 { index + 8 } else { index };
+                let i = if intense && index < 8 {
+                    index + 8
+                } else {
+                    index
+                };
                 Some(rgb(self.table[(i & 15) as usize]))
             }
         }

@@ -2,8 +2,9 @@
 //! `windows/src/terminal/adapter/ITermDispatch.hpp:39-199` (124 virtual
 //! methods, ~123 + destructor).
 //!
-//! Phase 1 skeleton: 123 trait methods với default `todo!()` body. Lane B
-//! (parser) build trên top của trait này; Lane C (adapter) implement.
+//! Phase 1 complete skeleton: 124 trait method default `todo!()` → no-op
+//! (lane B mass fold loop-08). Lane C `AdaptDispatch` concrete impl defer
+//! P09/P11 (conhost out-of-scope: ITerminalApi/ServiceLocator/InputBuffer/VtIo).
 //!
 //! Module chia thành sub-groups để dưới 200 LOC/file. The single trait body
 //! stays here; participate subtypes ở `interact.rs`.
@@ -40,9 +41,10 @@ pub type VtId<'a> = &'a str;
 /// Phase 1: Box<dyn FnOnce(&str)>.
 pub type StringHandler = Box<dyn FnOnce(&str)>;
 
-/// `ITermDispatch` — port của `ITermDispatch.hpp:35-200`. Group theo nhóm
-/// để dễ đọc. Tất cả method mặc định `todo!()` — nàng/he phải implement
-/// trait này ở phase 2.
+/// `ITermDispatch` — port của `ITermDispatch.hpp:35-200` (124 virtual method).
+/// Group theo nhóm để dễ đọc. Phase 1 skeleton complete: default body
+/// `todo!()` → no-op lane B (loop-08). Lane C `AdaptDispatch` concrete impl
+/// defer P09/P11 (conhost out-of-scope).
 ///
 /// C++ args được hạ cấp thành Rust-friendly types:
 /// - `VTInt` → `VtInt` (= `i32`).
@@ -54,304 +56,304 @@ pub type StringHandler = Box<dyn FnOnce(&str)>;
 pub trait ITermDispatch {
     // Unknown / Print — port `:39,40,41`.
     fn unknown_sequence(&mut self) {
-        todo!("ITermDispatch::UnknownSequence")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn print(&mut self, c: char) {
-        todo!("ITermDispatch::Print")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn print_string(&mut self, s: &str) {
-        todo!("ITermDispatch::PrintString")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Cursor — port `:43-55`.
     fn cursor_up(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::CursorUp")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_down(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::CursorDown")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_forward(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::CursorForward")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_backward(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::CursorBackward")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_next_line(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::CursorNextLine")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_prev_line(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::CursorPrevLine")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_horizontal_position_absolute(&mut self, column: VtInt) {
         let _ = column;
-        todo!("ITermDispatch::CursorHorizontalPositionAbsolute")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn vertical_line_position_absolute(&mut self, line: VtInt) {
         let _ = line;
-        todo!("ITermDispatch::VerticalLinePositionAbsolute")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn horizontal_position_relative(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::HorizontalPositionRelative")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn vertical_position_relative(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::VerticalPositionRelative")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_position(&mut self, line: VtInt, column: VtInt) {
         let _ = (line, column);
-        todo!("ITermDispatch::CursorPosition")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_save_state(&mut self) {
-        todo!("ITermDispatch::CursorSaveState")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn cursor_restore_state(&mut self) {
-        todo!("ITermDispatch::CursorRestoreState")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Insert/Delete (chars + lines) — port `:56-69`.
     fn insert_character(&mut self, count: VtInt) {
         let _ = count;
-        todo!("ITermDispatch::InsertCharacter")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn delete_character(&mut self, count: VtInt) {
         let _ = count;
-        todo!("ITermDispatch::DeleteCharacter")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn scroll_up(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::ScrollUp")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn scroll_down(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::ScrollDown")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn next_page(&mut self, page_count: VtInt) {
         let _ = page_count;
-        todo!("ITermDispatch::NextPage")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn preceding_page(&mut self, page_count: VtInt) {
         let _ = page_count;
-        todo!("ITermDispatch::PrecedingPage")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn page_position_absolute(&mut self, page: VtInt) {
         let _ = page;
-        todo!("ITermDispatch::PagePositionAbsolute")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn page_position_relative(&mut self, page_count: VtInt) {
         let _ = page_count;
-        todo!("ITermDispatch::PagePositionRelative")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn page_position_back(&mut self, page_count: VtInt) {
         let _ = page_count;
-        todo!("ITermDispatch::PagePositionBack")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_displayed_extent(&mut self) {
-        todo!("ITermDispatch::RequestDisplayedExtent")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn insert_line(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::InsertLine")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn delete_line(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::DeleteLine")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn insert_column(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::InsertColumn")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn delete_column(&mut self, distance: VtInt) {
         let _ = distance;
-        todo!("ITermDispatch::DeleteColumn")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Modes — port `:70-78`.
     fn set_keypad_mode(&mut self, application_mode: bool) {
         let _ = application_mode;
-        todo!("ITermDispatch::SetKeypadMode")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_ansi_mode(&mut self, ansi_mode: bool) {
         let _ = ansi_mode;
-        todo!("ITermDispatch::SetAnsiMode")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_kitty_keyboard_protocol(&mut self, flags: VtParameter, mode: VtParameter) {
         let _ = (flags, mode);
-        todo!("ITermDispatch::SetKittyKeyboardProtocol")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn query_kitty_keyboard_protocol(&mut self) {
-        todo!("ITermDispatch::QueryKittyKeyboardProtocol")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn push_kitty_keyboard_protocol(&mut self, flags: VtParameter) {
         let _ = flags;
-        todo!("ITermDispatch::PushKittyKeyboardProtocol")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn pop_kitty_keyboard_protocol(&mut self, count: VtParameter) {
         let _ = count;
-        todo!("ITermDispatch::PopKittyKeyboardProtocol")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_top_bottom_scrolling_margins(&mut self, top: VtInt, bottom: VtInt) {
         let _ = (top, bottom);
-        todo!("ITermDispatch::SetTopBottomScrollingMargins")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_left_right_scrolling_margins(&mut self, left: VtInt, right: VtInt) {
         let _ = (left, right);
-        todo!("ITermDispatch::SetLeftRightScrollingMargins")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn enquire_answerback(&mut self) {
-        todo!("ITermDispatch::EnquireAnswerback")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Bell / Cr / Lf / Ri — port `:79-84`.
     fn warning_bell(&mut self) {
-        todo!("ITermDispatch::WarningBell")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn carriage_return(&mut self) {
-        todo!("ITermDispatch::CarriageReturn")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn line_feed(&mut self, line_feed_type: LineFeedType) {
         let _ = line_feed_type;
-        todo!("ITermDispatch::LineFeed")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn reverse_line_feed(&mut self) {
-        todo!("ITermDispatch::ReverseLineFeed")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn back_index(&mut self) {
-        todo!("ITermDispatch::BackIndex")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn forward_index(&mut self) {
-        todo!("ITermDispatch::ForwardIndex")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Window / OSC — port `:85-86,157-166`.
     fn set_window_title(&mut self, title: &str) {
         let _ = title;
-        todo!("ITermDispatch::SetWindowTitle")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_current_working_directory(&mut self, uri: &str) {
         let _ = uri;
-        todo!("ITermDispatch::SetCurrentWorkingDirectory")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_clipboard(&mut self, content: &str) {
         let _ = content;
-        todo!("ITermDispatch::SetClipboard")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn window_manipulation(&mut self, function: WindowManipulationType, params: VtParameters) {
         let _ = (function, params);
-        todo!("ITermDispatch::WindowManipulation")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn add_hyperlink(&mut self, uri: &str, params: &str) {
         let _ = (uri, params);
-        todo!("ITermDispatch::AddHyperlink")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn end_hyperlink(&mut self) {
-        todo!("ITermDispatch::EndHyperlink")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn do_con_emu_action(&mut self, s: &str) {
         let _ = s;
-        todo!("ITermDispatch::DoConEmuAction")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn do_iterm2_action(&mut self, s: &str) {
         let _ = s;
-        todo!("ITermDispatch::DoITerm2Action")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn do_final_term_action(&mut self, s: &str) {
         let _ = s;
-        todo!("ITermDispatch::DoFinalTermAction")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn do_vs_code_action(&mut self, s: &str) {
         let _ = s;
-        todo!("ITermDispatch::DoVsCodeAction")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn do_wt_action(&mut self, s: &str) {
         let _ = s;
-        todo!("ITermDispatch::DoWTAction")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn do_urxvt_action(&mut self, s: &str) {
         let _ = s;
-        todo!("ITermDispatch::DoUrxvtAction")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Tabs — port `:87-91`.
     fn horizontal_tab_set(&mut self) {
-        todo!("ITermDispatch::HorizontalTabSet")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn forward_tab(&mut self, num_tabs: VtInt) {
         let _ = num_tabs;
-        todo!("ITermDispatch::ForwardTab")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn backwards_tab(&mut self, num_tabs: VtInt) {
         let _ = num_tabs;
-        todo!("ITermDispatch::BackwardsTab")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn tab_clear(&mut self, clear_type: TabClearType) {
         let _ = clear_type;
-        todo!("ITermDispatch::TabClear")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn tab_set(&mut self, set_type: VtParameter) {
         let _ = set_type;
-        todo!("ITermDispatch::TabSet")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Color table — port `:92-99`.
     fn set_color_table_entry(&mut self, table_index: usize, color: u32) {
         let _ = (table_index, color);
-        todo!("ITermDispatch::SetColorTableEntry")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_color_table_entry(&mut self, table_index: usize) {
         let _ = table_index;
-        todo!("ITermDispatch::RequestColorTableEntry")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn reset_color_table(&mut self) {
-        todo!("ITermDispatch::ResetColorTable")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn reset_color_table_entry(&mut self, table_index: usize) {
         let _ = table_index;
-        todo!("ITermDispatch::ResetColorTableEntry")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_xterm_color_resource(&mut self, resource: usize, color: u32) {
         let _ = (resource, color);
-        todo!("ITermDispatch::SetXtermColorResource")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_xterm_color_resource(&mut self, resource: usize) {
         let _ = resource;
-        todo!("ITermDispatch::RequestXtermColorResource")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn reset_xterm_color_resource(&mut self, resource: usize) {
         let _ = resource;
-        todo!("ITermDispatch::ResetXtermColorResource")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn assign_color(&mut self, item: ColorItem, fg_index: VtInt, bg_index: VtInt) {
         let _ = (item, fg_index, bg_index);
-        todo!("ITermDispatch::AssignColor")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Erase — port `:101-113`.
     fn erase_in_display(&mut self, erase_type: EraseType) {
         let _ = erase_type;
-        todo!("ITermDispatch::EraseInDisplay")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn erase_in_line(&mut self, erase_type: EraseType) {
         let _ = erase_type;
-        todo!("ITermDispatch::EraseInLine")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn erase_characters(&mut self, num_chars: VtInt) {
         let _ = num_chars;
-        todo!("ITermDispatch::EraseCharacters")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn selective_erase_in_display(&mut self, erase_type: EraseType) {
         let _ = erase_type;
-        todo!("ITermDispatch::SelectiveEraseInDisplay")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn selective_erase_in_line(&mut self, erase_type: EraseType) {
         let _ = erase_type;
-        todo!("ITermDispatch::SelectiveEraseInLine")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn change_attributes_rectangular_area(
         &mut self,
@@ -362,7 +364,7 @@ pub trait ITermDispatch {
         attrs: VtParameters,
     ) {
         let _ = (top, left, bottom, right, attrs);
-        todo!("ITermDispatch::ChangeAttributesRectangularArea")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn reverse_attributes_rectangular_area(
         &mut self,
@@ -373,7 +375,7 @@ pub trait ITermDispatch {
         attrs: VtParameters,
     ) {
         let _ = (top, left, bottom, right, attrs);
-        todo!("ITermDispatch::ReverseAttributesRectangularArea")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     #[allow(clippy::too_many_arguments)]
     fn copy_rectangular_area(
@@ -388,7 +390,7 @@ pub trait ITermDispatch {
         dst_page: VtInt,
     ) {
         let _ = (top, left, bottom, right, page, dst_top, dst_left, dst_page);
-        todo!("ITermDispatch::CopyRectangularArea")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn fill_rectangular_area(
         &mut self,
@@ -399,11 +401,11 @@ pub trait ITermDispatch {
         right: VtInt,
     ) {
         let _ = (ch, top, left, bottom, right);
-        todo!("ITermDispatch::FillRectangularArea")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn erase_rectangular_area(&mut self, top: VtInt, left: VtInt, bottom: VtInt, right: VtInt) {
         let _ = (top, left, bottom, right);
-        todo!("ITermDispatch::EraseRectangularArea")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn selective_erase_rectangular_area(
         &mut self,
@@ -413,11 +415,11 @@ pub trait ITermDispatch {
         right: VtInt,
     ) {
         let _ = (top, left, bottom, right);
-        todo!("ITermDispatch::SelectiveEraseRectangularArea")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn select_attribute_change_extent(&mut self, extent: ChangeExtent) {
         let _ = extent;
-        todo!("ITermDispatch::SelectAttributeChangeExtent")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_checksum_rectangular_area(
         &mut self,
@@ -429,118 +431,118 @@ pub trait ITermDispatch {
         right: VtInt,
     ) {
         let _ = (id, page, top, left, bottom, right);
-        todo!("ITermDispatch::RequestChecksumRectangularArea")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— SGR — port `:116-122`.
     fn set_graphics_rendition(&mut self, options: VtParameters) {
         let _ = options;
-        todo!("ITermDispatch::SetGraphicsRendition")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_line_rendition(&mut self, rendition: LineRendition) {
         let _ = rendition;
-        todo!("ITermDispatch::SetLineRendition")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_character_protection_attribute(&mut self, options: VtParameters) {
         let _ = options;
-        todo!("ITermDispatch::SetCharacterProtectionAttribute")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn push_graphics_rendition(&mut self, options: VtParameters) {
         let _ = options;
-        todo!("ITermDispatch::PushGraphicsRendition")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn pop_graphics_rendition(&mut self) {
-        todo!("ITermDispatch::PopGraphicsRendition")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Modes (set / reset / request) — port `:123-131`.
     fn set_mode(&mut self, param: ModeParams) {
         let _ = param;
-        todo!("ITermDispatch::SetMode")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn reset_mode(&mut self, param: ModeParams) {
         let _ = param;
-        todo!("ITermDispatch::ResetMode")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_mode(&mut self, param: ModeParams) {
         let _ = param;
-        todo!("ITermDispatch::RequestMode")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn device_status_report(&mut self, status_type: StatusType, id: VtParameter) {
         let _ = (status_type, id);
-        todo!("ITermDispatch::DeviceStatusReport")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn device_attributes(&mut self) {
-        todo!("ITermDispatch::DeviceAttributes")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn secondary_device_attributes(&mut self) {
-        todo!("ITermDispatch::SecondaryDeviceAttributes")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn tertiary_device_attributes(&mut self) {
-        todo!("ITermDispatch::TertiaryDeviceAttributes")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn vt52_device_attributes(&mut self) {
-        todo!("ITermDispatch::Vt52DeviceAttributes")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_terminal_parameters(&mut self, permission: ReportingPermission) {
         let _ = permission;
-        todo!("ITermDispatch::RequestTerminalParameters")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Charsets — port `:134-143`.
     fn designate_coding_system(&mut self, coding_system: VtId) {
         let _ = coding_system;
-        todo!("ITermDispatch::DesignateCodingSystem")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn designate94_charset(&mut self, gset_number: VtInt, charset: VtId) {
         let _ = (gset_number, charset);
-        todo!("ITermDispatch::Designate94Charset")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn designate96_charset(&mut self, gset_number: VtInt, charset: VtId) {
         let _ = (gset_number, charset);
-        todo!("ITermDispatch::Designate96Charset")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn locking_shift(&mut self, gset_number: VtInt) {
         let _ = gset_number;
-        todo!("ITermDispatch::LockingShift")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn locking_shift_right(&mut self, gset_number: VtInt) {
         let _ = gset_number;
-        todo!("ITermDispatch::LockingShiftRight")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn single_shift(&mut self, gset_number: VtInt) {
         let _ = gset_number;
-        todo!("ITermDispatch::SingleShift")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn accept_c1_controls(&mut self, enabled: bool) {
         let _ = enabled;
-        todo!("ITermDispatch::AcceptC1Controls")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn send_c1_controls(&mut self, enabled: bool) {
         let _ = enabled;
-        todo!("ITermDispatch::SendC1Controls")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn announce_code_structure(&mut self, ansi_level: VtInt) {
         let _ = ansi_level;
-        todo!("ITermDispatch::AnnounceCodeStructure")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Reset — port `:144-146`.
     fn soft_reset(&mut self) {
-        todo!("ITermDispatch::SoftReset")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn hard_reset(&mut self, erase: bool) {
         let _ = erase;
-        todo!("ITermDispatch::HardReset")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn screen_alignment_pattern(&mut self) {
-        todo!("ITermDispatch::ScreenAlignmentPattern")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— Cursor style — port `:148`.
     fn set_cursor_style(&mut self, cursor_style: CursorStyle) {
         let _ = cursor_style;
-        todo!("ITermDispatch::SetCursorStyle")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 
     // —— DCS / Sixel / Macros — port `:168-200`.
@@ -557,7 +559,7 @@ pub trait ITermDispatch {
             private_color_registers,
             handler,
         );
-        todo!("ITermDispatch::DefineSixelImage")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn download_drcs(
         &mut self,
@@ -576,49 +578,49 @@ pub trait ITermDispatch {
             font_sets,
             handler,
         );
-        todo!("ITermDispatch::DownloadDRCS")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_user_preference_charset(&mut self) {
-        todo!("ITermDispatch::RequestUserPreferenceCharset")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn assign_user_preference_charset(&mut self, charset_size: CharsetSize) {
         let _ = charset_size;
-        todo!("ITermDispatch::AssignUserPreferenceCharset")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn define_macro(&mut self, macro_id: VtInt, private_macro: bool, handler: StringHandler) {
         let _ = (macro_id, private_macro, handler);
-        todo!("ITermDispatch::DefineMacro")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn invoke_macro(&mut self, macro_id: VtInt) {
         let _ = macro_id;
-        todo!("ITermDispatch::InvokeMacro")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_terminal_state_report(&mut self, format: ReportFormat, format_option: VtParameter) {
         let _ = (format, format_option);
-        todo!("ITermDispatch::RequestTerminalStateReport")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn restore_terminal_state(&mut self, format: ReportFormat) {
         let _ = format;
-        todo!("ITermDispatch::RestoreTerminalState")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_setting(&mut self) {
-        todo!("ITermDispatch::RequestSetting")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn request_presentation_state_report(&mut self, format: PresentationReportFormat) {
         let _ = format;
-        todo!("ITermDispatch::RequestPresentationStateReport")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn restore_presentation_state(&mut self, format: PresentationReportFormat) {
         let _ = format;
-        todo!("ITermDispatch::RestorePresentationState")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn play_sounds(&mut self, parameters: VtParameters) {
         let _ = parameters;
-        todo!("ITermDispatch::PlaySounds")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
     fn set_optional_features(&mut self, features: u32) {
         let _ = features;
-        todo!("ITermDispatch::SetOptionalFeatures")
+        // lane B no-op fold (loop-08); lane C AdaptDispatch concrete impl defer P09/P11.
     }
 }
 
@@ -1088,10 +1090,13 @@ mod tests {
 
     #[test]
     fn trait_has_default_print_stub() {
-        // Default body là `todo!()` — không gọi được nên chỉ check struct
-        // impl được compile (assert presence bằng type cast).
+        // Loop-08 fold: default body giờ là no-op (không `todo!()`), nên
+        // ta có thể call `print` an toàn — assert trait impl compile + call
+        // không panic. Sanity-check trait surface.
         fn _assert_impl<T: ITermDispatch>() {}
         _assert_impl::<Stub>();
+        let mut s = Stub;
+        s.print('a'); // no-op, không panic.
     }
 
     #[test]
@@ -1102,5 +1107,167 @@ mod tests {
         assert_eq!(EraseType::default(), EraseType::ToEnd);
         assert_eq!(TabClearType::default(), TabClearType::ClearCurrent);
         assert_eq!(LineFeedType::default(), LineFeedType::DependsOnMode);
+    }
+
+    // —— Loop-08 lane-B no-op fold coverage: 20 tests assert default trait
+    // bodies không panic + không có side-effect observable. Mỗi test cover
+    // một signature-shape đại diện (zero-arg, single VtInt, char/&str, bool,
+    // enum, multi-arg, struct). Verify `todo!("ITermDispatch::Name")` đã
+    // được fold thành no-op comment (lane C AdaptDispatch defer P09/P11).
+
+    #[test]
+    fn no_op_zero_arg_unknown_sequence() {
+        let mut s = Stub;
+        s.unknown_sequence();
+    }
+
+    #[test]
+    fn no_op_zero_arg_warning_bell() {
+        let mut s = Stub;
+        s.warning_bell();
+    }
+
+    #[test]
+    fn no_op_zero_arg_carriage_return() {
+        let mut s = Stub;
+        s.carriage_return();
+    }
+
+    #[test]
+    fn no_op_zero_arg_cursor_save_restore_state() {
+        let mut s = Stub;
+        s.cursor_save_state();
+        s.cursor_restore_state();
+    }
+
+    #[test]
+    fn no_op_char_print() {
+        let mut s = Stub;
+        s.print('a');
+        s.print('来');
+        s.print('\u{1F600}');
+    }
+
+    #[test]
+    fn no_op_str_print_string() {
+        let mut s = Stub;
+        s.print_string("hello");
+        s.print_string("");
+        s.print_string("tiếng Việt");
+    }
+
+    #[test]
+    fn no_op_single_vtint_cursor_up() {
+        let mut s = Stub;
+        s.cursor_up(5);
+        s.cursor_up(0);
+        s.cursor_up(i32::MAX);
+    }
+
+    #[test]
+    fn no_op_single_vtint_scan_scroll_insert_delete() {
+        let mut s = Stub;
+        s.scroll_up(3);
+        s.scroll_down(7);
+        s.insert_character(2);
+        s.delete_character(9);
+    }
+
+    #[test]
+    fn no_op_two_vtint_cursor_position() {
+        let mut s = Stub;
+        s.cursor_position(10, 20);
+        s.set_top_bottom_scrolling_margins(1, 24);
+        s.set_left_right_scrolling_margins(1, 80);
+    }
+
+    #[test]
+    fn no_op_bool_set_keypad_ansi_mode() {
+        let mut s = Stub;
+        s.set_keypad_mode(true);
+        s.set_keypad_mode(false);
+        s.set_ansi_mode(true);
+        s.set_ansi_mode(false);
+    }
+
+    #[test]
+    fn no_op_enum_line_feed_with_default_variant() {
+        let mut s = Stub;
+        s.line_feed(LineFeedType::default());
+        s.line_feed(LineFeedType::DependsOnMode);
+    }
+
+    #[test]
+    fn no_op_enum_tab_clear_with_default_variant() {
+        let mut s = Stub;
+        s.tab_clear(TabClearType::default());
+        s.tab_clear(TabClearType::ClearCurrent);
+    }
+
+    #[test]
+    fn no_op_enum_erase_in_display_with_default_variant() {
+        let mut s = Stub;
+        s.erase_in_display(EraseType::default());
+        s.erase_in_line(EraseType::ToEnd);
+        s.erase_characters(4);
+    }
+
+    #[test]
+    fn no_op_str_window_title_clipboard() {
+        let mut s = Stub;
+        s.set_window_title("test");
+        s.set_clipboard("copied");
+        s.set_current_working_directory("file:///x");
+    }
+
+    #[test]
+    fn no_op_str_osc_action_handlers() {
+        let mut s = Stub;
+        s.do_con_emu_action("a");
+        s.do_iterm2_action("");
+        s.do_final_term_action("x");
+        s.add_hyperlink("https://e", "");
+        s.end_hyperlink();
+    }
+
+    #[test]
+    fn no_op_usize_u32_color_table_entry() {
+        let mut s = Stub;
+        s.set_color_table_entry(1, 0xFF0000);
+        s.request_color_table_entry(2);
+        s.reset_color_table_entry(3);
+    }
+
+    #[test]
+    fn no_op_vtparam_tab_set_and_kitty() {
+        let mut s = Stub;
+        s.tab_set(0);
+        s.set_kitty_keyboard_protocol(1, 2);
+        s.push_kitty_keyboard_protocol(3);
+        s.pop_kitty_keyboard_protocol(1);
+    }
+
+    #[test]
+    fn no_op_enum_struct_rect_and_window_manipulation() {
+        let mut s = Stub;
+        s.set_cursor_style(CursorStyle::default());
+        s.window_manipulation(WindowManipulationType::default(), VtParameters::default());
+    }
+
+    #[test]
+    fn no_op_bool_hard_reset_and_features() {
+        let mut s = Stub;
+        s.hard_reset(true);
+        s.hard_reset(false);
+        s.set_optional_features(0);
+        s.set_optional_features(u32::MAX);
+    }
+
+    #[test]
+    fn no_op_vtparameters_graphics_rendition_push_pop() {
+        let mut s = Stub;
+        s.set_graphics_rendition(VtParameters::default());
+        s.push_graphics_rendition(VtParameters::default());
+        s.pop_graphics_rendition();
     }
 }

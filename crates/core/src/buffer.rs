@@ -168,7 +168,10 @@ impl Row {
                     self.glyphs[col_end + 2] = (UNICODE_SPACE, 1);
                 }
                 self.glyphs[col_end + 1] = (UNICODE_SPACE, 0);
-            } else if col_end + 1 < self.glyphs.len() && self.glyphs[col_end + 1].1 == 0 && width == 1 {
+            } else if col_end + 1 < self.glyphs.len()
+                && self.glyphs[col_end + 1].1 == 0
+                && width == 1
+            {
                 // A trailer whose lead we just replaced.
                 self.glyphs[col_end + 1] = (UNICODE_SPACE, 1);
             }
@@ -202,7 +205,8 @@ impl Row {
             return;
         }
         let after = *self.attr_at(end);
-        self.attr_runs.retain(|(s, _)| (*s as usize) < begin || (*s as usize) > end);
+        self.attr_runs
+            .retain(|(s, _)| (*s as usize) < begin || (*s as usize) > end);
         let cap = u16::MAX as usize;
         self.attr_runs.push((begin.min(cap) as u16, *attr));
         if end <= cap {
@@ -212,7 +216,11 @@ impl Row {
         // Merge neighbours with identical attributes, and a leading run equal
         // to the base.
         self.attr_runs.dedup_by(|b, a| a.1 == b.1);
-        if self.attr_runs.first().is_some_and(|(s, a)| *s == 0 && *a == self.attr) {
+        if self
+            .attr_runs
+            .first()
+            .is_some_and(|(s, a)| *s == 0 && *a == self.attr)
+        {
             self.attr_runs.remove(0);
         }
     }
@@ -416,7 +424,9 @@ impl TextBuffer {
     /// Return to the main screen, resized to the current page
     /// (`UseMainScreenBuffer`).
     pub fn leave_alt_screen(&mut self) {
-        let Some(mut main) = self.alt_main.take() else { return };
+        let Some(mut main) = self.alt_main.take() else {
+            return;
+        };
         let (w, h) = (self.size.0, self.size.1 as usize);
         main.truncate(h);
         while main.len() < h {
@@ -1296,7 +1306,10 @@ mod tests {
         let mut green = TextAttribute::default();
         green.set_indexed_foreground(2);
         r.set_attr_range(3, 4, &green);
-        assert_eq!((*r.attr_at(2), *r.attr_at(3), *r.attr_at(4)), (red(), green, red()));
+        assert_eq!(
+            (*r.attr_at(2), *r.attr_at(3), *r.attr_at(4)),
+            (red(), green, red())
+        );
         // Same attribute written again merges into one run.
         r.set_attr_range(3, 4, &red());
         assert_eq!(r.attr_runs.len(), 2);

@@ -1,5 +1,4 @@
 //! Tab context-menu actions, drag reorder and tear-out of `TerminalPage`.
-use gpui::{AppContext, Entity, TestAppContext};
 use app::null_render_engine::NullRenderEngine;
 use app::settings_loader::CascadiaSettings;
 use app::tab::Tab;
@@ -7,12 +6,14 @@ use app::TerminalPage;
 use connection::ConptyConnection;
 use control::{KeyMapping, TermControl};
 use core::{TextAttribute, TextBuffer};
+use gpui::{AppContext, Entity, TestAppContext};
 use settings::{GlobalAppSettings, Profile};
 
 fn settings() -> CascadiaSettings {
     CascadiaSettings {
         profiles: vec![Profile::default_powershell()],
-        default_profile_guid: uuid::Uuid::parse_str("61c54bbd-c2c6-5271-96e7-009a87ff44bf").unwrap(),
+        default_profile_guid: uuid::Uuid::parse_str("61c54bbd-c2c6-5271-96e7-009a87ff44bf")
+            .unwrap(),
         globals: GlobalAppSettings::default(),
     }
 }

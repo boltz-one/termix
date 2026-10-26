@@ -29,7 +29,10 @@ fn wt_colorfix__perceivable_color_distinguishable() {
     // Idempotent endpoint: re-nudge `out` vs `reference` → ΔEOK² ≥ min_sq
     // → `get_perceivable_color` early-return → out unchanged (`ColorFix.cpp:172`).
     let out2 = get_perceivable_color(out, reference, 0.5 * 0.5);
-    assert_eq!(out2, out, "idempotent — after nudge ΔEOK² ≥ min_sq (≥0.25 full ΔE)");
+    assert_eq!(
+        out2, out,
+        "idempotent — after nudge ΔEOK² ≥ min_sq (≥0.25 full ΔE)"
+    );
 }
 
 /// `wt_renderer__always_distinguishable_nudges_close_pair` — VR3 wired: near
@@ -52,7 +55,10 @@ fn wt_renderer__always_distinguishable_nudges_close_pair() {
     a2.set_color(fg, true);
     a2.set_color(0xFF575757, false);
     let (fg2, _) = s.get_attribute_colors(&a2);
-    assert_eq!(fg2, fg, "idempotent — nudged fg already distinguishable from bg");
+    assert_eq!(
+        fg2, fg,
+        "idempotent — nudged fg already distinguishable from bg"
+    );
 }
 
 /// `wt_renderer__indexed_distinguishable_requires_default_or_legacy` — VR4
@@ -67,11 +73,16 @@ fn wt_renderer__indexed_distinguishable_requires_default_or_legacy() {
     a.set_color(0xFF555555, true);
     a.set_color(0xFF575757, false);
     let (fg, _) = s.get_attribute_colors(&a);
-    assert_eq!(fg, 0xFF555555, "indexed-only skip cho RGB literal non-legacy");
+    assert_eq!(
+        fg, 0xFF555555,
+        "indexed-only skip cho RGB literal non-legacy"
+    );
     // Default pair (idx 0 raw 0) → guard true → adjust reach, nhưng palette
     // White/Black ΔE lớn → get_perceivable_color early-return → fg unchanged.
     let a2 = TextAttribute::new();
     let (fg2, _) = s.get_attribute_colors(&a2);
-    assert_eq!(fg2, s.color_table[s.default_fg_index as usize],
-        "default pair → palette[15] (already distinguishable → no nudge)");
+    assert_eq!(
+        fg2, s.color_table[s.default_fg_index as usize],
+        "default pair → palette[15] (already distinguishable → no nudge)"
+    );
 }

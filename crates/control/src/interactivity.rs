@@ -161,11 +161,12 @@ impl ControlInteractivity {
     /// → terminal viewport scroll (line/page). `phase` cho wheel events.
     /// WT `MouseScroll::IsBegin/IsEnd` convert to `Scrollbar::Scroll` delta.
     pub fn handle_mouse_scroll(&mut self, delta: f32, _phase: ScrollPhase) -> bool {
-        if let Some(mut core) = self.core.try_lock() {
+        if let Some(core) = self.core.try_lock() {
             // WT `_MouseScroll` `.cpp:540-580`: `terminal.Scroll(-delta)`;
             // negative delta nghĩa là scroll wheel up. Phase 3 wire khi
             // `TextBuffer::scroll_viewport` finalize.
-            let _ = (delta, &mut core);
+            std::mem::drop(core);
+            let _ = delta;
             return true;
         }
         false

@@ -15,9 +15,7 @@
 //! `%LOCALAPPDATA%\Packages\<pkg>\LocalState\settings.json`.
 
 use gpui::App;
-use settings::{
-    GlobalAppSettings, Profile, DEFAULT_WINDOWS_POWERSHELL_GUID, INBOX_SETTINGS_JSON,
-};
+use settings::{GlobalAppSettings, Profile, DEFAULT_WINDOWS_POWERSHELL_GUID, INBOX_SETTINGS_JSON};
 
 /// `CascadiaSettings` — port mỏng của WT `CascadiaSettings.h:36-105`.
 /// Phase 1 chỉ nắm profiles + default guid + globals.

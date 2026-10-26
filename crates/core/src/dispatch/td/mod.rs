@@ -45,7 +45,6 @@ pub mod dcs;
 
 // Removed glob imports that don't re-export public items.
 
-
 use crate::buffer::TextBuffer;
 use crate::dispatch::interact::InteractDispatch;
 use crate::dispatch::ITermDispatch;

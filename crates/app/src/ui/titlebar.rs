@@ -3,8 +3,8 @@
 //! `window_control_area` nên không cần handler click.
 
 use gpui::{
-    div, px, AnyElement, App, InteractiveElement, IntoElement, ParentElement, RenderOnce, StatefulInteractiveElement, Styled,
-    Window, WindowControlArea,
+    div, px, AnyElement, App, InteractiveElement, IntoElement, ParentElement, RenderOnce,
+    StatefulInteractiveElement, Styled, Window, WindowControlArea,
 };
 
 use super::theme::{metrics, Theme, ICON_FONT};
@@ -19,14 +19,22 @@ pub struct Titlebar {
 
 impl Titlebar {
     pub fn new(content: impl IntoElement, theme: Theme, maximized: bool) -> Self {
-        Self { content: content.into_any_element(), theme, maximized }
+        Self {
+            content: content.into_any_element(),
+            theme,
+            maximized,
+        }
     }
 }
 
 impl RenderOnce for Titlebar {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
         let t = self.theme;
-        let max_glyph = if self.maximized { '\u{E923}' } else { '\u{E922}' };
+        let max_glyph = if self.maximized {
+            '\u{E923}'
+        } else {
+            '\u{E922}'
+        };
         div()
             .relative()
             .flex()
@@ -38,8 +46,23 @@ impl RenderOnce for Titlebar {
             .bg(t.tab_row_bg)
             // Bottom rule drawn first so the selected tab (same colour as the
             // body) paints over it and merges with the content below.
-            .child(div().absolute().left_0().right_0().bottom_0().h(px(1.)).bg(t.stroke))
-            .child(div().flex().flex_1().min_w(px(0.)).h_full().child(self.content))
+            .child(
+                div()
+                    .absolute()
+                    .left_0()
+                    .right_0()
+                    .bottom_0()
+                    .h(px(1.))
+                    .bg(t.stroke),
+            )
+            .child(
+                div()
+                    .flex()
+                    .flex_1()
+                    .min_w(px(0.))
+                    .h_full()
+                    .child(self.content),
+            )
             .child(
                 // DragBar (`MinWidth=45`) — vùng kéo cửa sổ.
                 div()
@@ -49,7 +72,12 @@ impl RenderOnce for Titlebar {
             )
             .child(caption_button('\u{E921}', WindowControlArea::Min, t, false))
             .child(caption_button(max_glyph, WindowControlArea::Max, t, false))
-            .child(caption_button('\u{E8BB}', WindowControlArea::Close, t, true))
+            .child(caption_button(
+                '\u{E8BB}',
+                WindowControlArea::Close,
+                t,
+                true,
+            ))
     }
 }
 
@@ -74,7 +102,11 @@ fn caption_button(glyph: char, area: WindowControlArea, t: Theme, close: bool) -
         .window_control_area(area)
         .hover(move |s| {
             let s = s.bg(hover);
-            if close { s.text_color(gpui::white()) } else { s }
+            if close {
+                s.text_color(gpui::white())
+            } else {
+                s
+            }
         })
         .active(move |s| s.bg(pressed))
         .child(glyph.to_string())

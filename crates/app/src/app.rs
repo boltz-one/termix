@@ -39,13 +39,24 @@ pub fn run() -> anyhow::Result<()> {
                 })
                 .or_else(|| settings.profiles.first());
             let (face, pt) = default
-                .map(|p| (p.default_appearance.font.face.clone(), p.default_appearance.font.size))
+                .map(|p| {
+                    (
+                        p.default_appearance.font.face.clone(),
+                        p.default_appearance.font.size,
+                    )
+                })
                 .unwrap_or_else(|| ("Cascadia Mono".into(), 12.0));
             let (cell_w, line_h) = control::term_view::cell_size(cx, &face, pt);
             let inset = 2.0 * crate::pane::PANE_INSET;
             let w = settings.globals.initial_cols as f32 * cell_w + inset;
-            let h = settings.globals.initial_rows as f32 * line_h + inset + crate::ui::theme::metrics::TITLEBAR_H;
-            gpui::WindowBounds::Windowed(gpui::Bounds::centered(None, gpui::size(gpui::px(w), gpui::px(h)), cx))
+            let h = settings.globals.initial_rows as f32 * line_h
+                + inset
+                + crate::ui::theme::metrics::TITLEBAR_H;
+            gpui::WindowBounds::Windowed(gpui::Bounds::centered(
+                None,
+                gpui::size(gpui::px(w), gpui::px(h)),
+                cx,
+            ))
         };
         let window_opts = WindowOptions {
             window_bounds: Some(window_bounds),

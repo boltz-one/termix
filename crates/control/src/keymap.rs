@@ -108,7 +108,7 @@ pub struct KeyBinding {
 
 /// Container — port `KeyMapping` (`KeyMapping.idl`). Vec with priority order
 /// matching WT (first-match).
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct KeyMapping {
     bindings: Vec<KeyBinding>,
 }
@@ -134,7 +134,7 @@ impl KeyMapping {
     /// Special: `"win+sc(41)"` QuakeMode (WT scan-code notation) —
     /// `Keystroke::parse` won't accept scan-codes; skip those entries
     /// (port-blocker noted in CHANGELOG).
-    pub fn default() -> Self {
+    fn load_defaults() -> Self {
         let mut bindings = Vec::new();
         for (keys, action) in DEFAULTS_BINDINGS {
             if let Ok(ks) = gpui::Keystroke::parse(keys) {
@@ -174,6 +174,12 @@ impl KeyMapping {
 
     pub fn is_empty(&self) -> bool {
         self.bindings.is_empty()
+    }
+}
+
+impl Default for KeyMapping {
+    fn default() -> Self {
+        Self::load_defaults()
     }
 }
 

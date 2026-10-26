@@ -6,7 +6,7 @@
 //! Live test — needs real Windows ConPTY runtime + named pipe infrastructure.
 //! CI non-Windows skip via `#[ignore]`.
 
-use connection::{ConptyConnection, ConptySettings, ConnectionState, ITerminalConnection};
+use connection::{ConnectionState, ConptyConnection, ConptySettings, ITerminalConnection};
 
 #[allow(non_snake_case)]
 #[test]
@@ -21,7 +21,8 @@ fn winconpty__good_create_spawns_cmd_exits_zero() {
         ..Default::default()
     };
     conn.initialize(settings).unwrap();
-    conn.start().expect("ConPTY spawn should succeed với cmd /c exit 0");
+    conn.start()
+        .expect("ConPTY spawn should succeed với cmd /c exit 0");
     conn.close().expect("close should not leak handles");
     assert_eq!(conn.state(), ConnectionState::Closed);
 }

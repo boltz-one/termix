@@ -108,6 +108,7 @@ impl Reporter {
     /// `HandleMouse`. `pos` is the 0-based viewport cell (already clamped),
     /// `held` the button down during a move, `alt_screen` whether the alternate
     /// buffer is active.
+    #[allow(clippy::too_many_arguments)]
     pub fn handle(
         &mut self,
         modes: &MouseModes,
@@ -136,7 +137,11 @@ impl Reporter {
             self.accumulated += delta;
             if self.accumulated.abs() < WHEEL_DELTA {
                 // Swallow sub-notch wheel input we would otherwise have reported.
-                return if tracking || alt_scroll { Out::Send(String::new()) } else { Out::None };
+                return if tracking || alt_scroll {
+                    Out::Send(String::new())
+                } else {
+                    Out::None
+                };
             }
             self.accumulated = 0;
         }
@@ -155,8 +160,20 @@ impl Reporter {
                     self.last_msg = Some(msg);
                 }
                 // A move with a button down reports that button.
-                let real = if hover { held.map(Msg::Down) } else { Some(msg) };
-                return Out::Send(encode(modes, real.unwrap_or(msg), hover, held.is_some(), pos, mods, delta));
+                let real = if hover {
+                    held.map(Msg::Down)
+                } else {
+                    Some(msg)
+                };
+                return Out::Send(encode(
+                    modes,
+                    real.unwrap_or(msg),
+                    hover,
+                    held.is_some(),
+                    pos,
+                    mods,
+                    delta,
+                ));
             }
         }
         if alt_scroll {
@@ -172,7 +189,15 @@ impl Reporter {
 }
 
 /// `_GenerateDefaultSequence` / `_GenerateUtf8Sequence` / `_GenerateSGRSequence`.
-fn encode(modes: &MouseModes, msg: Msg, hover: bool, pressed: bool, pos: (usize, usize), m: Mods, delta: i32) -> String {
+fn encode(
+    modes: &MouseModes,
+    msg: Msg,
+    hover: bool,
+    pressed: bool,
+    pos: (usize, usize),
+    m: Mods,
+    delta: i32,
+) -> String {
     let (x, y) = pos;
     if modes.utf8 || (!modes.sgr) {
         // Default and UTF-8 share the layout; default is limited to coordinate 94.
@@ -180,27 +205,51 @@ fn encode(modes: &MouseModes, msg: Msg, hover: bool, pressed: bool, pos: (usize,
             return String::new();
         }
         // A hover with no button pressed is encoded as "released" (3).
-        let b = if hover && !pressed { Msg::Up(Button::Left) } else { msg };
+        let b = if hover && !pressed {
+            Msg::Up(Button::Left)
+        } else {
+            msg
+        };
         let code = x_button(b, hover, delta, m, false);
         let ch = |v: u32| char::from_u32(32 + v).unwrap_or(' ');
         return format!("\x1b[M{}{}{}", ch(code), ch(x as u32 + 1), ch(y as u32 + 1));
     }
     let release = matches!(msg, Msg::Up(_));
     let code = x_button(msg, hover, delta, m, true);
-    format!("\x1b[<{code};{};{}{}", x + 1, y + 1, if release { 'm' } else { 'M' })
+    format!(
+        "\x1b[<{code};{};{}{}",
+        x + 1,
+        y + 1,
+        if release { 'm' } else { 'M' }
+    )
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const NO: Mods = Mods { shift: false, alt: false, ctrl: false };
+    const NO: Mods = Mods {
+        shift: false,
+        alt: false,
+        ctrl: false,
+    };
 
     fn modes(sgr: bool) -> MouseModes {
-        MouseModes { press_release: true, sgr, ..MouseModes::default() }
+        MouseModes {
+            press_release: true,
+            sgr,
+            ..MouseModes::default()
+        }
     }
 
-    fn send(r: &mut Reporter, m: &MouseModes, msg: Msg, pos: (usize, usize), delta: i32, held: Option<Button>) -> String {
+    fn send(
+        r: &mut Reporter,
+        m: &MouseModes,
+        msg: Msg,
+        pos: (usize, usize),
+        delta: i32,
+        held: Option<Button>,
+    ) -> String {
         match r.handle(m, false, msg, pos, NO, delta, held) {
             Out::Send(s) => s,
             o => panic!("{o:?}"),
@@ -211,25 +260,50 @@ mod tests {
     fn sgr_buttons_and_release() {
         let mut r = Reporter::default();
         let m = modes(true);
-        assert_eq!(send(&mut r, &m, Msg::Down(Button::Left), (4, 9), 0, None), "\x1b[<0;5;10M");
-        assert_eq!(send(&mut r, &m, Msg::Up(Button::Left), (4, 9), 0, None), "\x1b[<0;5;10m");
-        assert_eq!(send(&mut r, &m, Msg::Down(Button::Right), (0, 0), 0, None), "\x1b[<2;1;1M");
+        assert_eq!(
+            send(&mut r, &m, Msg::Down(Button::Left), (4, 9), 0, None),
+            "\x1b[<0;5;10M"
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::Up(Button::Left), (4, 9), 0, None),
+            "\x1b[<0;5;10m"
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::Down(Button::Right), (0, 0), 0, None),
+            "\x1b[<2;1;1M"
+        );
     }
 
     #[test]
     fn x10_limit_is_94_and_release_is_3() {
         let mut r = Reporter::default();
         let m = modes(false);
-        assert_eq!(send(&mut r, &m, Msg::Down(Button::Left), (0, 0), 0, None), "\x1b[M !!");
-        assert_eq!(send(&mut r, &m, Msg::Up(Button::Right), (0, 0), 0, None), "\x1b[M#!!");
-        assert_eq!(send(&mut r, &m, Msg::Down(Button::Left), (95, 0), 0, None), "");
-        assert_eq!(send(&mut r, &m, Msg::Down(Button::Left), (94, 0), 0, None), "\x1b[M \x7f!");
+        assert_eq!(
+            send(&mut r, &m, Msg::Down(Button::Left), (0, 0), 0, None),
+            "\x1b[M !!"
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::Up(Button::Right), (0, 0), 0, None),
+            "\x1b[M#!!"
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::Down(Button::Left), (95, 0), 0, None),
+            ""
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::Down(Button::Left), (94, 0), 0, None),
+            "\x1b[M \x7f!"
+        );
     }
 
     #[test]
     fn utf8_lifts_the_limit() {
         let mut r = Reporter::default();
-        let m = MouseModes { press_release: true, utf8: true, ..MouseModes::default() };
+        let m = MouseModes {
+            press_release: true,
+            utf8: true,
+            ..MouseModes::default()
+        };
         let s = send(&mut r, &m, Msg::Down(Button::Left), (200, 0), 0, None);
         assert_eq!(s.chars().nth(4), Some(char::from_u32(32 + 201).unwrap()));
     }
@@ -239,31 +313,64 @@ mod tests {
         let mut r = Reporter::default();
         let m = modes(true);
         assert_eq!(send(&mut r, &m, Msg::Wheel, (1, 1), 60, None), "");
-        assert_eq!(send(&mut r, &m, Msg::Wheel, (1, 1), 60, None), "\x1b[<64;2;2M");
-        assert_eq!(send(&mut r, &m, Msg::Wheel, (1, 1), -120, None), "\x1b[<65;2;2M");
-        assert_eq!(send(&mut r, &m, Msg::HWheel, (1, 1), 120, None), "\x1b[<67;2;2M");
-        assert_eq!(send(&mut r, &m, Msg::HWheel, (1, 1), -120, None), "\x1b[<66;2;2M");
+        assert_eq!(
+            send(&mut r, &m, Msg::Wheel, (1, 1), 60, None),
+            "\x1b[<64;2;2M"
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::Wheel, (1, 1), -120, None),
+            "\x1b[<65;2;2M"
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::HWheel, (1, 1), 120, None),
+            "\x1b[<67;2;2M"
+        );
+        assert_eq!(
+            send(&mut r, &m, Msg::HWheel, (1, 1), -120, None),
+            "\x1b[<66;2;2M"
+        );
     }
 
     #[test]
     fn motion_filtering_and_dedup() {
         let mut r = Reporter::default();
-        let m = MouseModes { button_motion: true, sgr: true, ..MouseModes::default() };
+        let m = MouseModes {
+            button_motion: true,
+            sgr: true,
+            ..MouseModes::default()
+        };
         // No button: nothing in 1002.
-        assert_eq!(r.handle(&m, false, Msg::Move, (1, 1), NO, 0, None), Out::None);
+        assert_eq!(
+            r.handle(&m, false, Msg::Move, (1, 1), NO, 0, None),
+            Out::None
+        );
         let a = r.handle(&m, false, Msg::Move, (2, 1), NO, 0, Some(Button::Left));
         assert_eq!(a, Out::Send("\x1b[<32;3;2M".into()));
         // Same cell again: dropped.
-        assert_eq!(r.handle(&m, false, Msg::Move, (2, 1), NO, 0, Some(Button::Left)), Out::None);
-        let any = MouseModes { any_motion: true, sgr: true, ..MouseModes::default() };
-        assert_eq!(r.handle(&any, false, Msg::Move, (3, 3), NO, 0, None), Out::Send("\x1b[<35;4;4M".into()));
+        assert_eq!(
+            r.handle(&m, false, Msg::Move, (2, 1), NO, 0, Some(Button::Left)),
+            Out::None
+        );
+        let any = MouseModes {
+            any_motion: true,
+            sgr: true,
+            ..MouseModes::default()
+        };
+        assert_eq!(
+            r.handle(&any, false, Msg::Move, (3, 3), NO, 0, None),
+            Out::Send("\x1b[<35;4;4M".into())
+        );
     }
 
     #[test]
     fn modifiers_encode() {
         let mut r = Reporter::default();
         let m = modes(true);
-        let mods = Mods { shift: false, alt: true, ctrl: true };
+        let mods = Mods {
+            shift: false,
+            alt: true,
+            ctrl: true,
+        };
         let o = r.handle(&m, false, Msg::Down(Button::Left), (0, 0), mods, 0, None);
         assert_eq!(o, Out::Send("\x1b[<24;1;1M".into()));
     }
@@ -272,10 +379,25 @@ mod tests {
     fn alternate_scroll_only_on_alt_screen() {
         let mut r = Reporter::default();
         let m = MouseModes::default();
-        assert_eq!(r.handle(&m, false, Msg::Wheel, (0, 0), NO, 120, None), Out::None);
-        assert_eq!(r.handle(&m, true, Msg::Wheel, (0, 0), NO, 120, None), Out::AltScroll("up"));
-        assert_eq!(r.handle(&m, true, Msg::Wheel, (0, 0), NO, -120, None), Out::AltScroll("down"));
-        let off = MouseModes { alternate_scroll: false, ..MouseModes::default() };
-        assert_eq!(r.handle(&off, true, Msg::Wheel, (0, 0), NO, 120, None), Out::None);
+        assert_eq!(
+            r.handle(&m, false, Msg::Wheel, (0, 0), NO, 120, None),
+            Out::None
+        );
+        assert_eq!(
+            r.handle(&m, true, Msg::Wheel, (0, 0), NO, 120, None),
+            Out::AltScroll("up")
+        );
+        assert_eq!(
+            r.handle(&m, true, Msg::Wheel, (0, 0), NO, -120, None),
+            Out::AltScroll("down")
+        );
+        let off = MouseModes {
+            alternate_scroll: false,
+            ..MouseModes::default()
+        };
+        assert_eq!(
+            r.handle(&off, true, Msg::Wheel, (0, 0), NO, 120, None),
+            Out::None
+        );
     }
 }

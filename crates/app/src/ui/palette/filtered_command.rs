@@ -15,7 +15,11 @@ pub struct PaletteItem {
 
 impl PaletteItem {
     pub fn new(name: impl Into<String>) -> Self {
-        Self { name: name.into(), subtitle: String::new(), key_chord_text: String::new() }
+        Self {
+            name: name.into(),
+            subtitle: String::new(),
+            key_chord_text: String::new(),
+        }
     }
 }
 
@@ -41,7 +45,13 @@ fn segments_and_weight(pattern: &Option<Pattern>, haystack: &str) -> (Option<Vec
 
 impl FilteredCommand {
     pub fn new(item: PaletteItem) -> Self {
-        Self { item, pattern: None, weight: 0, name_highlights: None, subtitle_highlights: None }
+        Self {
+            item,
+            pattern: None,
+            weight: 0,
+            name_highlights: None,
+            subtitle_highlights: None,
+        }
     }
 
     pub fn item(&self) -> &PaletteItem {
@@ -87,7 +97,12 @@ impl FilteredCommand {
     pub fn compare(first: &Self, second: &Self) -> bool {
         match first.weight.cmp(&second.weight) {
             Ordering::Equal => {
-                first.item.name.to_lowercase().cmp(&second.item.name.to_lowercase()) == Ordering::Less
+                first
+                    .item
+                    .name
+                    .to_lowercase()
+                    .cmp(&second.item.name.to_lowercase())
+                    == Ordering::Less
             }
             o => o == Ordering::Greater,
         }
@@ -109,10 +124,12 @@ mod tests {
     }
 
     fn runs(c: &FilteredCommand) -> Option<Vec<(usize, usize)>> {
-        c.name_highlights().map(|r| r.iter().map(|t| (t.start, t.end)).collect())
+        c.name_highlights()
+            .map(|r| r.iter().map(|t| (t.start, t.end)).collect())
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__filteredcommand_verify_highlighting() {
         let mut c = fc("AAAAAABBBBBBCCC");
         assert_eq!(runs(&c), None);
@@ -133,6 +150,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__filteredcommand_verify_weight() {
         let mut c = fc("AAAAAABBBBBBCCC");
         let mut weigh = |s: Option<&str>| {
@@ -153,6 +171,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__filteredcommand_verify_compare() {
         let (mut a, mut b) = (fc("AAAAAABBBBBBCCC"), fc("BBBBBCCC"));
         assert_eq!(a.weight(), b.weight());
@@ -168,6 +187,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__filteredcommand_verify_compare_ignore_case() {
         let (a, b) = (fc("a"), fc("B"));
         assert_eq!(a.weight(), b.weight());

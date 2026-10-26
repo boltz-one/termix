@@ -111,13 +111,18 @@ impl Tab {
     }
 
     fn drag_to(&mut self, position: Point<Pixels>) {
-        let Some(path) = self.dragging.clone() else { return };
+        let Some(path) = self.dragging.clone() else {
+            return;
+        };
         let b = self.bounds.get();
         let (w, h) = (f32::from(b.size.width), f32::from(b.size.height));
         if w <= 0.0 || h <= 0.0 {
             return;
         }
-        let (Some(rect), Some(dir)) = (self.root_pane.rect_at(&path), self.root_pane.direction_at(&path)) else {
+        let (Some(rect), Some(dir)) = (
+            self.root_pane.rect_at(&path),
+            self.root_pane.direction_at(&path),
+        ) else {
             return;
         };
         let fx = f32::from(position.x - b.origin.x) / w;
@@ -131,7 +136,9 @@ impl Tab {
 
     /// Control of the active pane (falls back to the first leaf).
     pub fn active_control(&self) -> &Entity<TermControl> {
-        self.root_pane.find(self.active).unwrap_or_else(|| self.root_pane.first_control())
+        self.root_pane
+            .find(self.active)
+            .unwrap_or_else(|| self.root_pane.first_control())
     }
 
     /// User-chosen title (`Rename tab`); empty clears it.
@@ -150,7 +157,13 @@ impl Tab {
         }
         #[cfg(not(feature = "stub-downstream"))]
         {
-            let t = self.active_control().read(cx).interactivity.core.lock().title();
+            let t = self
+                .active_control()
+                .read(cx)
+                .interactivity
+                .core
+                .lock()
+                .title();
             if !t.is_empty() {
                 return t;
             }
@@ -177,7 +190,9 @@ impl Tab {
     /// only pane, so the caller closes the tab instead.
     pub fn close_active_pane(&mut self) -> bool {
         let layout = self.root_pane.layout();
-        let Some(i) = layout.iter().position(|(id, _)| *id == self.active) else { return false };
+        let Some(i) = layout.iter().position(|(id, _)| *id == self.active) else {
+            return false;
+        };
         if !self.root_pane.close_leaf(self.active) {
             return false;
         }
@@ -238,7 +253,11 @@ impl gpui::Render for Tab {
             .size_full()
             .relative()
             // Records the pane-area bounds so divider drags can map pixels to %.
-            .child(canvas(move |b, _, _| bounds.set(b), |_, _, _, _| {}).absolute().size_full())
+            .child(
+                canvas(move |b, _, _| bounds.set(b), |_, _, _, _| {})
+                    .absolute()
+                    .size_full(),
+            )
             .child(body)
             .on_mouse_move(cx.listener(|this, ev: &MouseMoveEvent, _, cx| {
                 if this.dragging.is_some() {

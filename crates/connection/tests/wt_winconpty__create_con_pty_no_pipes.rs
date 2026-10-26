@@ -9,7 +9,7 @@
 //! `#[ignore = "manual: needs Windows ConPTY runtime + named pipe infrastructure"]`
 //! vì live spawn ConPTY cần Windows host (skip ở CI non-Windows).
 
-use connection::{ConptyConnection, ConptySettings, ConnectionState, ITerminalConnection};
+use connection::{ConnectionState, ConptyConnection, ConptySettings, ITerminalConnection};
 
 #[allow(non_snake_case)]
 #[test]

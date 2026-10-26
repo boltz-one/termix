@@ -11,7 +11,7 @@
 //! - `LineRendition.hpp:16` — enum (4 variants) + `ScreenToBufferLine` /
 //!   `BufferToScreenLine` helpers.
 
-use core::fmt;
+use std::fmt;
 
 /// Kiểu underline — port `UnderlineStyle` (`TextAttribute.hpp:30-39`).
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]

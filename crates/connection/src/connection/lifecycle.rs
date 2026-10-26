@@ -468,7 +468,15 @@ fn spawn_exit_watcher(conn: &ConptyConnection) {
     let mut dup = HANDLE::default();
     let cur = unsafe { GetCurrentProcess() };
     let ok = unsafe {
-        DuplicateHandle(cur, conn.pi_client.hProcess, cur, &mut dup, 0, false, DUPLICATE_SAME_ACCESS)
+        DuplicateHandle(
+            cur,
+            conn.pi_client.hProcess,
+            cur,
+            &mut dup,
+            0,
+            false,
+            DUPLICATE_SAME_ACCESS,
+        )
     };
     if ok.is_err() {
         return;
@@ -476,26 +484,32 @@ fn spawn_exit_watcher(conn: &ConptyConnection) {
     let raw = dup.0 as usize;
     let state_tx = conn.state_changed.try_borrow_sender();
     let output_tx = conn.terminal_output.try_borrow_sender();
-    let _ = std::thread::Builder::new().name("tg-client-wait".into()).spawn(move || {
-        const STILL_ACTIVE: u32 = 259;
-        let h = HANDLE(raw as *mut _);
-        unsafe { WaitForSingleObject(h, INFINITE) };
-        let mut code = 0u32;
-        let _ = unsafe { GetExitCodeProcess(h, &mut code) };
-        let _ = unsafe { CloseHandle(h) };
-        let failed = code != 0 && code != STILL_ACTIVE;
-        // ConPTY repaints its own screen right after the client exits and would
-        // erase the message; let that repaint pass first.
-        std::thread::sleep(std::time::Duration::from_millis(400));
-        if failed {
-            if let Some(tx) = &output_tx {
-                let _ = tx.send(process_exit_message(code));
+    let _ = std::thread::Builder::new()
+        .name("tg-client-wait".into())
+        .spawn(move || {
+            const STILL_ACTIVE: u32 = 259;
+            let h = HANDLE(raw as *mut _);
+            unsafe { WaitForSingleObject(h, INFINITE) };
+            let mut code = 0u32;
+            let _ = unsafe { GetExitCodeProcess(h, &mut code) };
+            let _ = unsafe { CloseHandle(h) };
+            let failed = code != 0 && code != STILL_ACTIVE;
+            // ConPTY repaints its own screen right after the client exits and would
+            // erase the message; let that repaint pass first.
+            std::thread::sleep(std::time::Duration::from_millis(400));
+            if failed {
+                if let Some(tx) = &output_tx {
+                    let _ = tx.send(process_exit_message(code));
+                }
             }
-        }
-        if let Some(tx) = &state_tx {
-            let _ = tx.send(if failed { ConnectionState::Failed } else { ConnectionState::Closed });
-        }
-    });
+            if let Some(tx) = &state_tx {
+                let _ = tx.send(if failed {
+                    ConnectionState::Failed
+                } else {
+                    ConnectionState::Closed
+                });
+            }
+        });
 }
 
 /// Port `ConptyConnection.cpp:602-612` — store rows/cols, resize ConPTY nếu Connected.
@@ -676,7 +690,11 @@ pub(crate) fn build_env_block(settings: &super::settings::ConptySettings) -> Vec
         }
         // Windows PowerShell 5.1 must not inherit PowerShell 7 module paths from the
         // parent shell: it would load PS7's PSReadLine ("Cannot load PSReadline module").
-        if settings.commandline.to_ascii_lowercase().contains("windowspowershell") {
+        if settings
+            .commandline
+            .to_ascii_lowercase()
+            .contains("windowspowershell")
+        {
             if let Some(v) = map.get_mut("PSModulePath") {
                 *v = v
                     .split(';')
@@ -715,9 +733,7 @@ pub(crate) fn build_env_block(settings: &super::settings::ConptySettings) -> Vec
 /// WT dùng resource strings `ProcessExited` + `CtrlDToClose`. Ta hardcode English
 /// verbatim per Resolved note #5: `"\r\n[process exited with code {N}]\r\n[press Ctrl+D to close]\r\n"`.
 pub(crate) fn process_exit_message(exit_code: u32) -> String {
-    format!(
-        "\r\n[process exited with code {exit_code}]\r\n[press Ctrl+D to close]\r\n"
-    )
+    format!("\r\n[process exited with code {exit_code}]\r\n[press Ctrl+D to close]\r\n")
 }
 
 /// `Utils::ClampToShortMax(value, min)` — clamp vào `i16` range (cpp:610).

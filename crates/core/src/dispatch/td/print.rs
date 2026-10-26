@@ -176,7 +176,11 @@ impl TerminalDispatch {
             // Cells written with the current SGR attributes (insert mode already
             // applied them through `TextBuffer::insert`).
             if !self.modes.test(Mode::InsertReplace) {
-                self.terminal.rows_mut()[row_idx].set_attr_range(col_begin, _col_end.max(col_begin + 1), &attrs);
+                self.terminal.rows_mut()[row_idx].set_attr_range(
+                    col_begin,
+                    _col_end.max(col_begin + 1),
+                    &attrs,
+                );
             }
 
             // Advance col_end (W1: derive from replace_text result of single grapheme).

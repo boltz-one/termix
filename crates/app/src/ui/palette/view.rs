@@ -46,7 +46,13 @@ impl PalettePanel {
                 chord: f.item().key_chord_text.clone(),
             })
             .collect();
-        Self { search: state.search().to_string(), rows, selected: state.selected(), theme, callbacks }
+        Self {
+            search: state.search().to_string(),
+            rows,
+            selected: state.selected(),
+            theme,
+            callbacks,
+        }
     }
 }
 
@@ -94,11 +100,20 @@ impl RenderOnce for PalettePanel {
                     .px(px(12.))
                     .rounded(px(4.))
                     .text_size(px(14.))
-                    .bg(if i == self.selected { t.tab_hover_bg } else { t.page_bg })
+                    .bg(if i == self.selected {
+                        t.tab_hover_bg
+                    } else {
+                        t.page_bg
+                    })
                     .hover(|s| s.bg(t.tab_hover_bg))
                     .on_click(move |_: &ClickEvent, w, cx| on_pick(i, w, cx))
                     .child(name)
-                    .child(div().text_size(px(12.)).text_color(t.fg_dim).child(row.chord.clone())),
+                    .child(
+                        div()
+                            .text_size(px(12.))
+                            .text_color(t.fg_dim)
+                            .child(row.chord.clone()),
+                    ),
             );
         }
         // Top-centre like WT (`HorizontalAlignment=Center`, width 600).
@@ -119,7 +134,17 @@ impl RenderOnce for PalettePanel {
                 .border_color(t.stroke)
                 .bg(t.page_bg)
                 .text_color(t.fg)
-                .child(div().h(px(32.)).px(px(12.)).flex().items_center().text_size(px(14.)).bg(t.tab_row_bg).rounded(px(4.)).child(search))
+                .child(
+                    div()
+                        .h(px(32.))
+                        .px(px(12.))
+                        .flex()
+                        .items_center()
+                        .text_size(px(14.))
+                        .bg(t.tab_row_bg)
+                        .rounded(px(4.))
+                        .child(search),
+                )
                 .child(list),
         )
     }
@@ -130,12 +155,24 @@ mod tests {
     use super::*;
 
     #[test]
+    #[allow(non_snake_case)]
     fn wt_ui__palette_split_highlights() {
-        let segs = split_highlights("abcdef", &[TextRun { start: 1, end: 2 }, TextRun { start: 5, end: 5 }]);
+        let segs = split_highlights(
+            "abcdef",
+            &[TextRun { start: 1, end: 2 }, TextRun { start: 5, end: 5 }],
+        );
         assert_eq!(
             segs,
-            vec![("a".into(), false), ("bc".into(), true), ("de".into(), false), ("f".into(), true)]
+            vec![
+                ("a".into(), false),
+                ("bc".into(), true),
+                ("de".into(), false),
+                ("f".into(), true)
+            ]
         );
-        assert_eq!(split_highlights("abc", &[]), vec![("abc".to_string(), false)]);
+        assert_eq!(
+            split_highlights("abc", &[]),
+            vec![("abc".to_string(), false)]
+        );
     }
 }

@@ -125,9 +125,7 @@ fn initialize_computes_flags_from_bool_fields() {
         ..Default::default()
     };
     initialize(&mut c, s).unwrap();
-    assert!(c
-        .flags
-        .contains(super::PseudoConsoleFlags::INHERIT_CURSOR));
+    assert!(c.flags.contains(super::PseudoConsoleFlags::INHERIT_CURSOR));
 }
 
 /// Gap #6 — `ambiguous_is_wide=true` → set `AMBIGUOUS_IS_WIDE` bit.
@@ -195,9 +193,7 @@ fn launch_env_block_includes_wt_session() {
     };
     let block = super::lifecycle::build_env_block(&s);
     // Decode UTF-16 block → ASCII string contain `WT_SESSION=`
-    let decoded: String = String::from_utf16_lossy(
-        block.split(|&b| b == 0).next().unwrap_or(&[]),
-    );
+    let decoded: String = String::from_utf16_lossy(block.split(|&b| b == 0).next().unwrap_or(&[]));
     let whole: String = String::from_utf16_lossy(
         &block
             .iter()
@@ -230,7 +226,10 @@ fn launch_env_block_includes_wt_profile_id_when_some() {
             .copied()
             .collect::<Vec<u16>>(),
     );
-    assert!(whole.contains("WT_PROFILE_ID="), "env block phải có WT_PROFILE_ID=");
+    assert!(
+        whole.contains("WT_PROFILE_ID="),
+        "env block phải có WT_PROFILE_ID="
+    );
 }
 
 /// Gap #7 — env empty AND reload_env=false → return empty Vec (caller pass `None`).

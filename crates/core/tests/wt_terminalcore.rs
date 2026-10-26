@@ -5,9 +5,9 @@
 //! (bufferHeight^2 + bufferHeight) > SHRT_MAX).
 //!
 //! Verbatim-in-intent port. WT dùng `MockScrollRenderEngine` therad `InvalidateScroll`
-//! + `_scrollBarNotification` shared. Ta dùng `Terminal::trigger_scroll_delta_slot`
-//! (`Rc<RefCell<Option<(i32,i32)>>>`) + `scroll_position_changed` callback
-//! (`Rc<RefCell<Option<(i32,i32,i32)>>>`). Multi value via `Box<dyn Fn>`.
+//! + `_scrollBarNotification` shared. Ta dùng:
+//!   (`Rc<RefCell<Option<(i32,i32)>>>`) + `scroll_position_changed` callback
+//!   (`Rc<RefCell<Option<(i32,i32,i32)>>>`). Multi value via `Box<dyn Fn>`.
 
 // Test name convention `wt_<suite>__<method>` (double underscore) — port
 // naming. non_snake_case intentional cho parity tracking.
@@ -28,15 +28,16 @@ const TERMINAL_HISTORY_LENGTH: i32 = 9001;
 /// (`ScrollTest.cpp:69-74`).
 type ScrollBarNotification = (i32, i32, i32);
 
-/// Khởi tạo terminal test fixture — port `MethodSetup` (`ScrollTest.cpp:98-116`).
-/// Trả (terminal, scroll_bar_shared, trigger_scroll_shared).
-fn make_terminal(
-    notify_on_circling: bool,
-) -> (
+/// Return type for test terminal fixture.
+type TerminalTestFixture = (
     Terminal,
     Rc<RefCell<Option<ScrollBarNotification>>>,
     Rc<RefCell<Option<(i32, i32)>>>,
-) {
+);
+
+/// Khởi tạo terminal test fixture — port `MethodSetup` (`ScrollTest.cpp:98-116`).
+/// Trả (terminal, scroll_bar_shared, trigger_scroll_shared).
+fn make_terminal(notify_on_circling: bool) -> TerminalTestFixture {
     let mut term = Terminal::new_with_marker(
         TestDummyMarker,
         (TERMINAL_VIEW_WIDTH, TERMINAL_VIEW_HEIGHT),
@@ -44,8 +45,7 @@ fn make_terminal(
     );
     term.always_notify_on_buffer_rotation(notify_on_circling);
 
-    let scroll_bar: Rc<RefCell<Option<ScrollBarNotification>>> =
-        Rc::new(RefCell::new(None));
+    let scroll_bar: Rc<RefCell<Option<ScrollBarNotification>>> = Rc::new(RefCell::new(None));
     let scroll_bar_for_cb = Rc::clone(&scroll_bar);
     term.set_scroll_position_changed_callback(Box::new(move |top, height, bottom| {
         *scroll_bar_for_cb.borrow_mut() = Some((top, height, bottom));
@@ -78,8 +78,7 @@ fn assert_row(
     let circled_buffer = row >= total_buffer_size - 1;
     // `expectScrollBarNotification` (line 184-185):
     //   (scrolled ∧ ¬circled) ∨ (circled ∧ notifyOnCircling)
-    let expect_scroll_bar = (scrolled && !circled_buffer)
-        || (circled_buffer && notify_on_circling);
+    let expect_scroll_bar = (scrolled && !circled_buffer) || (circled_buffer && notify_on_circling);
 
     if expect_scroll_bar {
         assert!(
@@ -97,12 +96,8 @@ fn assert_row(
     if scrolled && circled_buffer {
         let delta = trigger
             .borrow()
-            .expect(&format!("row {row}: expected trigger-scroll delta"));
-        assert_eq!(
-            delta,
-            (0, -1),
-            "row {row}: wrong trigger-scroll delta"
-        );
+            .unwrap_or_else(|| panic!("row {row}: expected trigger-scroll delta"));
+        assert_eq!(delta, (0, -1), "row {row}: wrong trigger-scroll delta");
     } else {
         assert!(
             trigger.borrow().is_none(),
@@ -112,22 +107,15 @@ fn assert_row(
 
     // Viewport values khi callback fire (line 216-233).
     if let Some((top, height, bottom)) = *scroll_bar.borrow() {
-        let expected_top = (row - TERMINAL_VIEW_HEIGHT + 2)
-            .clamp(0, TERMINAL_HISTORY_LENGTH);
+        let expected_top = (row - TERMINAL_VIEW_HEIGHT + 2).clamp(0, TERMINAL_HISTORY_LENGTH);
         let expected_height = TERMINAL_VIEW_HEIGHT;
         let expected_bottom = expected_top + TERMINAL_VIEW_HEIGHT;
-        assert_eq!(
-            top, expected_top,
-            "row {row}: ViewportTop mismatch"
-        );
+        assert_eq!(top, expected_top, "row {row}: ViewportTop mismatch");
         assert_eq!(
             height, expected_height,
             "row {row}: ViewportHeight mismatch"
         );
-        assert_eq!(
-            bottom, expected_bottom,
-            "row {row}: BufferHeight mismatch"
-        );
+        assert_eq!(bottom, expected_bottom, "row {row}: BufferHeight mismatch");
     }
 }
 
@@ -138,13 +126,7 @@ fn run_test_notify_scrolling(notify_on_circling: bool) {
     let total_buffer_size = term.total_buffer_height();
     // GH#5540 điểm nhấn: emit 2x totalBufferSize lines (~18000).
     for row in 0..(total_buffer_size * 2) {
-        assert_row(
-            row,
-            &mut term,
-            &scroll_bar,
-            &trigger,
-            notify_on_circling,
-        );
+        assert_row(row, &mut term, &scroll_bar, &trigger, notify_on_circling);
     }
 }
 

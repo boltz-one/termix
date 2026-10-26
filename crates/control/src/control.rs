@@ -82,7 +82,9 @@ impl TermControl {
             settings::appearance_enums::CursorShape::Bar => core::CursorShape::VerticalBar,
             settings::appearance_enums::CursorShape::Vintage => core::CursorShape::Legacy,
             settings::appearance_enums::CursorShape::Underscore => core::CursorShape::Underscore,
-            settings::appearance_enums::CursorShape::DoubleUnderscore => core::CursorShape::DoubleUnderscore,
+            settings::appearance_enums::CursorShape::DoubleUnderscore => {
+                core::CursorShape::DoubleUnderscore
+            }
             settings::appearance_enums::CursorShape::FilledBox => core::CursorShape::FullBox,
             settings::appearance_enums::CursorShape::EmptyBox => core::CursorShape::EmptyBox,
         };
@@ -91,7 +93,12 @@ impl TermControl {
         // before `Start` so first output not dropped.
         core.initialize();
         // Profile `cursorShape` (programs change it later with DECSCUSR).
-        core.engine.dispatch.terminal.get_cursor_mut().set_style(shape);
+        core.engine
+            .dispatch
+            .terminal
+            .get_cursor_mut()
+            .set_style(shape);
+        #[allow(clippy::arc_with_non_send_sync)]
         let core = Arc::new(Mutex::new(core));
         let interactivity = ControlInteractivity::new(core, key_mapping);
         Self {
@@ -144,9 +151,19 @@ impl TermControl {
     /// Toggle the cursor blink phase (`TermControl::_CursorTimer`).
     fn spawn_blink(cx: &mut gpui::Context<Self>) -> gpui::Task<()> {
         cx.spawn(async move |this, cx| loop {
-            cx.background_executor().timer(std::time::Duration::from_millis(530)).await;
+            cx.background_executor()
+                .timer(std::time::Duration::from_millis(530))
+                .await;
             let alive = this.update(cx, |this, cx| {
-                let blinking = this.interactivity.core.lock().engine.dispatch.terminal.get_cursor().is_blinking();
+                let blinking = this
+                    .interactivity
+                    .core
+                    .lock()
+                    .engine
+                    .dispatch
+                    .terminal
+                    .get_cursor()
+                    .is_blinking();
                 if blinking {
                     this.view.cursor_on = !this.view.cursor_on;
                     cx.notify();
@@ -165,7 +182,8 @@ impl TermControl {
 
     /// "[press Ctrl+D to close]": ask the page to close this pane.
     pub(crate) fn request_close(&self) {
-        self.closed.store(true, std::sync::atomic::Ordering::Release);
+        self.closed
+            .store(true, std::sync::atomic::Ordering::Release);
     }
 
     /// True once the shell has exited (connection `Closed`/`Failed`).
@@ -349,8 +367,14 @@ impl gpui::EntityInputHandler for TermControl {
         _window: &mut gpui::Window,
         _cx: &mut gpui::Context<Self>,
     ) -> Option<gpui::UTF16Selection> {
-        let end = self.preedit.as_ref().map_or(0, |p| p.encode_utf16().count());
-        Some(gpui::UTF16Selection { range: end..end, reversed: false })
+        let end = self
+            .preedit
+            .as_ref()
+            .map_or(0, |p| p.encode_utf16().count());
+        Some(gpui::UTF16Selection {
+            range: end..end,
+            reversed: false,
+        })
     }
 
     fn marked_text_range(
@@ -415,9 +439,20 @@ impl gpui::EntityInputHandler for TermControl {
         if f32::from(m.cell_w) <= 0.0 {
             return Some(element_bounds);
         }
-        let (x, y) = self.interactivity.core.lock().engine.dispatch.terminal.get_cursor().get_position();
+        let (x, y) = self
+            .interactivity
+            .core
+            .lock()
+            .engine
+            .dispatch
+            .terminal
+            .get_cursor()
+            .get_position();
         Some(gpui::Bounds::new(
-            gpui::point(m.origin.x + m.cell_w * x.max(0) as f32, m.origin.y + m.line_h * y.max(0) as f32),
+            gpui::point(
+                m.origin.x + m.cell_w * x.max(0) as f32,
+                m.origin.y + m.line_h * y.max(0) as f32,
+            ),
             gpui::size(m.cell_w, m.line_h),
         ))
     }

@@ -68,9 +68,21 @@ impl Pane {
     /// Build the element tree. `active` gets the accent border when there is
     /// more than one pane; clicking a pane calls `on_activate`, pressing a
     /// divider calls `on_drag`.
-    pub fn element(&self, active: EntityId, on_activate: &ActivateCb, on_drag: &DragStartCb) -> AnyElement {
+    pub fn element(
+        &self,
+        active: EntityId,
+        on_activate: &ActivateCb,
+        on_drag: &DragStartCb,
+    ) -> AnyElement {
         let multi = !self.is_leaf();
-        node_element(&self.root, &mut Vec::new(), active, multi, on_activate, on_drag)
+        node_element(
+            &self.root,
+            &mut Vec::new(),
+            active,
+            multi,
+            on_activate,
+            on_drag,
+        )
     }
 
     /// Zoomed view: only the active pane, filling the tab (`TogglePaneZoom`).
@@ -80,10 +92,19 @@ impl Pane {
     }
 }
 
-fn leaf_element(control: &Entity<TermControl>, active: EntityId, multi: bool, cb: &ActivateCb) -> AnyElement {
+fn leaf_element(
+    control: &Entity<TermControl>,
+    active: EntityId,
+    multi: bool,
+    cb: &ActivateCb,
+) -> AnyElement {
     let id = control.entity_id();
     let cb = cb.clone();
-    let border = if multi && id == active { rgb(ACTIVE_BORDER) } else { rgb(PANE_BG) };
+    let border = if multi && id == active {
+        rgb(ACTIVE_BORDER)
+    } else {
+        rgb(PANE_BG)
+    };
     div()
         .size_full()
         .flex_1()
@@ -108,7 +129,12 @@ fn node_element(
 ) -> AnyElement {
     match node {
         Node::Leaf(control) => leaf_element(control, active, multi, cb),
-        Node::Split { direction, pct, first, second } => {
+        Node::Split {
+            direction,
+            pct,
+            first,
+            second,
+        } => {
             path.push(false);
             let a = node_element(first, path, active, multi, cb, drag);
             path.pop();
@@ -122,13 +148,13 @@ fn node_element(
             let drag_path = path.clone();
             let drag = drag.clone();
             // Panes are flush; the divider is an invisible handle over the seam.
-            let handle = div()
-                .id(("pane-divider", key))
-                .absolute()
-                .on_mouse_down(MouseButton::Left, move |_, w, cx| {
+            let handle = div().id(("pane-divider", key)).absolute().on_mouse_down(
+                MouseButton::Left,
+                move |_, w, cx| {
                     cx.stop_propagation();
                     drag(drag_path.clone(), w, cx);
-                });
+                },
+            );
             let container = div().relative().size_full().flex();
             if vertical {
                 container
@@ -186,6 +212,9 @@ mod tests {
         let c2 = app.new_entity(|_| crate::downstream::TermControl);
         pane.split(crate::tab::SplitDirection::Vertical, c2);
         assert!(!pane.is_leaf());
-        assert_eq!(pane.split_direction(), Some(crate::tab::SplitDirection::Vertical));
+        assert_eq!(
+            pane.split_direction(),
+            Some(crate::tab::SplitDirection::Vertical)
+        );
     }
 }

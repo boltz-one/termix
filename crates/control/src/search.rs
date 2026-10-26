@@ -45,12 +45,16 @@ pub fn find_all(buf: &TextBuffer, query: &str, case_sensitive: bool) -> Vec<Matc
     while abs < total {
         // Logical line: rows joined while the row wraps into the next one.
         let mut cells: Vec<Cell> = Vec::new();
-        loop {
-            let Some(row) = buf.row_abs(abs) else { break };
+        while let Some(row) = buf.row_abs(abs) {
             let id = buf.scrollback_dropped + abs;
             for (col, &(ch, w)) in row.glyphs().iter().enumerate() {
                 if w != 0 {
-                    cells.push(Cell { ch, id, col, width: w as usize });
+                    cells.push(Cell {
+                        ch,
+                        id,
+                        col,
+                        width: w as usize,
+                    });
                 }
             }
             abs += 1;
@@ -68,14 +72,24 @@ pub fn find_all(buf: &TextBuffer, query: &str, case_sensitive: bool) -> Vec<Matc
                         Some((id, _, end)) if *id == c.id => *end = c.col + c.width,
                         _ => {
                             if let Some((id, col, end)) = part.take() {
-                                out.push(Match { id, col, len: end - col, group });
+                                out.push(Match {
+                                    id,
+                                    col,
+                                    len: end - col,
+                                    group,
+                                });
                             }
                             part = Some((c.id, c.col, c.col + c.width));
                         }
                     }
                 }
                 if let Some((id, col, end)) = part {
-                    out.push(Match { id, col, len: end - col, group });
+                    out.push(Match {
+                        id,
+                        col,
+                        len: end - col,
+                        group,
+                    });
                 }
                 group += 1;
                 i += needle.len();
@@ -120,14 +134,22 @@ mod tests {
     }
 
     fn part(id: usize, col: usize, len: usize, group: usize) -> Match {
-        Match { id, col, len, group }
+        Match {
+            id,
+            col,
+            len,
+            group,
+        }
     }
 
     #[test]
     fn finds_case_insensitively_across_rows_and_history() {
         let mut b = buf(&["Foo foo", "none", "FOO"]);
         b.increment_circular_buffer(&TextAttribute::default()); // "Foo foo" -> history
-        assert_eq!(find_all(&b, "foo", false), vec![part(0, 0, 3, 0), part(0, 4, 3, 1), part(2, 0, 3, 2)]);
+        assert_eq!(
+            find_all(&b, "foo", false),
+            vec![part(0, 0, 3, 0), part(0, 4, 3, 1), part(2, 0, 3, 2)]
+        );
         assert_eq!(group_count(&find_all(&b, "foo", true)), 1, "case sensitive");
         assert!(find_all(&b, "", false).is_empty());
     }
@@ -141,7 +163,10 @@ mod tests {
         let m = find_all(&b, "efgh", false);
         assert_eq!(m, vec![part(0, 4, 2, 0), part(1, 0, 2, 0)]);
         assert_eq!(group_count(&m), 1);
-        assert!(find_all(&b, "efgh", false).len() == 2 && find_all(&buf(&["abcdef", "ghi"]), "efgh", false).is_empty());
+        assert!(
+            find_all(&b, "efgh", false).len() == 2
+                && find_all(&buf(&["abcdef", "ghi"]), "efgh", false).is_empty()
+        );
     }
 
     #[test]

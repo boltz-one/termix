@@ -8,7 +8,7 @@
 //! Handle leak check: `WaitForSingleObject(hConPtyProcess, 3000)` ở WT →
 //! simplified, chỉ verify state machine + no panic.
 
-use connection::{ConptyConnection, ConptySettings, ConnectionState, ITerminalConnection};
+use connection::{ConnectionState, ConptyConnection, ConptySettings, ITerminalConnection};
 
 #[allow(non_snake_case)]
 #[test]

@@ -5,7 +5,7 @@
 //! start() với `initial_rows=0` OR `initial_cols=0` → CreatePseudoConsole fail
 //! trong `lifecycle::start()`, transition_to_state(Failed), no handle leak.
 
-use connection::{ConptyConnection, ConptySettings, ConnectionState, ITerminalConnection};
+use connection::{ConnectionState, ConptyConnection, ConptySettings, ITerminalConnection};
 
 #[allow(non_snake_case)]
 #[test]
@@ -37,7 +37,10 @@ fn winconpty__create_con_pty_bad_size_zero_cols_fails() {
     };
     conn.initialize(settings).unwrap();
     let result = conn.start();
-    assert!(result.is_err(), "size (0 cols) phải fail CreatePseudoConsole");
+    assert!(
+        result.is_err(),
+        "size (0 cols) phải fail CreatePseudoConsole"
+    );
     assert_eq!(conn.state(), ConnectionState::Failed);
 }
 
@@ -54,6 +57,9 @@ fn winconpty__create_con_pty_bad_size_zero_rows_fails() {
     };
     conn.initialize(settings).unwrap();
     let result = conn.start();
-    assert!(result.is_err(), "size (0 rows) phải fail CreatePseudoConsole");
+    assert!(
+        result.is_err(),
+        "size (0 rows) phải fail CreatePseudoConsole"
+    );
     assert_eq!(conn.state(), ConnectionState::Failed);
 }

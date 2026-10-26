@@ -137,7 +137,11 @@ fn fuzzy_match_v2(text: &[char], pattern: &[char]) -> (i32, Vec<usize>) {
             }
             in_gap = false;
         } else {
-            let gap = if in_gap { SCORE_GAP_EXTENSION } else { SCORE_GAP_START };
+            let gap = if in_gap {
+                SCORE_GAP_EXTENSION
+            } else {
+                SCORE_GAP_START
+            };
             initial[i] = (prev_initial + gap).max(0);
             consecutive_scores[i] = 0;
             in_gap = true;
@@ -171,7 +175,12 @@ fn fuzzy_match_v2(text: &[char], pattern: &[char]) -> (i32, Vec<usize>) {
             let ch = folded[pco + j];
             let col = pco + j;
             let left = score_m[base + j - 1];
-            let score = left + if in_gap { SCORE_GAP_EXTENSION } else { SCORE_GAP_START };
+            let score = left
+                + if in_gap {
+                    SCORE_GAP_EXTENSION
+                } else {
+                    SCORE_GAP_START
+                };
             let (mut diag, mut consec) = (0i32, 0i32);
             if ch == pc {
                 diag = score_m[base + j - 1 - width] + SCORE_MATCH;
@@ -180,7 +189,9 @@ fn fuzzy_match_v2(text: &[char], pattern: &[char]) -> (i32, Vec<usize>) {
                 if bonus == BOUNDARY_BONUS {
                     consec = 1;
                 } else if consec > 1 {
-                    bonus = bonus.max(BONUS_CONSECUTIVE).max(bonuses[col + 1 - consec as usize]);
+                    bonus = bonus
+                        .max(BONUS_CONSECUTIVE)
+                        .max(bonuses[col + 1 - consec as usize]);
                 }
                 if diag + bonus < score {
                     diag += bonuses[col];
@@ -219,7 +230,11 @@ fn fuzzy_match_v2(text: &[char], pattern: &[char]) -> (i32, Vec<usize>) {
         } else {
             0
         };
-        let left = if col > first_occ[pi] as isize { score_m[at - 1] } else { 0 };
+        let left = if col > first_occ[pi] as isize {
+            score_m[at - 1]
+        } else {
+            0
+        };
         if cell > diag && (cell > left || (cell == left && prefer_current)) {
             pos.push(col as usize);
             if pi == 0 {
@@ -231,8 +246,8 @@ fn fuzzy_match_v2(text: &[char], pattern: &[char]) -> (i32, Vec<usize>) {
         if at >= size {
             break;
         }
-        prefer_current = consec_m[at] > 1
-            || (at + width + 1 < size && consec_m[at + width + 1] > 0);
+        prefer_current =
+            consec_m[at] > 1 || (at + width + 1 < size && consec_m[at + width + 1] > 0);
     }
     (max_score, pos)
 }
@@ -275,12 +290,18 @@ pub fn match_text(text: &str, pattern: &Pattern) -> Option<MatchResult> {
             run_start.get_or_insert(u16_off);
             next += 1;
         } else if let Some(start) = run_start.take() {
-            runs.push(TextRun { start, end: u16_off - 1 });
+            runs.push(TextRun {
+                start,
+                end: u16_off - 1,
+            });
         }
         u16_off += c.len_utf16();
     }
     if let Some(start) = run_start {
-        runs.push(TextRun { start, end: u16_off - 1 });
+        runs.push(TextRun {
+            start,
+            end: u16_off - 1,
+        });
     }
     Some(MatchResult { score: total, runs })
 }

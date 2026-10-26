@@ -59,7 +59,11 @@ fn word_bounds(chars: &[char], col: usize) -> (usize, usize) {
 
 impl Selection {
     pub fn new(at: Cell, granularity: Granularity) -> Self {
-        Self { anchor: at, head: at, granularity }
+        Self {
+            anchor: at,
+            head: at,
+            granularity,
+        }
     }
 
     pub fn granularity(&self) -> Granularity {
@@ -73,7 +77,11 @@ impl Selection {
 
     /// Normalised `(start, end)` inclusive, expanded for word/line modes.
     pub fn ordered(&self, buf: &TextBuffer) -> (Cell, Cell) {
-        let (mut a, mut b) = if self.anchor <= self.head { (self.anchor, self.head) } else { (self.head, self.anchor) };
+        let (mut a, mut b) = if self.anchor <= self.head {
+            (self.anchor, self.head)
+        } else {
+            (self.head, self.anchor)
+        };
         match self.granularity {
             Granularity::Char => {}
             Granularity::Word => {
@@ -104,9 +112,15 @@ impl Selection {
         let (a, b) = self.ordered(buf);
         let mut out = String::new();
         for id in a.id..=b.id {
-            let Some(cells) = row_cells(buf, id) else { continue };
+            let Some(cells) = row_cells(buf, id) else {
+                continue;
+            };
             let from = if id == a.id { a.col } else { 0 };
-            let to = if id == b.id { b.col.saturating_add(1).min(cells.len()) } else { cells.len() };
+            let to = if id == b.id {
+                b.col.saturating_add(1).min(cells.len())
+            } else {
+                cells.len()
+            };
             let mut line: String = cells
                 .get(from..to.max(from))
                 .unwrap_or(&[])
@@ -114,7 +128,9 @@ impl Selection {
                 .filter(|(_, w)| *w != 0)
                 .map(|(c, _)| *c)
                 .collect();
-            let wrapped = buf.row_abs(id - buf.scrollback_dropped).is_some_and(|r| r.wrap_forced);
+            let wrapped = buf
+                .row_abs(id - buf.scrollback_dropped)
+                .is_some_and(|r| r.wrap_forced);
             if !wrapped || id == b.id {
                 line = line.trim_end().to_string();
             }
@@ -183,6 +199,10 @@ mod tests {
         b.scrollback_limit = 1;
         b.increment_circular_buffer(&TextAttribute::default()); // "two" -> history, "one" dropped
         let s = Selection::new(cell(1, 0), Granularity::Line);
-        assert_eq!(s.text(&b), "two", "id 1 still names the same row after trimming");
+        assert_eq!(
+            s.text(&b),
+            "two",
+            "id 1 still names the same row after trimming"
+        );
     }
 }

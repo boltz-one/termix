@@ -29,7 +29,12 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub const UNIT: Rect = Rect { x: 0.0, y: 0.0, w: 1.0, h: 1.0 };
+    pub const UNIT: Rect = Rect {
+        x: 0.0,
+        y: 0.0,
+        w: 1.0,
+        h: 1.0,
+    };
     fn right(&self) -> f32 {
         self.x + self.w
     }
@@ -41,7 +46,12 @@ impl Rect {
 pub enum Node<L> {
     Leaf(L),
     /// `Vertical` = side by side (vertical divider), `Horizontal` = stacked.
-    Split { direction: SplitDirection, pct: u8, first: Box<Node<L>>, second: Box<Node<L>> },
+    Split {
+        direction: SplitDirection,
+        pct: u8,
+        first: Box<Node<L>>,
+        second: Box<Node<L>>,
+    },
     /// Transient value while a node is being moved; never observable.
     Empty,
 }
@@ -59,8 +69,22 @@ const EPS: f32 = 1e-4;
 fn split_rects(direction: SplitDirection, pct: u8, r: Rect) -> (Rect, Rect) {
     let p = pct as f32 / 100.0;
     match direction {
-        SplitDirection::Vertical => (Rect { w: r.w * p, ..r }, Rect { x: r.x + r.w * p, w: r.w * (1.0 - p), ..r }),
-        _ => (Rect { h: r.h * p, ..r }, Rect { y: r.y + r.h * p, h: r.h * (1.0 - p), ..r }),
+        SplitDirection::Vertical => (
+            Rect { w: r.w * p, ..r },
+            Rect {
+                x: r.x + r.w * p,
+                w: r.w * (1.0 - p),
+                ..r
+            },
+        ),
+        _ => (
+            Rect { h: r.h * p, ..r },
+            Rect {
+                y: r.y + r.h * p,
+                h: r.h * (1.0 - p),
+                ..r
+            },
+        ),
     }
 }
 
@@ -79,7 +103,12 @@ impl<L: Leaf> Node<L> {
     fn layout(&self, r: Rect, out: &mut Vec<(L::Id, Rect)>) {
         match self {
             Node::Leaf(l) => out.push((l.id(), r)),
-            Node::Split { direction, pct, first, second } => {
+            Node::Split {
+                direction,
+                pct,
+                first,
+                second,
+            } => {
                 let (a, b) = split_rects(*direction, *pct, r);
                 first.layout(a, out);
                 second.layout(b, out);
@@ -90,17 +119,35 @@ impl<L: Leaf> Node<L> {
 
     /// Rect of the node at `path` (false = first child, true = second).
     fn rect_at(&self, path: &[bool], r: Rect) -> Option<Rect> {
-        let Some((&step, rest)) = path.split_first() else { return Some(r) };
-        let Node::Split { direction, pct, first, second } = self else { return None };
+        let Some((&step, rest)) = path.split_first() else {
+            return Some(r);
+        };
+        let Node::Split {
+            direction,
+            pct,
+            first,
+            second,
+        } = self
+        else {
+            return None;
+        };
         let (a, b) = split_rects(*direction, *pct, r);
-        if step { second.rect_at(rest, b) } else { first.rect_at(rest, a) }
+        if step {
+            second.rect_at(rest, b)
+        } else {
+            first.rect_at(rest, a)
+        }
     }
 
     fn split_at_mut(&mut self, path: &[bool]) -> Option<(&mut SplitDirection, &mut u8)> {
         match (path.split_first(), self) {
             (None, Node::Split { direction, pct, .. }) => Some((direction, pct)),
             (Some((&step, rest)), Node::Split { first, second, .. }) => {
-                if step { second.split_at_mut(rest) } else { first.split_at_mut(rest) }
+                if step {
+                    second.split_at_mut(rest)
+                } else {
+                    first.split_at_mut(rest)
+                }
             }
             _ => None,
         }
@@ -135,7 +182,9 @@ impl<L: Leaf> Node<L> {
     fn split_leaf(&mut self, id: L::Id, direction: SplitDirection, new: &mut Option<L>) -> bool {
         match self {
             Node::Leaf(l) if l.id() == id => {
-                let Some(new_leaf) = new.take() else { return false };
+                let Some(new_leaf) = new.take() else {
+                    return false;
+                };
                 let old = std::mem::replace(self, Node::Empty);
                 *self = Node::Split {
                     direction,
@@ -153,7 +202,9 @@ impl<L: Leaf> Node<L> {
     }
 
     fn close_leaf(&mut self, id: L::Id) -> bool {
-        let Node::Split { first, second, .. } = self else { return false };
+        let Node::Split { first, second, .. } = self else {
+            return false;
+        };
         let is_leaf = |n: &Node<L>| matches!(n, Node::Leaf(l) if l.id() == id);
         let sibling = if is_leaf(first) {
             std::mem::replace(&mut **second, Node::Empty)
@@ -169,8 +220,18 @@ impl<L: Leaf> Node<L> {
     /// Move the nearest matching-axis divider above `id` by `delta` percent
     /// in `dir` (Right/Down grow the first child).
     fn resize(&mut self, id: L::Id, dir: Direction, delta: i16) -> bool {
-        let Node::Split { direction, pct, first, second } = self else { return false };
-        if (first.has(id) && first.resize(id, dir, delta)) || (second.has(id) && second.resize(id, dir, delta)) {
+        let Node::Split {
+            direction,
+            pct,
+            first,
+            second,
+        } = self
+        else {
+            return false;
+        };
+        if (first.has(id) && first.resize(id, dir, delta))
+            || (second.has(id) && second.resize(id, dir, delta))
+        {
             return true;
         }
         let axis_matches = match direction {
@@ -193,7 +254,10 @@ impl<L: Leaf + Clone> PaneTree<L> {
     /// Exchange the positions of leaves `a` and `b`.
     pub fn swap(&mut self, a: L::Id, b: L::Id) -> bool {
         let ids: Vec<L::Id> = self.leaves().iter().map(|l| l.id()).collect();
-        let (Some(i), Some(j)) = (ids.iter().position(|x| *x == a), ids.iter().position(|x| *x == b)) else {
+        let (Some(i), Some(j)) = (
+            ids.iter().position(|x| *x == a),
+            ids.iter().position(|x| *x == b),
+        ) else {
             return false;
         };
         let (la, lb) = (self.leaves()[i].clone(), self.leaves()[j].clone());
@@ -205,7 +269,9 @@ impl<L: Leaf + Clone> PaneTree<L> {
 
 impl<L: Leaf> PaneTree<L> {
     pub fn new(leaf: L) -> Self {
-        Self { root: Node::Leaf(leaf) }
+        Self {
+            root: Node::Leaf(leaf),
+        }
     }
 
     pub fn leaves(&self) -> Vec<&L> {
@@ -276,13 +342,19 @@ impl<L: Leaf> PaneTree<L> {
             .filter_map(|(id, o)| {
                 let (dist, ov) = match dir {
                     Direction::Left => (r.x - o.right(), overlap(r.y, r.bottom(), o.y, o.bottom())),
-                    Direction::Right => (o.x - r.right(), overlap(r.y, r.bottom(), o.y, o.bottom())),
+                    Direction::Right => {
+                        (o.x - r.right(), overlap(r.y, r.bottom(), o.y, o.bottom()))
+                    }
                     Direction::Up => (r.y - o.bottom(), overlap(r.x, r.right(), o.x, o.right())),
                     Direction::Down => (o.y - r.bottom(), overlap(r.x, r.right(), o.x, o.right())),
                 };
                 (dist > -EPS && ov > EPS).then_some((*id, dist, ov))
             })
-            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap().then(b.2.partial_cmp(&a.2).unwrap()))
+            .min_by(|a, b| {
+                a.1.partial_cmp(&b.1)
+                    .unwrap()
+                    .then(b.2.partial_cmp(&a.2).unwrap())
+            })
             .map(|(id, ..)| id)
     }
 }
@@ -323,7 +395,13 @@ mod tests {
     fn wt_app__pane_close_gives_space_to_sibling() {
         let mut t = three();
         assert!(t.close_leaf(3));
-        assert_eq!(t.layout().iter().map(|(i, r)| (*i, r.w)).collect::<Vec<_>>(), vec![(1, 0.5), (2, 0.5)]);
+        assert_eq!(
+            t.layout()
+                .iter()
+                .map(|(i, r)| (*i, r.w))
+                .collect::<Vec<_>>(),
+            vec![(1, 0.5), (2, 0.5)]
+        );
         assert!(t.close_leaf(1));
         assert_eq!(ids(&t), [2]);
         assert!(!t.close_leaf(2), "last pane cannot be closed by the tree");
@@ -340,14 +418,15 @@ mod tests {
         assert_eq!(t.neighbour(1, Direction::Down), None);
     }
 
+    impl Leaf for (u32, u8) {
+        type Id = u32;
+        fn id(&self) -> u32 {
+            self.0
+        }
+    }
+
     #[test]
     fn wt_app__pane_swap_and_divider_drag() {
-        impl Leaf for (u32, u8) {
-            type Id = u32;
-            fn id(&self) -> u32 {
-                self.0
-            }
-        }
         let mut t = PaneTree::new((1u32, 0u8));
         t.split_leaf(1, SplitDirection::Vertical, (2, 0));
         t.split_leaf(2, SplitDirection::Horizontal, (3, 0));
@@ -372,7 +451,10 @@ mod tests {
         assert_eq!(t.layout()[0].1.w, 0.55);
         assert!(t.resize(3, Direction::Up)); // horizontal split 2/3 → 2 shrinks
         assert!(t.layout()[1].1.h < 0.5);
-        assert!(!t.resize(1, Direction::Down), "no horizontal divider above pane 1");
+        assert!(
+            !t.resize(1, Direction::Down),
+            "no horizontal divider above pane 1"
+        );
         for _ in 0..20 {
             t.resize(1, Direction::Left);
         }

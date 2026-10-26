@@ -1,9 +1,9 @@
 //! IME composition lifecycle of `TermControl` (preedit shown, then committed).
-use gpui::{EntityInputHandler, TestAppContext};
 use app::null_render_engine::NullRenderEngine;
 use connection::ConptyConnection;
 use control::{KeyMapping, TermControl};
 use core::{TextAttribute, TextBuffer};
+use gpui::{EntityInputHandler, TestAppContext};
 use settings::Profile;
 
 #[gpui::test]
@@ -23,7 +23,10 @@ fn preedit_is_marked_then_cleared_on_commit(cx: &mut TestAppContext) {
             assert_eq!(t.marked_text_range(window, cx), None);
             t.replace_and_mark_text_in_range(None, "\u{3105}\u{3106}", None, window, cx);
             assert_eq!(t.marked_text_range(window, cx), Some(0..2));
-            assert_eq!(t.selected_text_range(false, window, cx).unwrap().range, 2..2);
+            assert_eq!(
+                t.selected_text_range(false, window, cx).unwrap().range,
+                2..2
+            );
             // A longer composition replaces the previous one.
             t.replace_and_mark_text_in_range(None, "\u{4F60}\u{597D}\u{5417}", None, window, cx);
             assert_eq!(t.marked_text_range(window, cx), Some(0..3));

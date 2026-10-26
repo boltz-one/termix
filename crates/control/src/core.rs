@@ -26,12 +26,12 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::Receiver;
 use connection::{ConnectionState, ITerminalConnection};
 use core::dispatch::interact_impl::{HostContext, TerminalInteractDispatch};
 use core::dispatch::td::TerminalDispatch;
 use core::parser::OutputStateMachineEngine;
 use core::TextBuffer;
+use crossbeam_channel::Receiver;
 use settings::Profile;
 
 /// Resize the buffer and re-sync everything the dispatch derives from the page
@@ -195,7 +195,7 @@ impl ControlCore {
 
     /// Port `ControlCore::Close` `ControlCore.cpp:680-760`: connection.close()
     /// + final teardown + join output thread. Returns Result; caller spawn
-    /// `Task` phải detach hoặc giữ.
+    ///   `Task` phải detach hoặc giữ.
     pub fn close(&mut self) -> anyhow::Result<()> {
         self.connection.close()
     }

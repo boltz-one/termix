@@ -44,7 +44,10 @@ pub struct TabItem {
 
 impl TabItem {
     pub fn new(title: impl Into<String>) -> Self {
-        Self { title: title.into(), status: TabStatus::default() }
+        Self {
+            title: title.into(),
+            status: TabStatus::default(),
+        }
     }
 
     /// Title hiển thị; rỗng → "Terminal" (control chưa raise `TitleChanged`).
@@ -201,7 +204,11 @@ mod tests {
 
     #[test]
     fn status_glyph_order() {
-        let s = TabStatus { bell: true, read_only: true, ..Default::default() };
+        let s = TabStatus {
+            bell: true,
+            read_only: true,
+            ..Default::default()
+        };
         assert_eq!(s.glyphs(), vec!['\u{EA8F}', '\u{E72E}']);
         assert_eq!(TabItem::new("").display_title(), "Terminal");
     }

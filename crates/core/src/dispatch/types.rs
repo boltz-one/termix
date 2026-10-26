@@ -79,9 +79,9 @@ impl ReportingPermission {
 /// Only LNM (20) và IRM (4) là ANSI standard mode — phần còn lại là `DECPrivateMode`.
 pub fn ansi_standard_mode_from_i32(v: i32) -> ModeParams {
     match v {
-        4 => ModeParams::InsertReplaceMode,        // IRM
+        4 => ModeParams::InsertReplaceMode,       // IRM
         20 => ModeParams::LnmLineFeedNewLineMode, // LNM
-        _ => ModeParams::Unknown,                  // off-spec ANSI mode — WT tương tự Unknown.
+        _ => ModeParams::Unknown,                 // off-spec ANSI mode — WT tương tự Unknown.
     }
 }
 
@@ -103,12 +103,12 @@ pub fn dec_private_mode_from_i32(v: i32) -> ModeParams {
         47 => ModeParams::AlternateScreenBuffer,
         1047 => ModeParams::AlternateScreenBuffer,
         1049 => ModeParams::AlternateScreenBuffer,
-        1000 => ModeParams::MouseTracking,    // VT200_MOUSE
+        1000 => ModeParams::MouseTracking, // VT200_MOUSE
         1002 => ModeParams::ButtonEventMouseTracking, // BUTTON_EVENT_MOUSE
         1003 => ModeParams::AnyEventMouseTracking,
         1004 => ModeParams::FocusEvent,
         1005 => ModeParams::Utf8MouseEncoding, // UTF8_EXTENDED
-        1006 => ModeParams::SgrMouseTracking, // SGR_EXTENDED
+        1006 => ModeParams::SgrMouseTracking,  // SGR_EXTENDED
         1007 => ModeParams::AlternateScroll,
         2004 => ModeParams::BracketedPaste, // XTERM_BracketedPaste
         _ => ModeParams::Unknown,           // off-spec — WT cũng drop.
@@ -267,27 +267,27 @@ pub enum StatusType {
 pub enum ModeParams {
     #[default]
     Unknown,
-    InsertReplaceMode,       // IRM (4)
+    InsertReplaceMode,      // IRM (4)
     LnmLineFeedNewLineMode, // LNM (20) ANSI — Wave 0 add
-    CursorVisibilityMode,    // DECTCEM (25)
-    OriginModeRelative,      // DECOM (6)
-    ColumnMode132,           // DECCOLM (3)
+    CursorVisibilityMode,   // DECTCEM (25)
+    OriginModeRelative,     // DECOM (6)
+    ColumnMode132,          // DECCOLM (3)
     ColumnMode80,
-    AutoWrapMode,          // DECAWM (7)
-    AutoRepeatMode,        // DECARM (8)
-    NumericKeypadMode,     // DECNKM (66)
-    BackarrowKeyMode,      // DECBKM (67)
-    ApplicationCursorMode, // DECCKM (1)
-    AlternateScreenBuffer, // ?47,1047,1049
-    ReverseColors,         // ?5
-    BracketedPaste,        // 2004
-    FocusEvent,            // 1004
-    MouseTracking,         // 1000..1006
+    AutoWrapMode,             // DECAWM (7)
+    AutoRepeatMode,           // DECARM (8)
+    NumericKeypadMode,        // DECNKM (66)
+    BackarrowKeyMode,         // DECBKM (67)
+    ApplicationCursorMode,    // DECCKM (1)
+    AlternateScreenBuffer,    // ?47,1047,1049
+    ReverseColors,            // ?5
+    BracketedPaste,           // 2004
+    FocusEvent,               // 1004
+    MouseTracking,            // 1000..1006
     ButtonEventMouseTracking, // 1002
-    Utf8MouseEncoding,     // 1005
-    SgrMouseTracking,      // 1006
-    AnyEventMouseTracking, // 1003
-    AlternateScroll,       // 1007
+    Utf8MouseEncoding,        // 1005
+    SgrMouseTracking,         // 1006
+    AnyEventMouseTracking,    // 1003
+    AlternateScroll,          // 1007
 }
 
 /// `GraphicsOptions` — port `DispatchTypes::GraphicsOptions`

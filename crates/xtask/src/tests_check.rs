@@ -40,7 +40,8 @@ pub fn join_only(errors: &mut Vec<String>) -> BTreeMap<String, u32> {
         Err(_) => std::collections::BTreeSet::new(),
     };
     for r in &all {
-        if r.status == "passing" && !r.rust_test.is_empty()
+        if r.status == "passing"
+            && !r.rust_test.is_empty()
             && !listed.iter().any(|n| n.contains(&r.rust_test))
         {
             errors.push(format!(

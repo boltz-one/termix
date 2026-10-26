@@ -569,7 +569,8 @@ impl<D: ITermDispatch> Perform for OutputStateMachineEngine<D> {
                 if self.last_printed_char != '\0' {
                     let raw = default_param(params, 0, 1);
                     let repeat_count = raw.max(1) as usize;
-                    let s: String = std::iter::repeat_n(self.last_printed_char, repeat_count).collect();
+                    let s: String =
+                        std::iter::repeat_n(self.last_printed_char, repeat_count).collect();
                     self.dispatch.print_string(&s);
                 }
             }

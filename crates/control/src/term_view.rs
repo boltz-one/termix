@@ -7,12 +7,12 @@ use std::cell::Cell as StdCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use core::CursorShape;
 use gpui::{
-    canvas, fill, outline, point, px, rgb, size, BorderStyle, Bounds, ElementInputHandler, Entity, FocusHandle, Font, Hsla,
-    IntoElement, Pixels, Point, Styled, Window,
+    canvas, fill, outline, point, px, rgb, size, BorderStyle, Bounds, ElementInputHandler, Entity,
+    FocusHandle, Font, Hsla, IntoElement, Pixels, Point, Styled, Window,
 };
 use parking_lot::Mutex;
-use core::CursorShape;
 
 use crate::control::TermControl;
 use crate::core::ControlCore;
@@ -78,11 +78,17 @@ fn pick_font_in(ts: &gpui::TextSystem, wanted: &str) -> Font {
         .to_string();
     let mut font = gpui::font(family);
     // CJK / emoji / symbols the terminal font lacks (WT `font.fallbacks` defaults).
-    let fallbacks: Vec<String> = ["Segoe UI Emoji", "Segoe UI Symbol", "Microsoft YaHei UI", "Yu Gothic UI", "Malgun Gothic"]
-        .into_iter()
-        .filter(|f| names.iter().any(|n| n == f))
-        .map(String::from)
-        .collect();
+    let fallbacks: Vec<String> = [
+        "Segoe UI Emoji",
+        "Segoe UI Symbol",
+        "Microsoft YaHei UI",
+        "Yu Gothic UI",
+        "Malgun Gothic",
+    ]
+    .into_iter()
+    .filter(|f| names.iter().any(|n| n == f))
+    .map(String::from)
+    .collect();
     if !fallbacks.is_empty() {
         font.fallbacks = Some(gpui::FontFallbacks::from_fonts(fallbacks));
     }
@@ -95,7 +101,11 @@ pub fn terminal_canvas(input: PaintInput) -> impl IntoElement {
         |bounds, _, _| bounds,
         move |bounds, _, window, cx| {
             // Text input (IME commit, Unicode, composed Vietnamese…) goes here.
-            window.handle_input(&input.focus, ElementInputHandler::new(bounds, input.entity.clone()), cx);
+            window.handle_input(
+                &input.focus,
+                ElementInputHandler::new(bounds, input.entity.clone()),
+                cx,
+            );
             let font = pick_font(window, &input.font_family);
             let font_size = px(input.font_px);
             let line_h = px((input.font_px * LINE_HEIGHT_FACTOR).round());
@@ -105,8 +115,12 @@ pub fn terminal_canvas(input: PaintInput) -> impl IntoElement {
                 .map(|s| s.width)
                 .unwrap_or(px(input.font_px * 0.6));
 
-            let cols = (f32::from(bounds.size.width) / f32::from(cell_w)).floor().max(1.0) as u16;
-            let rows = (f32::from(bounds.size.height) / f32::from(line_h)).floor().max(1.0) as u16;
+            let cols = (f32::from(bounds.size.width) / f32::from(cell_w))
+                .floor()
+                .max(1.0) as u16;
+            let rows = (f32::from(bounds.size.height) / f32::from(line_h))
+                .floor()
+                .max(1.0) as u16;
 
             let mut core = input.core.lock();
             if let Err(e) = core.size_changed(rows, cols) {
@@ -116,9 +130,22 @@ pub fn terminal_canvas(input: PaintInput) -> impl IntoElement {
             let buf = &core.engine.dispatch.terminal;
             let top_abs = input.view.top_abs(buf);
             let top_id = buf.scrollback_dropped + top_abs;
-            input.metrics.set(Metrics { origin: bounds.origin, cell_w, line_h, top_id, cols, rows });
+            input.metrics.set(Metrics {
+                origin: bounds.origin,
+                cell_w,
+                line_h,
+                top_id,
+                cols,
+                rows,
+            });
 
-            let grid = Grid { origin: bounds.origin, cell_w, line_h, font_size, cols: cols as usize };
+            let grid = Grid {
+                origin: bounds.origin,
+                cell_w,
+                line_h,
+                font_size,
+                cols: cols as usize,
+            };
             let palette = Palette::default();
             let selection = input.view.selection.map(|s| s.ordered(buf));
             let (matches, current) = match &input.view.search {
@@ -127,13 +154,19 @@ pub fn terminal_canvas(input: PaintInput) -> impl IntoElement {
             };
             for i in 0..rows as usize {
                 let abs = top_abs + i;
-                let Some(row) = buf.row_abs(abs) else { continue };
+                let Some(row) = buf.row_abs(abs) else {
+                    continue;
+                };
                 let id = buf.scrollback_dropped + abs;
                 let mut spans: Vec<Span> = Vec::new();
                 if let Some((a, b)) = selection {
                     if id >= a.id && id <= b.id {
                         let start = if id == a.id { a.col } else { 0 };
-                        let end = if id == b.id { b.col.saturating_add(1) } else { usize::MAX };
+                        let end = if id == b.id {
+                            b.col.saturating_add(1)
+                        } else {
+                            usize::MAX
+                        };
                         spans.push(selection_span(start, end));
                     }
                 }
@@ -152,23 +185,51 @@ pub fn terminal_canvas(input: PaintInput) -> impl IntoElement {
                 let thumb_h = (h * rows as f32 / total as f32).max(20.0);
                 let thumb_y = (h - thumb_h) * (top_abs as f32 / (total - rows as usize) as f32);
                 let thumb = Bounds::new(
-                    point(bounds.origin.x + bounds.size.width - px(6.), bounds.origin.y + px(thumb_y)),
+                    point(
+                        bounds.origin.x + bounds.size.width - px(6.),
+                        bounds.origin.y + px(thumb_y),
+                    ),
                     size(px(6.), px(thumb_h)),
                 );
-                window.paint_quad(fill(thumb, Hsla { a: 0.28, ..rgb(0xFFFFFF).into() }));
+                window.paint_quad(fill(
+                    thumb,
+                    Hsla {
+                        a: 0.28,
+                        ..rgb(0xFFFFFF).into()
+                    },
+                ));
             }
 
             // IME composition: boxed, underlined text starting at the cursor.
             if let Some(pre) = input.preedit.as_deref().filter(|p| !p.is_empty()) {
                 let (x, y) = buf.get_cursor().get_position();
-                draw_preedit(window, cx, &grid, &font, pre, x.max(0) as usize, y.max(0) as usize);
+                draw_preedit(
+                    window,
+                    cx,
+                    &grid,
+                    &font,
+                    pre,
+                    x.max(0) as usize,
+                    y.max(0) as usize,
+                );
             }
 
             // Cursor: only on the live page, honouring blink and shape.
             let cursor = buf.get_cursor();
-            if input.view.is_live() && cursor.is_visible() && (input.view.cursor_on || !input.focused || !cursor.is_blinking()) {
+            if input.view.is_live()
+                && cursor.is_visible()
+                && (input.view.cursor_on || !input.focused || !cursor.is_blinking())
+            {
                 let (cx_, cy) = cursor.get_position();
-                draw_cursor(window, &grid, cx_.max(0) as usize, cy.max(0) as usize, cursor.get_type(), cursor.get_size(), input.focused);
+                draw_cursor(
+                    window,
+                    &grid,
+                    cx_.max(0) as usize,
+                    cy.max(0) as usize,
+                    cursor.get_type(),
+                    cursor.get_size(),
+                    input.focused,
+                );
             }
         },
     )
@@ -177,7 +238,15 @@ pub fn terminal_canvas(input: PaintInput) -> impl IntoElement {
 
 /// Draw `text` cell by cell from `(col, row)`, over a lifted background and
 /// underlined, so the user sees what the IME is composing.
-fn draw_preedit(window: &mut Window, cx: &mut gpui::App, g: &Grid, font: &Font, text: &str, mut col: usize, row: usize) {
+fn draw_preedit(
+    window: &mut Window,
+    cx: &mut gpui::App,
+    g: &Grid,
+    font: &Font,
+    text: &str,
+    mut col: usize,
+    row: usize,
+) {
     use unicode_width::UnicodeWidthChar;
     let ts = window.text_system().clone();
     let fg: Hsla = rgb(0xFFFFFF).into();
@@ -186,25 +255,51 @@ fn draw_preedit(window: &mut Window, cx: &mut gpui::App, g: &Grid, font: &Font, 
         if col + w > g.cols {
             break;
         }
-        let origin = point(g.origin.x + g.cell_w * col as f32, g.origin.y + g.line_h * row as f32);
-        window.paint_quad(fill(Bounds::new(origin, size(g.cell_w * w as f32, g.line_h)), rgb(0x3A3A3A)));
+        let origin = point(
+            g.origin.x + g.cell_w * col as f32,
+            g.origin.y + g.line_h * row as f32,
+        );
+        window.paint_quad(fill(
+            Bounds::new(origin, size(g.cell_w * w as f32, g.line_h)),
+            rgb(0x3A3A3A),
+        ));
         let run = gpui::TextRun {
             len: ch.len_utf8(),
             font: font.clone(),
             color: fg,
             background_color: None,
-            underline: Some(gpui::UnderlineStyle { thickness: px(1.), color: Some(fg), wavy: false }),
+            underline: Some(gpui::UnderlineStyle {
+                thickness: px(1.),
+                color: Some(fg),
+                wavy: false,
+            }),
             strikethrough: None,
         };
-        let line = ts.shape_line(ch.to_string().into(), g.font_size, &[run], Some(g.cell_w * w as f32));
+        let line = ts.shape_line(
+            ch.to_string().into(),
+            g.font_size,
+            &[run],
+            Some(g.cell_w * w as f32),
+        );
         let _ = line.paint(origin, g.line_h, gpui::TextAlign::Left, None, window, cx);
         col += w;
     }
 }
 
-fn draw_cursor(window: &mut Window, g: &Grid, col: usize, row: usize, shape: CursorShape, size_pct: u32, focused: bool) {
+fn draw_cursor(
+    window: &mut Window,
+    g: &Grid,
+    col: usize,
+    row: usize,
+    shape: CursorShape,
+    size_pct: u32,
+    focused: bool,
+) {
     let cell = Bounds::new(
-        point(g.origin.x + g.cell_w * col as f32, g.origin.y + g.line_h * row as f32),
+        point(
+            g.origin.x + g.cell_w * col as f32,
+            g.origin.y + g.line_h * row as f32,
+        ),
         size(g.cell_w, g.line_h),
     );
     let color: Hsla = rgb(0xFFFFFF).into();
@@ -213,15 +308,29 @@ fn draw_cursor(window: &mut Window, g: &Grid, col: usize, row: usize, shape: Cur
         window.paint_quad(outline(cell, color, BorderStyle::Solid));
         return;
     }
-    let bar = |h: Pixels| Bounds::new(point(cell.origin.x, cell.origin.y + cell.size.height - h), size(cell.size.width, h));
+    let bar = |h: Pixels| {
+        Bounds::new(
+            point(cell.origin.x, cell.origin.y + cell.size.height - h),
+            size(cell.size.width, h),
+        )
+    };
     match shape {
         CursorShape::VerticalBar => {
-            window.paint_quad(fill(Bounds::new(cell.origin, size(px(2.), cell.size.height)), color));
+            window.paint_quad(fill(
+                Bounds::new(cell.origin, size(px(2.), cell.size.height)),
+                color,
+            ));
         }
         CursorShape::Underscore => window.paint_quad(fill(bar(px(2.)), color)),
         CursorShape::DoubleUnderscore => {
             window.paint_quad(fill(bar(px(1.)), color));
-            window.paint_quad(fill(Bounds::new(point(cell.origin.x, cell.origin.y + cell.size.height - px(3.)), size(cell.size.width, px(1.))), color));
+            window.paint_quad(fill(
+                Bounds::new(
+                    point(cell.origin.x, cell.origin.y + cell.size.height - px(3.)),
+                    size(cell.size.width, px(1.)),
+                ),
+                color,
+            ));
         }
         CursorShape::EmptyBox => window.paint_quad(outline(cell, color, BorderStyle::Solid)),
         CursorShape::FullBox => window.paint_quad(fill(cell, Hsla { a: 0.75, ..color })),

@@ -1,8 +1,11 @@
 //! Paints one buffer row: attribute backgrounds, selection / search highlights,
 //! then the text with per-run colour, weight, slant, underline, strikethrough.
 
-use gpui::{fill, point, px, rgb, size, Bounds, Font, FontStyle, FontWeight, Hsla, Pixels, Point, TextAlign, TextRun, Window};
 use core::Row;
+use gpui::{
+    fill, point, px, rgb, size, Bounds, Font, FontStyle, FontWeight, Hsla, Pixels, Point,
+    TextAlign, TextRun, Window,
+};
 
 use crate::term_style::{CellStyle, Palette};
 
@@ -29,11 +32,19 @@ pub struct Span {
 }
 
 pub fn selection_span(start: usize, end: usize) -> Span {
-    Span { start, end, color: SELECTION }
+    Span {
+        start,
+        end,
+        color: SELECTION,
+    }
 }
 
 pub fn match_span(start: usize, end: usize, current: bool) -> Span {
-    Span { start, end, color: if current { CURRENT_MATCH } else { MATCH } }
+    Span {
+        start,
+        end,
+        color: if current { CURRENT_MATCH } else { MATCH },
+    }
 }
 
 fn hsla(c: u32) -> Hsla {
@@ -42,7 +53,10 @@ fn hsla(c: u32) -> Hsla {
 
 fn cell_bounds(g: &Grid, row_i: usize, col: usize, cols: usize) -> Bounds<Pixels> {
     Bounds::new(
-        point(g.origin.x + g.cell_w * col as f32, g.origin.y + g.line_h * row_i as f32),
+        point(
+            g.origin.x + g.cell_w * col as f32,
+            g.origin.y + g.line_h * row_i as f32,
+        ),
         size(g.cell_w * cols as f32, g.line_h),
     )
 }
@@ -64,12 +78,20 @@ fn text_run(base: &Font, len: usize, st: &CellStyle) -> TextRun {
         font,
         color,
         background_color: None,
-        underline: st.underline.then(|| gpui::UnderlineStyle { thickness: px(1.), color: Some(color), wavy: false }),
-        strikethrough: st.strike.then(|| gpui::StrikethroughStyle { thickness: px(1.), color: Some(color) }),
+        underline: st.underline.then(|| gpui::UnderlineStyle {
+            thickness: px(1.),
+            color: Some(color),
+            wavy: false,
+        }),
+        strikethrough: st.strike.then(|| gpui::StrikethroughStyle {
+            thickness: px(1.),
+            color: Some(color),
+        }),
     }
 }
 
 /// Draw `row` at screen row `row_i`.
+#[allow(clippy::too_many_arguments)]
 pub fn paint_row(
     window: &mut Window,
     cx: &mut gpui::App,
@@ -80,7 +102,9 @@ pub fn paint_row(
     base_font: &Font,
     highlights: &[Span],
 ) {
-    let styles: Vec<CellStyle> = (0..g.cols).map(|c| palette.resolve(row.attr_at(c))).collect();
+    let styles: Vec<CellStyle> = (0..g.cols)
+        .map(|c| palette.resolve(row.attr_at(c)))
+        .collect();
 
     // Attribute backgrounds (runs of equal colour).
     let mut c = 0;
@@ -109,14 +133,26 @@ pub fn paint_row(
     let mut text = String::new();
     let mut runs: Vec<TextRun> = Vec::new();
     let mut start_col = 0usize;
-    let mut col = 0usize;
-    let flush = |window: &mut Window, cx: &mut gpui::App, text: &mut String, runs: &mut Vec<TextRun>, start_col: usize| {
+    let mut col;
+    let flush = |window: &mut Window,
+                 cx: &mut gpui::App,
+                 text: &mut String,
+                 runs: &mut Vec<TextRun>,
+                 start_col: usize| {
         if text.is_empty() {
             return;
         }
-        let line = ts.shape_line(std::mem::take(text).into(), g.font_size, runs, Some(g.cell_w));
+        let line = ts.shape_line(
+            std::mem::take(text).into(),
+            g.font_size,
+            runs,
+            Some(g.cell_w),
+        );
         runs.clear();
-        let origin = point(g.origin.x + g.cell_w * start_col as f32, g.origin.y + g.line_h * row_i as f32);
+        let origin = point(
+            g.origin.x + g.cell_w * start_col as f32,
+            g.origin.y + g.line_h * row_i as f32,
+        );
         let _ = line.paint(origin, g.line_h, TextAlign::Left, None, window, cx);
     };
     for (idx, &(ch, width)) in row.glyphs().iter().enumerate() {
@@ -147,8 +183,16 @@ pub fn paint_row(
             flush(window, cx, &mut text, &mut runs, start_col);
             if !st.invisible {
                 let r = [text_run(base_font, ch.len_utf8(), &st)];
-                let line = ts.shape_line(ch.to_string().into(), g.font_size, &r, Some(g.cell_w * width as f32));
-                let origin = point(g.origin.x + g.cell_w * col as f32, g.origin.y + g.line_h * row_i as f32);
+                let line = ts.shape_line(
+                    ch.to_string().into(),
+                    g.font_size,
+                    &r,
+                    Some(g.cell_w * width as f32),
+                );
+                let origin = point(
+                    g.origin.x + g.cell_w * col as f32,
+                    g.origin.y + g.line_h * row_i as f32,
+                );
                 let _ = line.paint(origin, g.line_h, TextAlign::Left, None, window, cx);
             }
         }
@@ -158,5 +202,8 @@ pub fn paint_row(
 
 /// Runs are mergeable when everything but `len` matches.
 fn same_look(a: &TextRun, b: &TextRun) -> bool {
-    a.font == b.font && a.color == b.color && a.underline == b.underline && a.strikethrough == b.strikethrough
+    a.font == b.font
+        && a.color == b.color
+        && a.underline == b.underline
+        && a.strikethrough == b.strikethrough
 }

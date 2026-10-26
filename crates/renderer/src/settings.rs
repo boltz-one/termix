@@ -159,10 +159,8 @@ impl RenderSettings {
         // Port WT `RenderSettings.cpp:215-225` (`Feature_AdjustIndistinguishableText`).
         // `IsDefaultOrLegacy` ≡ default (idx==0 và raw==0, lookup_color nhánh fallback)
         // OR legacy (16-color index). Mirror lookup_color branch logic (line 99-122).
-        let fg_default_or_legacy =
-            attr.is_legacy || (attr.fg_index == 0 && attr.foreground == 0);
-        let bg_default_or_legacy =
-            attr.is_legacy || (attr.bg_index == 0 && attr.background == 0);
+        let fg_default_or_legacy = attr.is_legacy || (attr.fg_index == 0 && attr.foreground == 0);
+        let bg_default_or_legacy = attr.is_legacy || (attr.bg_index == 0 && attr.background == 0);
         let mode = self.render_mode;
         let always = mode.contains(RenderModeFlags::ALWAYS_DISTINGUISHABLE);
         let indexed = mode.contains(RenderModeFlags::INDEXED_DISTINGUISHABLE);
@@ -224,8 +222,7 @@ impl RenderSettings {
         }
         // Port WT `RenderSettings.cpp:280-286`.
         let ul_default_or_legacy = attr.underline_color == 0 || attr.is_legacy;
-        let bg_default_or_legacy =
-            attr.is_legacy || (attr.bg_index == 0 && attr.background == 0);
+        let bg_default_or_legacy = attr.is_legacy || (attr.bg_index == 0 && attr.background == 0);
         let mode = self.render_mode;
         let always = mode.contains(RenderModeFlags::ALWAYS_DISTINGUISHABLE);
         let indexed = mode.contains(RenderModeFlags::INDEXED_DISTINGUISHABLE);
@@ -430,7 +427,10 @@ mod tests {
         a.set_color(0xFF575757, false); // bg RGB non-legacy
         let (fg, _) = s.get_attribute_colors(&a);
         // RGB literal non-legacy → guard false → skip nudge → fg = raw.
-        assert_eq!(fg, 0xFF555555, "indexed-only skip cho RGB literal non-legacy");
+        assert_eq!(
+            fg, 0xFF555555,
+            "indexed-only skip cho RGB literal non-legacy"
+        );
 
         // Case B: khi chỉ một trong fg/bg default-or-legacy thì AND false →
         // skip. Verify bằng default attr (fg/bg đều default: idx=0 raw=0
@@ -440,8 +440,10 @@ mod tests {
         // unchanged = palette[15]. Mirror WT: default pair không cần nudge.
         let a2 = TextAttribute::new(); // pure default
         let (fg2, bg2) = s.get_attribute_colors(&a2);
-        assert_eq!(fg2, s.color_table[s.default_fg_index as usize],
-            "default fg → palette[15] (already distinguishable vs Black → no nudge)");
+        assert_eq!(
+            fg2, s.color_table[s.default_fg_index as usize],
+            "default fg → palette[15] (already distinguishable vs Black → no nudge)"
+        );
         assert_eq!(bg2, s.color_table[s.default_bg_index as usize]);
         // Indexed flag không break default lookup path (P3 tên = verbatim).
     }

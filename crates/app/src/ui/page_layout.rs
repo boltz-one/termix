@@ -2,9 +2,7 @@
 //! row 0 tab row/titlebar (Auto), row 1 infobar (Auto), row 2 content (`*`).
 //! Dialog/palette/suggestions nằm trong row 2 dưới dạng overlay (`Grid.Row=2`).
 
-use gpui::{
-    div, px, AnyElement, App, IntoElement, ParentElement, RenderOnce, Styled, Window,
-};
+use gpui::{div, px, AnyElement, App, IntoElement, ParentElement, RenderOnce, Styled, Window};
 
 use super::theme::Theme;
 
@@ -51,7 +49,13 @@ impl RenderOnce for PageLayout {
             .bg(self.theme.page_bg)
             .child(self.titlebar);
         if let Some(infobar) = self.infobar {
-            root = root.child(div().flex_none().w_full().bg(self.theme.page_bg).child(infobar));
+            root = root.child(
+                div()
+                    .flex_none()
+                    .w_full()
+                    .bg(self.theme.page_bg)
+                    .child(infobar),
+            );
         }
         let mut content = div()
             .relative()

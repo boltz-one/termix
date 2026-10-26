@@ -83,7 +83,10 @@ fn format(enc: &Enc, alt: bool) -> Option<String> {
 
 /// `_encodeRegular` for the key named `key` (GPUI key names).
 fn encode_regular(key: &str, ctrl: bool, shift: bool, modifier: u32, m: KeyModes) -> Enc {
-    let mut e = Enc { csi_modifier: modifier, ..Default::default() };
+    let mut e = Enc {
+        csi_modifier: modifier,
+        ..Default::default()
+    };
     let modified = modifier != 0;
     // Cursor/Home/End: SS3 only when unmodified and DECCKM is set.
     let cursor = |c: char, e: &mut Enc| {
@@ -121,9 +124,11 @@ fn encode_regular(key: &str, ctrl: bool, shift: bool, modifier: u32, m: KeyModes
                 e.ss3_final = Some(c);
             }
         }
-        "f5" | "f6" | "f7" | "f8" | "f9" | "f10" | "f11" | "f12" | "f13" | "f14" | "f15" | "f16" | "f17"
-        | "f18" | "f19" | "f20" => {
-            const LUT: [u32; 16] = [15, 17, 18, 19, 20, 21, 23, 24, 25, 26, 28, 29, 31, 32, 33, 34];
+        "f5" | "f6" | "f7" | "f8" | "f9" | "f10" | "f11" | "f12" | "f13" | "f14" | "f15"
+        | "f16" | "f17" | "f18" | "f19" | "f20" => {
+            const LUT: [u32; 16] = [
+                15, 17, 18, 19, 20, 21, 23, 24, 25, 26, 28, 29, 31, 32, 33, 34,
+            ];
             let n: usize = key[1..].parse().unwrap_or(5);
             e.csi_final = Some('~');
             e.csi_code = LUT[n - 5];
@@ -157,7 +162,8 @@ pub fn encode_keystroke(ks: &Keystroke, m: KeyModes) -> Option<String> {
     let key = ks.key.as_str();
     let typed = ks.key_char.as_deref().and_then(|s| s.chars().next());
     // AltGr (Ctrl+Alt on international layouts) that produced a graphic char is text.
-    let alt_gr = mods.alt && mods.control && typed.is_some_and(|c| (c as u32) > 0x20 && c as u32 != 0x7f);
+    let alt_gr =
+        mods.alt && mods.control && typed.is_some_and(|c| (c as u32) > 0x20 && c as u32 != 0x7f);
     let (ctrl, alt) = (mods.control && !alt_gr, mods.alt && !alt_gr);
     let shift = mods.shift;
     let modifier = (shift as u32) * CSI_SHIFT + (alt as u32) * CSI_ALT + (ctrl as u32) * CSI_CTRL;
@@ -207,7 +213,11 @@ mod tests {
         let mut ks = Keystroke::parse(s).unwrap();
         let plain = !ks.modifiers.control && !ks.modifiers.alt;
         if ks.key.chars().count() == 1 && plain {
-            ks.key_char = Some(if ks.modifiers.shift { ks.key.to_uppercase() } else { ks.key.clone() });
+            ks.key_char = Some(if ks.modifiers.shift {
+                ks.key.to_uppercase()
+            } else {
+                ks.key.clone()
+            });
         }
         if ks.key == "space" && plain {
             ks.key_char = Some(" ".into());
@@ -231,12 +241,18 @@ mod tests {
     fn backspace_enter_and_modes() {
         assert_eq!(enc("ctrl-backspace").as_deref(), Some("\x08"));
         assert_eq!(enc("alt-backspace").as_deref(), Some("\x1b\x7f"));
-        let bk = KeyModes { backarrow: true, ..Default::default() };
+        let bk = KeyModes {
+            backarrow: true,
+            ..Default::default()
+        };
         assert_eq!(enc_m("backspace", bk).as_deref(), Some("\x08"));
         assert_eq!(enc_m("ctrl-backspace", bk).as_deref(), Some("\x7f"));
         assert_eq!(enc("ctrl-enter").as_deref(), Some("\n"));
         assert_eq!(enc("alt-enter").as_deref(), Some("\x1b\r"));
-        let lnm = KeyModes { line_feed: true, ..Default::default() };
+        let lnm = KeyModes {
+            line_feed: true,
+            ..Default::default()
+        };
         assert_eq!(enc_m("enter", lnm).as_deref(), Some("\r\n"));
         assert_eq!(enc("alt-tab").as_deref(), Some("\x1b\t"));
         assert_eq!(enc("alt-escape").as_deref(), Some("\x1b\x1b"));
@@ -246,7 +262,10 @@ mod tests {
     fn cursor_keys_follow_decckm() {
         assert_eq!(enc("up").as_deref(), Some("\x1b[A"));
         assert_eq!(enc("home").as_deref(), Some("\x1b[H"));
-        let app = KeyModes { cursor_key: true, ..Default::default() };
+        let app = KeyModes {
+            cursor_key: true,
+            ..Default::default()
+        };
         assert_eq!(enc_m("up", app).as_deref(), Some("\x1bOA"));
         assert_eq!(enc_m("end", app).as_deref(), Some("\x1bOF"));
         assert_eq!(enc_m("ctrl-left", app).as_deref(), Some("\x1b[1;5D"));

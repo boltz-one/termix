@@ -22,10 +22,12 @@ use gpui::{
 use crate::downstream::{
     ConptyConnection, ConptySettings, ITerminalConnection, Profile, PseudoConsoleFlags,
 };
-use crate::settings_loader::CascadiaSettings;
 use crate::pane_tree::Direction;
+use crate::settings_loader::CascadiaSettings;
 use crate::tab::{SplitDirection, Tab};
-use crate::ui::palette::{default_commands, PaletteAction, PaletteCallbacks, PalettePanel, PaletteState};
+use crate::ui::palette::{
+    default_commands, PaletteAction, PaletteCallbacks, PalettePanel, PaletteState,
+};
 use crate::ui::{PageLayout, TabItem, TabStrip, TabStripCallbacks, TabStripModel, Theme, Titlebar};
 // Note: `GlobalAppSettings` không dùng trong produção path — test-only import.
 #[cfg(test)]
@@ -274,23 +276,37 @@ impl TerminalPage {
             PaletteAction::ClosePane => self.close_active_pane(cx),
             PaletteAction::ZoomPane => self.with_active_tab(cx, |t| t.toggle_zoom()),
             PaletteAction::SwapLeft => self.with_active_tab(cx, |t| t.swap_active(Direction::Left)),
-            PaletteAction::SwapRight => self.with_active_tab(cx, |t| t.swap_active(Direction::Right)),
+            PaletteAction::SwapRight => {
+                self.with_active_tab(cx, |t| t.swap_active(Direction::Right))
+            }
             PaletteAction::SwapUp => self.with_active_tab(cx, |t| t.swap_active(Direction::Up)),
             PaletteAction::SwapDown => self.with_active_tab(cx, |t| t.swap_active(Direction::Down)),
             PaletteAction::FocusLeft => self.with_active_tab(cx, |t| t.move_focus(Direction::Left)),
-            PaletteAction::FocusRight => self.with_active_tab(cx, |t| t.move_focus(Direction::Right)),
+            PaletteAction::FocusRight => {
+                self.with_active_tab(cx, |t| t.move_focus(Direction::Right))
+            }
             PaletteAction::FocusUp => self.with_active_tab(cx, |t| t.move_focus(Direction::Up)),
             PaletteAction::FocusDown => self.with_active_tab(cx, |t| t.move_focus(Direction::Down)),
-            PaletteAction::ResizeLeft => self.with_active_tab(cx, |t| t.resize_active(Direction::Left)),
-            PaletteAction::ResizeRight => self.with_active_tab(cx, |t| t.resize_active(Direction::Right)),
+            PaletteAction::ResizeLeft => {
+                self.with_active_tab(cx, |t| t.resize_active(Direction::Left))
+            }
+            PaletteAction::ResizeRight => {
+                self.with_active_tab(cx, |t| t.resize_active(Direction::Right))
+            }
             PaletteAction::ResizeUp => self.with_active_tab(cx, |t| t.resize_active(Direction::Up)),
-            PaletteAction::ResizeDown => self.with_active_tab(cx, |t| t.resize_active(Direction::Down)),
+            PaletteAction::ResizeDown => {
+                self.with_active_tab(cx, |t| t.resize_active(Direction::Down))
+            }
         }
         cx.notify();
     }
 
     fn with_active_tab(&mut self, cx: &mut Context<Self>, f: impl FnOnce(&mut Tab)) {
-        if let Some(tab) = self.active_tab_index.and_then(|i| self.tabs.get(i)).cloned() {
+        if let Some(tab) = self
+            .active_tab_index
+            .and_then(|i| self.tabs.get(i))
+            .cloned()
+        {
             tab.update(cx, |t, cx| {
                 f(t);
                 cx.notify();
@@ -366,10 +382,14 @@ impl TerminalPage {
                 appears_transparent: true,
                 ..Default::default()
             }),
-            window_bounds: Some(gpui::WindowBounds::Windowed(gpui::Bounds::new(origin, size))),
+            window_bounds: Some(gpui::WindowBounds::Windowed(gpui::Bounds::new(
+                origin, size,
+            ))),
             ..Default::default()
         };
-        if let Err(e) = cx.open_window(opts, move |_w, cx| cx.new(|_| TerminalPage::with_tab(settings, tab))) {
+        if let Err(e) = cx.open_window(opts, move |_w, cx| {
+            cx.new(|_| TerminalPage::with_tab(settings, tab))
+        }) {
             log::error!("tear-out window failed: {e}");
         }
         cx.notify();
@@ -379,7 +399,9 @@ impl TerminalPage {
     fn take_tab(&mut self, index: usize) -> Entity<Tab> {
         let tab = self.tabs.remove(index);
         self.active_tab_index = match self.active_tab_index {
-            Some(a) if a == index => (!self.tabs.is_empty()).then(|| index.min(self.tabs.len() - 1)),
+            Some(a) if a == index => {
+                (!self.tabs.is_empty()).then(|| index.min(self.tabs.len() - 1))
+            }
             Some(a) if a > index => Some(a - 1),
             other => other,
         };
@@ -395,7 +417,9 @@ impl TerminalPage {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let Some(i) = self.drag_tab.take() else { return };
+        let Some(i) = self.drag_tab.take() else {
+            return;
+        };
         let y = f32::from(position.y);
         if i >= self.tabs.len() || (0.0..=crate::ui::theme::metrics::TITLEBAR_H).contains(&y) {
             return; // plain click or reorder inside this window
@@ -407,7 +431,9 @@ impl TerminalPage {
             if handle.window_id() == me {
                 continue;
             }
-            let Some(other) = handle.downcast::<TerminalPage>() else { continue };
+            let Some(other) = handle.downcast::<TerminalPage>() else {
+                continue;
+            };
             let moving = tab.clone();
             let accepted = other
                 .update(cx, move |page, w, cx| {
@@ -437,12 +463,19 @@ impl TerminalPage {
     fn tab_menu_action_duplicate(&mut self, tab: usize, cx: &mut Context<Self>) {
         let Some(t) = self.tabs.get(tab) else { return };
         let profile = t.read(cx).profile().cloned();
-        let index = profile.and_then(|p| self.settings.profiles.iter().position(|q| q.guid == p.guid));
+        let index =
+            profile.and_then(|p| self.settings.profiles.iter().position(|q| q.guid == p.guid));
         self._open_new_tab_via_dropdown(index, cx);
     }
 
     /// Entry `item` of tab `tab`'s context menu (see `ui::tab_strip::TAB_MENU`).
-    pub fn tab_menu_action(&mut self, tab: usize, item: usize, window: &mut Window, cx: &mut Context<Self>) {
+    pub fn tab_menu_action(
+        &mut self,
+        tab: usize,
+        item: usize,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         self.tab_menu = None;
         if tab >= self.tabs.len() {
             return;
@@ -475,7 +508,9 @@ impl TerminalPage {
     /// `TerminalPage::_ClosePane`: close the active pane, or the tab when it
     /// is the last one.
     fn close_active_pane(&mut self, cx: &mut Context<Self>) {
-        let Some(i) = self.active_tab_index.filter(|&i| i < self.tabs.len()) else { return };
+        let Some(i) = self.active_tab_index.filter(|&i| i < self.tabs.len()) else {
+            return;
+        };
         let tab = self.tabs[i].clone();
         if !tab.update(cx, |t, _| t.close_active_pane()) {
             self.handle_close_tab_action(i, cx);
@@ -653,7 +688,9 @@ impl Render for TerminalPage {
             })
             .collect();
         if self.tabs.is_empty() {
-            cx.defer_in(window, |this, window, cx| this.close_window_if_empty(window, cx));
+            cx.defer_in(window, |this, window, cx| {
+                this.close_window_if_empty(window, cx)
+            });
         }
         // Panes whose shell has exited are closed after this frame.
         #[cfg(not(feature = "stub-downstream"))]
@@ -764,7 +801,11 @@ impl Render for TerminalPage {
         let mut layout = PageLayout::new(theme, titlebar, content);
         if self.confirm_close {
             let n = self.tabs.len();
-            let button = |id: &'static str, label: &'static str, primary: bool, close: bool, cx: &mut Context<Self>| {
+            let button = |id: &'static str,
+                          label: &'static str,
+                          primary: bool,
+                          close: bool,
+                          cx: &mut Context<Self>| {
                 gpui::div()
                     .id(id)
                     .px(gpui::px(16.))
@@ -852,7 +893,11 @@ impl Render for TerminalPage {
                         .bg(gpui::rgb(0x2D2D2D))
                         .text_color(theme.fg)
                         .text_size(gpui::px(13.))
-                        .child(gpui::div().flex_1().child("A process in this pane exited with an error."))
+                        .child(
+                            gpui::div()
+                                .flex_1()
+                                .child("A process in this pane exited with an error."),
+                        )
                         .child(button("Close pane", true, cx))
                         .child(button("Dismiss", false, cx)),
                 );
@@ -879,13 +924,22 @@ impl Render for TerminalPage {
                 },
             ));
         }
-        let focus = self.focus_handle.get_or_insert_with(|| cx.focus_handle()).clone();
+        let focus = self
+            .focus_handle
+            .get_or_insert_with(|| cx.focus_handle())
+            .clone();
         // Focus: palette open → page (it handles typing); otherwise the active
         // terminal so keystrokes reach the shell.
-        let want = match (self.palette.is_some() || self.renaming.is_some() || self.confirm_close, self.active_tab_index) {
-            (false, Some(i)) if i < self.tabs.len() => {
-                self.tabs[i].read(cx).active_control().read(cx).focus_handle.clone()
-            }
+        let want = match (
+            self.palette.is_some() || self.renaming.is_some() || self.confirm_close,
+            self.active_tab_index,
+        ) {
+            (false, Some(i)) if i < self.tabs.len() => self.tabs[i]
+                .read(cx)
+                .active_control()
+                .read(cx)
+                .focus_handle
+                .clone(),
             _ => focus.clone(),
         };
         if !want.is_focused(window) {
@@ -897,32 +951,50 @@ impl Render for TerminalPage {
         gpui::div()
             .size_full()
             .track_focus(&focus)
-            .on_key_down(cx.listener(|this, ev: &KeyDownEvent, window, cx| this.on_key_down(ev, window, cx)))
+            .on_key_down(
+                cx.listener(|this, ev: &KeyDownEvent, window, cx| this.on_key_down(ev, window, cx)),
+            )
             // A drag ends wherever the button is released; any click closes the menu.
             .on_mouse_up(
                 gpui::MouseButton::Left,
-                cx.listener(|this, ev: &gpui::MouseUpEvent, window, cx| this.finish_drag(ev.position, window, cx)),
+                cx.listener(|this, ev: &gpui::MouseUpEvent, window, cx| {
+                    this.finish_drag(ev.position, window, cx)
+                }),
             )
             .when_some(self.tab_menu, |d, (i, pos)| {
-                d.child(crate::ui::tab_strip::tab_context_menu(theme, i, pos, tab_pick.clone()))
+                d.child(crate::ui::tab_strip::tab_context_menu(
+                    theme,
+                    i,
+                    pos,
+                    tab_pick.clone(),
+                ))
             })
             // Click anywhere else closes an open menu (menus draw above this).
             .when(self.tab_menu.is_some(), |d| {
-                d.child(gpui::deferred(
-                    gpui::div()
-                        .absolute()
-                        .top_0()
-                        .left_0()
-                        .size_full()
-                        .on_mouse_down(gpui::MouseButton::Left, cx.listener(|this, _, _, cx| {
-                            this.tab_menu = None;
-                            cx.notify();
-                        }))
-                        .on_mouse_down(gpui::MouseButton::Right, cx.listener(|this, _, _, cx| {
-                            this.tab_menu = None;
-                            cx.notify();
-                        })),
-                ).with_priority(5))
+                d.child(
+                    gpui::deferred(
+                        gpui::div()
+                            .absolute()
+                            .top_0()
+                            .left_0()
+                            .size_full()
+                            .on_mouse_down(
+                                gpui::MouseButton::Left,
+                                cx.listener(|this, _, _, cx| {
+                                    this.tab_menu = None;
+                                    cx.notify();
+                                }),
+                            )
+                            .on_mouse_down(
+                                gpui::MouseButton::Right,
+                                cx.listener(|this, _, _, cx| {
+                                    this.tab_menu = None;
+                                    cx.notify();
+                                }),
+                            ),
+                    )
+                    .with_priority(5),
+                )
             })
             // While the palette is open the page owns text input (IME, Unicode).
             .when(palette_open, |d| {
@@ -964,10 +1036,17 @@ impl gpui::EntityInputHandler for TerminalPage {
         _window: &mut Window,
         _cx: &mut Context<Self>,
     ) -> Option<gpui::UTF16Selection> {
-        Some(gpui::UTF16Selection { range: 0..0, reversed: false })
+        Some(gpui::UTF16Selection {
+            range: 0..0,
+            reversed: false,
+        })
     }
 
-    fn marked_text_range(&self, _window: &mut Window, _cx: &mut Context<Self>) -> Option<std::ops::Range<usize>> {
+    fn marked_text_range(
+        &self,
+        _window: &mut Window,
+        _cx: &mut Context<Self>,
+    ) -> Option<std::ops::Range<usize>> {
         None
     }
 

@@ -38,6 +38,7 @@ pub mod renderer;
 pub mod settings;
 
 pub use cell::{Cluster, CursorOptions, CursorShape, GridLineSet, GridLines};
+pub use colorfix::{adjust_lightness, get_lightness, get_perceivable_color};
 pub use grid::{
     AntialiasingMode, Bitmap, FontMapping, FontRelevantAttributes, GridLineRange, RenderingPayload,
     ShapedRow,
@@ -45,4 +46,3 @@ pub use grid::{
 pub use paint::{RenderData, RenderEngine, RenderFrameInfo, Renderer};
 pub use renderer::{InvalidRect, RendererState};
 pub use settings::{RenderModeFlags, RenderSettings};
-pub use colorfix::{adjust_lightness, get_lightness, get_perceivable_color};

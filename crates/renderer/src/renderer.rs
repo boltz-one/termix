@@ -199,9 +199,10 @@ impl RendererState {
             rc.top += delta.1;
             rc.bottom += delta.1;
         }
-        self.current_cursor_options.coord_cursor =
-            (self.current_cursor_options.coord_cursor.0 + delta.0,
-             self.current_cursor_options.coord_cursor.1 + delta.1);
+        self.current_cursor_options.coord_cursor = (
+            self.current_cursor_options.coord_cursor.0 + delta.0,
+            self.current_cursor_options.coord_cursor.1 + delta.1,
+        );
     }
 
     /// WT `_threadKeepRunning.load()` — render thread keeps running.
@@ -361,7 +362,10 @@ mod tests {
         r.trigger_redraw_all(true, true);
         assert_eq!(s1.borrow().invalidate_all_calls, 1);
         assert_eq!(s2.borrow().invalidate_all_calls, 1);
-        assert!(s1.borrow().invalidate_calls.is_empty(), "All không per-region");
+        assert!(
+            s1.borrow().invalidate_calls.is_empty(),
+            "All không per-region"
+        );
         assert!(s2.borrow().invalidate_calls.is_empty());
         assert_eq!(*bg_counter.borrow(), 1);
         assert_eq!(*frame_counter.borrow(), 1);
@@ -369,7 +373,11 @@ mod tests {
         // trigger_redraw_all(false,false) → invalidate_all lại, callbacks KHÔNG fire.
         r.trigger_redraw_all(false, false);
         assert_eq!(s1.borrow().invalidate_all_calls, 2);
-        assert_eq!(*bg_counter.borrow(), 1, "bg callback fire-and-forget, không sticky");
+        assert_eq!(
+            *bg_counter.borrow(),
+            1,
+            "bg callback fire-and-forget, không sticky"
+        );
         assert_eq!(*frame_counter.borrow(), 1, "frame callback không sticky");
     }
 
@@ -385,7 +393,10 @@ mod tests {
         r.start_thread();
         assert!(r.is_thread_keep_running());
         assert!(r.is_thread_active());
-        assert!(!r.is_teardown_complete(), "thread active: teardown not complete");
+        assert!(
+            !r.is_teardown_complete(),
+            "thread active: teardown not complete"
+        );
         r.trigger_teardown();
         assert!(!r.is_thread_keep_running());
         assert!(!r.is_thread_active());
@@ -425,7 +436,10 @@ mod tests {
         r.trigger_scroll((3, -2));
         assert_eq!(s1.borrow().invalidate_scroll_calls, vec![(3, -2)]);
         assert_eq!(s2.borrow().invalidate_scroll_calls, vec![(3, -2)]);
-        assert!(s1.borrow().invalidate_calls.is_empty(), "scroll không per-region");
+        assert!(
+            s1.borrow().invalidate_calls.is_empty(),
+            "scroll không per-region"
+        );
         assert!(s2.borrow().invalidate_calls.is_empty());
         assert_eq!(s1.borrow().invalidate_all_calls, 0);
     }
@@ -454,7 +468,11 @@ mod tests {
             }],
             "(0,0) delta: rects unchanged"
         );
-        assert_eq!(r.current_cursor_coord(), (0, 0), "(0,0) delta: coord unchanged");
+        assert_eq!(
+            r.current_cursor_coord(),
+            (0, 0),
+            "(0,0) delta: coord unchanged"
+        );
     }
 
     /// VR8 (loop-06) — `trigger_scroll((3,-2))` shifts selection rects + cursor
@@ -496,7 +514,11 @@ mod tests {
             ],
             "rects shift: left/right += 3, top/bottom += -2"
         );
-        assert_eq!(r.current_cursor_coord(), (3, -2), "coord shifts (0,0)+(3,-2)");
+        assert_eq!(
+            r.current_cursor_coord(),
+            (3, -2),
+            "coord shifts (0,0)+(3,-2)"
+        );
     }
 
     /// VR9 (loop-06) — `trigger_scroll` empty state no panic + cursor still
@@ -510,7 +532,14 @@ mod tests {
         assert!(r.last_selection_rects().is_empty());
         assert_eq!(r.current_cursor_coord(), (0, 0));
         r.trigger_scroll((5, 5));
-        assert!(r.last_selection_rects().is_empty(), "empty selection vẫn empty");
-        assert_eq!(r.current_cursor_coord(), (5, 5), "cursor shift dù selection empty");
+        assert!(
+            r.last_selection_rects().is_empty(),
+            "empty selection vẫn empty"
+        );
+        assert_eq!(
+            r.current_cursor_coord(),
+            (5, 5),
+            "cursor shift dù selection empty"
+        );
     }
 }
