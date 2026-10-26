@@ -1,33 +1,31 @@
-//! `RendererState` — port WT `renderer/base/renderer.cpp` invalidation/teardown state.
+//! `RendererState` — port WT `renderer/base/renderer.cpp:110,656-722`
+//! `TriggerRedraw/All/Teardown` + `renderer.hpp:175-185` state members
+//! (`_threadKeepRunning` / `_pfnBackgroundColorChanged` / `_pfnFrameColorChanged`
+//! / `_engines`).
 //!
-//! Loop 04 skeleton (P10 step 2a): trigger methods + state getters, KHÔNG paint
-//! driver, KHÔNG engine backend (ADR-0003 — GPUI owns scene). Loop sau wire
-//! `cx.notify()` + scroll/cursor/paint. Port slice ban đầu từ `renderer.cpp:656-716`
-//! (`TriggerRedraw`/`TriggerRedrawAll`/`TriggerTeardown`) + `renderer.cpp:110`
-//! (`TriggerTeardown`) + `renderer.hpp:181-185` (`_fInvalidRectUsed`/`_fAllInvalidated`
-//! /`_fTeardown`/`_fInvalidRect`).
+//! Loop 05 rework (close L04-G01/G02/G03): port-faithful per-engine dispatch
+//! (`Invalidate(&region)` / `InvalidateAll()`) + thread lifecycle state.
+//! KHÔNG còn GdiEngine accumulation pattern (`_rcInvalid` / `_fInvalidRectUsed`
+//! thuộc `renderer/gdi/gdirenderer.hpp:159-160`, out-of-scope ADR-0001). WT
+//! `renderer/base Renderer` không có `_fInvalidRect` accumulator, không có
+//! `_lastFrameType` enum hay `_pfnFrameCompiledCallback` (zero hit fabricated
+//! loop-04). `_pfnBackgroundColorChanged` / `_pfnFrameColorChanged` là function
+//! pointer fire-and-forget (renderer.cpp:715,720), không sticky state.
 //!
-//! **Naming**: WT class tên `Renderer`; crate `paint::Renderer` (`paint.rs`) đã port
-//! paint driver (`paint_frame_for_engine`/`paint_selection`/`paint_cursor_internal`)
-//! — cùng class WT, slice khác. Để tránh xung đột top-level `Renderer` (xem
-//! `lib.rs:44 pub use paint::Renderer`), loop-04 state slice đặt `RendererState`.
-//! Loop sau khi gộp state vào `paint::Renderer` (P10 step 6+), rename/squash lại.
-//!
-//! **`InvalidRect` convention**: WT `_fInvalidRect` là `til::rect` (exclusive
-//! bottom-right). `trigger_redraw(&Viewport)` port verbatim WT
-//! `TriggerRedraw(Viewport region)` — pass field-by-field `Viewport` (inclusive
-//! `right/bottom`) → `InvalidRect` (giữ nguyên tọa độ, không +1 convert);
-//! `trigger_redraw_point` xây `InvalidRect` 1×1 exclusive trực tiếp
-//! (`right = left + 1`, `bottom = top + 1`) — mirror WT
-//! `Viewport::FromDimensions(p, {1,1})` truyền cho `til::rect` exclusive. Hai
-//! path có convention hơi khác (VR2 pass-through inclusive, VR3 point exclusive)
-//! — đây là re-expression verbatim theo VR của D_4, không phải WT-faithful
-//! convention thống nhất; loop sau nếu cần exclusive thống nhất sẽ refactor.
+//! Re-expression trên Rust+GPUI (ADR-0003 behavioral parity): GPUI owns
+//! swapchain/scene → `_pEngine->Invalidate*` direct call替换 thành trait dispatch
+//! `RenderEngine::invalidate(*)` trên `Vec<Box<dyn RenderEngine>>` (loop sau
+//! GPUI engine impl); `NotifyPaintFrame()` wire sang `cx.notify()` loop sau;
+//! `_threadKeepRunning` (atomic) + `_thread` handle presence → `AtomicBool`
+//! + `thread_handle_active` bool. Loop 05 chỉ port dispatch + state observable.
 
 use core::Viewport;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-/// Invalidation region — port WT `_fInvalidRect` (`til::rect`, renderer.hpp:181).
-/// `None` = chưa có invalid region accumulated (state `_fInvalidRectUsed=false`).
+/// Invalidation rect — port `til::rect` (TIL primitive). GdiEngine uses
+/// `til::rect` for accumulation (`_rcInvalid`), nhưng WT `renderer/base` KHÔNG
+/// accumulate. Loop 05 giữ `InvalidRect` cho `RenderEngine` trait API +
+/// future scroll/paint; không longer used as `RendererState` accumulator field.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct InvalidRect {
     pub left: i32,
@@ -36,223 +34,295 @@ pub struct InvalidRect {
     pub bottom: i32,
 }
 
-/// `RendererState` skeleton — port WT `renderer/base/renderer.cpp:110,656-716`.
+/// `RenderEngine` trait — port slice WT `RenderEngineBase` / `IRenderEngine`
+/// (`renderer/inc/IRenderEngine.hpp`, `renderer/base/RenderEngineBase.hpp`) API
+/// cần cho `TriggerRedraw` / `TriggerRedrawAll` dispatch (renderer.cpp:656-722).
+/// Full trait port loop sau (P10 step 5+); loop 05 chỉ `invalidate` + `invalidate_all`.
+pub trait RenderEngine {
+    /// WT `RenderEngineBase::Invalidate(&region)` — per-engine invalidation
+    /// (renderer.cpp:664-668 `pEngine->Invalidate(&srUpdateRegion)`).
+    fn invalidate(&mut self, region: &Viewport);
+    /// WT `RenderEngineBase::InvalidateAll()` — full-frame invalidation
+    /// (renderer.cpp:710-712 `pEngine->InvalidateAll()`).
+    fn invalidate_all(&mut self);
+}
+
+/// `RendererState` — port WT `renderer/base/renderer.cpp:110,656-722` +
+/// `renderer.hpp:175-185`. Per-engine dispatch + thread lifecycle state.
 ///
-/// State observable qua getters; trigger methods mutate state, không gọi engine
-/// backend (ADR-0003 behavioral parity — GPUI owns scene/paint scheduler ở loop
-/// sau). WT `_pEngine->Invalidate(&region)` / `_pEngine->InvalidateAll()` được
-/// bỏ — scheduler downstream (GPUI `cx.notify()`) loop sau.
-#[derive(Clone, Debug, Default)]
+/// State observable qua getters; trigger methods mutate state + dispatch trait
+/// calls, không wire GPUI scene (ADR-0003 — `cx.notify()` loop sau).
 pub struct RendererState {
-    /// `_fInvalidRectUsed` (renderer.hpp:181) — true nếu có invalid rect accumulated.
-    invalid_rect_used: bool,
-    /// `_fInvalidRect` — accumulated invalid region (None when !used).
-    invalid_rect: Option<InvalidRect>,
-    /// `_fAllInvalidated` (renderer.hpp:181) — true sau `TriggerRedrawAll`.
-    all_invalidated: bool,
-    /// `_fTeardown` (renderer.cpp:110) — true sau `TriggerTeardown`.
-    teardown_requested: bool,
-    /// `_lastFrameType |= Frame::Background` — port `TriggerRedrawAll(bgChanged=true)`.
-    /// Sticky flag (mirror WT `|=` không clear).
-    background_changed: bool,
-    /// `_pfnFrameCompiledCallback` trigger — port `TriggerRedrawAll(frameChanged=true)`.
-    /// Sticky flag.
-    frame_changed: bool,
+    /// WT `_threadKeepRunning` (atomic bool, renderer.hpp) — `true` while
+    /// render thread active. `TriggerTeardown` (renderer.cpp:113) stores `false`.
+    thread_keep_running: AtomicBool,
+    /// WT `_thread` handle presence (re-expression — Rust không có portable
+    /// Windows HANDLE; `true` khi thread spawned, `false` sau `trigger_teardown`).
+    thread_handle_active: bool,
+    /// WT `_engines: std::vector<std::unique_ptr<RenderEngineBase>>` — per-engine
+    /// dispatch list (renderer.cpp:664 loop `for (auto& pEngine : _engines)`).
+    /// Loop 05: `RenderEngine` trait minimal; GPUI engine impl loop sau.
+    engines: Vec<Box<dyn RenderEngine>>,
+    /// WT `_pfnBackgroundColorChanged` (renderer.hpp:175, std::function<void()>)
+    /// — fire-and-forget callback, gọi trong `TriggerRedrawAll(bgChanged=true)`
+    /// (renderer.cpp:715). Optional setter.
+    on_background_color_changed: Option<Box<dyn FnMut()>>,
+    /// WT `_pfnFrameColorChanged` (renderer.hpp:176) — gọi trong
+    /// `TriggerRedrawAll(frameChanged=true)` (renderer.cpp:720).
+    on_frame_color_changed: Option<Box<dyn FnMut()>>,
 }
 
 impl RendererState {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            thread_keep_running: AtomicBool::new(false),
+            thread_handle_active: false,
+            engines: Vec::new(),
+            on_background_color_changed: None,
+            on_frame_color_changed: None,
+        }
     }
 
-    /// Port `TriggerRedraw(Viewport region)` (renderer.cpp:656). Union region vào
-    /// `_fInvalidRect`, set `_fInvalidRectUsed=true`, clear `_fAllInvalidated`.
-    /// WT cũng gọi `_pEngine->Invalidate(&region)` — bỏ (no engine; GPUI scene).
+    /// WT re-expression — mirror render thread init (Renderer ctor spawns
+    /// `_thread`). Loop 05 chỉ set lifecycle flags; actual thread spawn loop sau
+    /// (GPUI owns render loop, không cần std::thread).
+    pub fn start_thread(&mut self) {
+        self.thread_keep_running.store(true, Ordering::SeqCst);
+        self.thread_handle_active = true;
+    }
+
+    /// Port `TriggerRedraw(Viewport region)` (renderer.cpp:656-683). WT:
+    /// region.ToExclusive → trim viewport → `for pEngine in _engines:
+    /// pEngine->Invalidate(&region)` → `NotifyPaintFrame()`. Loop 05 port
+    /// dispatch slice; `NotifyPaintFrame()` wire `cx.notify()` loop sau.
+    /// **KHÔNG accumulate bbox union** (GdiEngine pattern, out-of-scope).
     pub fn trigger_redraw(&mut self, region: &Viewport) {
-        let r = InvalidRect {
-            left: region.left,
-            top: region.top,
-            right: region.right,
-            bottom: region.bottom,
-        };
-        self.union_rect(r);
-        self.all_invalidated = false;
+        for engine in &mut self.engines {
+            engine.invalidate(region);
+        }
     }
 
     /// Port `TriggerRedraw(point*)` (renderer.cpp:691) — WT delegate
-    /// `TriggerRedraw(Viewport::FromDimensions(*pcoord, {1,1}))`. Xây `InvalidRect`
-    /// 1×1 exclusive (`right = left + 1`, `bottom = top + 1`) trực tiếp rồi union.
+    /// `TriggerRedraw(Viewport::FromDimensions(*pcoord, {1,1}))`. Viewport
+    /// inclusive `right==left`, `bottom==top` cho 1×1 cell (width=1, height=1).
     pub fn trigger_redraw_point(&mut self, point: (i32, i32)) {
-        let r = InvalidRect {
-            left: point.0,
-            top: point.1,
-            right: point.0 + 1,
-            bottom: point.1 + 1,
-        };
-        self.union_rect(r);
-        self.all_invalidated = false;
+        let region = Viewport::new(point.0, point.1, point.0, point.1);
+        self.trigger_redraw(&region);
     }
 
-    /// Port `TriggerRedrawAll(bgChanged, frameChanged)` (renderer.cpp:704).
-    /// `_fAllInvalidated=true`; clear `_fInvalidRect*` (all = superset). Set
-    /// bg/frame flags (sticky — mirror WT `_lastFrameType |=` / callback set).
-    /// WT `_pEngine->InvalidateAll()` — bỏ (no engine).
+    /// Port `TriggerRedrawAll(bgChanged, frameChanged)` (renderer.cpp:704-722).
+    /// WT: `for pEngine in _engines: pEngine->InvalidateAll()` →
+    /// `NotifyPaintFrame()` → if bg `_pfnBackgroundColorChanged()` → if frame
+    /// `_pfnFrameColorChanged()`. Callback fire-and-forget, **không sticky flags**
+    /// (loop-04 `_lastFrameType |=` / `_pfnFrameCompiledCallback` was fabricated).
     pub fn trigger_redraw_all(&mut self, background_changed: bool, frame_changed: bool) {
-        self.all_invalidated = true;
-        self.invalid_rect = None;
-        self.invalid_rect_used = false;
+        for engine in &mut self.engines {
+            engine.invalidate_all();
+        }
         if background_changed {
-            self.background_changed = true;
+            if let Some(cb) = &mut self.on_background_color_changed {
+                cb();
+            }
         }
         if frame_changed {
-            self.frame_changed = true;
+            if let Some(cb) = &mut self.on_frame_color_changed {
+                cb();
+            }
         }
     }
 
-    /// Port `TriggerTeardown()` (renderer.cpp:110). `_fTeardown=true`. Teardown
-    /// không invalidate (không set invalid_rect), mirror WT line 110.
+    /// Port `TriggerTeardown()` (renderer.cpp:110-122). WT: lock mutex →
+    /// `_threadKeepRunning.store(false)` → `_shutdownEvent.SetEvent()` →
+    /// `NotifyPaintFrame()` → `_enable.SetEvent()` → `WaitForSingleObject(_thread)`
+    /// → `_thread.reset()`. Loop 05 re-expression: set `thread_keep_running=false`
+    /// + `thread_handle_active=false` (mirror lifecycle observable; actual
+    /// thread join GPUI không cần — render loop GPUI-owned).
     pub fn trigger_teardown(&mut self) {
-        self.teardown_requested = true;
+        self.thread_keep_running.store(false, Ordering::SeqCst);
+        self.thread_handle_active = false;
     }
 
-    /// Helper — union `r` vào `invalid_rect` (bbox: min left/top, max right/bottom).
-    /// Set `invalid_rect_used=true`. Dùng chung cho `trigger_redraw` (Viewport)
-    /// và `trigger_redraw_point` (1×1 exclusive).
-    fn union_rect(&mut self, r: InvalidRect) {
-        self.invalid_rect = Some(match self.invalid_rect.take() {
-            None => r,
-            Some(existing) => InvalidRect {
-                left: existing.left.min(r.left),
-                top: existing.top.min(r.top),
-                right: existing.right.max(r.right),
-                bottom: existing.bottom.max(r.bottom),
-            },
-        });
-        self.invalid_rect_used = true;
+    /// WT `_threadKeepRunning.load()` — render thread keeps running.
+    pub fn is_thread_keep_running(&self) -> bool {
+        self.thread_keep_running.load(Ordering::SeqCst)
     }
+    /// WT `_thread` presence — `true` khi thread spawned, `false` sau teardown.
+    pub fn is_thread_active(&self) -> bool {
+        self.thread_handle_active
+    }
+    /// WT `_thread.reset()` sauteardown — teardown complete khi thread stopped
+    /// + `thread_keep_running` false.
+    pub fn is_teardown_complete(&self) -> bool {
+        !self.thread_handle_active && !self.is_thread_keep_running()
+    }
+    /// WT `_engines` accessor (re-expression cho testability).
+    pub fn engines(&self) -> &[Box<dyn RenderEngine>] {
+        &self.engines
+    }
+    /// WT `_engines` mutator — push engine vào dispatch list (mirror
+    /// `Renderer::AddRenderEngine`).
+    pub fn push_engine(&mut self, engine: Box<dyn RenderEngine>) {
+        self.engines.push(engine);
+    }
+    /// WT `_pfnBackgroundColorChanged` setter (renderer.hpp:175).
+    pub fn set_on_background_color_changed(&mut self, cb: Box<dyn FnMut()>) {
+        self.on_background_color_changed = Some(cb);
+    }
+    /// WT `_pfnFrameColorChanged` setter (renderer.hpp:176).
+    pub fn set_on_frame_color_changed(&mut self, cb: Box<dyn FnMut()>) {
+        self.on_frame_color_changed = Some(cb);
+    }
+}
 
-    /// Invalidation pending (rect used OR all invalidated).
-    pub fn is_invalidated(&self) -> bool {
-        self.invalid_rect_used || self.all_invalidated
-    }
-    pub fn is_all_invalidated(&self) -> bool {
-        self.all_invalidated
-    }
-    pub fn invalid_rect(&self) -> Option<&InvalidRect> {
-        self.invalid_rect.as_ref()
-    }
-    pub fn is_teardown_requested(&self) -> bool {
-        self.teardown_requested
-    }
-    pub fn background_changed(&self) -> bool {
-        self.background_changed
-    }
-    pub fn frame_changed(&self) -> bool {
-        self.frame_changed
+impl Default for RendererState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::Viewport;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
-    /// VR2 — `trigger_redraw(Viewport)` sets invalid_rect + used; clears all_invalidated.
-    #[test]
-    fn test_trigger_redraw_sets_invalid_rect_and_used() {
-        let mut r = RendererState::new();
-        assert!(!r.is_invalidated(), "clean state: not invalidated");
-        r.trigger_redraw(&Viewport::new(5, 7, 20, 15));
-        assert!(r.is_invalidated());
-        assert_eq!(
-            r.invalid_rect(),
-            Some(&InvalidRect {
-                left: 5,
-                top: 7,
-                right: 20,
-                bottom: 15
-            })
-        );
-        assert!(!r.is_all_invalidated());
-        assert!(!r.is_teardown_requested());
+    /// Test-only stub engine — track `invalidate` call regions + `invalidate_all`
+    /// count. **Not a production mock** — verify port-faithful dispatch behavior
+    /// (per-engine Invalidate/InvalidateAll), không fake để pass production test.
+    #[derive(Default)]
+    struct CountingEngine {
+        invalidate_calls: Vec<Viewport>,
+        invalidate_all_calls: usize,
     }
 
-    /// VR3 — `trigger_redraw_point((5,7))` → 1×1 exclusive (right6, bottom8).
+    impl RenderEngine for CountingEngine {
+        fn invalidate(&mut self, region: &Viewport) {
+            self.invalidate_calls.push(*region);
+        }
+        fn invalidate_all(&mut self) {
+            self.invalidate_all_calls += 1;
+        }
+    }
+
+    /// Shared wrapper để observe `CountingEngine` state sau khi pushed
+    /// vào `Vec<Box<dyn RenderEngine>>` (trait object che xuốngcast).
+    struct SharedCountingEngine(Rc<RefCell<CountingEngine>>);
+    impl RenderEngine for SharedCountingEngine {
+        fn invalidate(&mut self, region: &Viewport) {
+            self.0.borrow_mut().invalidate(region);
+        }
+        fn invalidate_all(&mut self) {
+            self.0.borrow_mut().invalidate_all();
+        }
+    }
+
+    /// VR1 — `trigger_redraw` dispatches `invalidate(&region)` to EACH engine
+    /// (mirror WT renderer.cpp:664-668 `for pEngine : _engines`).
     #[test]
-    fn test_trigger_redraw_point_one_by_one() {
+    fn test_trigger_redraw_dispatches_invalidate_to_each_engine_rc() {
         let mut r = RendererState::new();
+        let s1 = Rc::new(RefCell::new(CountingEngine::default()));
+        let s2 = Rc::new(RefCell::new(CountingEngine::default()));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s1))));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s2))));
+        let region = Viewport::new(5, 7, 20, 15);
+        r.trigger_redraw(&region);
+        assert_eq!(s1.borrow().invalidate_calls, vec![region]);
+        assert_eq!(s2.borrow().invalidate_calls, vec![region]);
+        assert_eq!(s1.borrow().invalidate_all_calls, 0);
+        assert_eq!(s2.borrow().invalidate_all_calls, 0);
+    }
+
+    /// VR2 — `trigger_redraw_point((5,7))` delegates to `trigger_redraw` với
+    /// 1×1 inclusive Viewport `{5,7,5,7}` (width=1 height=1). Mirror WT
+    /// `TriggerRedraw(point*)` (renderer.cpp:691).
+    #[test]
+    fn test_trigger_redraw_point_one_by_one_delegates() {
+        let mut r = RendererState::new();
+        let s = Rc::new(RefCell::new(CountingEngine::default()));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s))));
         r.trigger_redraw_point((5, 7));
         assert_eq!(
-            r.invalid_rect(),
-            Some(&InvalidRect {
-                left: 5,
-                top: 7,
-                right: 6,
-                bottom: 8
-            })
+            s.borrow().invalidate_calls,
+            vec![Viewport::new(5, 7, 5, 7)],
+            "1×1 inclusive (inclusive Viewport convention, width=height=1)"
         );
     }
 
-    /// VR4 — bbox union accumulate (min left/top, max right/bottom).
+    /// VR3 — `trigger_redraw_all(bg,frame)` dispatches `invalidate_all()` to each
+    /// engine + fires callbacks (fire-and-forget, không sticky). Mirror WT
+    /// renderer.cpp:704-722.
     #[test]
-    fn test_trigger_redraw_accumulates_bbox_union() {
+    fn test_trigger_redraw_all_dispatches_invalidate_all_and_callbacks() {
         let mut r = RendererState::new();
+        let s1 = Rc::new(RefCell::new(CountingEngine::default()));
+        let s2 = Rc::new(RefCell::new(CountingEngine::default()));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s1))));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s2))));
+        // Counter callbacks (Rc<RefCell<usize>> — fire-and-forget increment).
+        let bg_counter = Rc::new(RefCell::new(0usize));
+        let frame_counter = Rc::new(RefCell::new(0usize));
+        let bg_for_cb = Rc::clone(&bg_counter);
+        let frame_for_cb = Rc::clone(&frame_counter);
+        r.set_on_background_color_changed(Box::new(move || {
+            *bg_for_cb.borrow_mut() += 1;
+        }));
+        r.set_on_frame_color_changed(Box::new(move || {
+            *frame_for_cb.borrow_mut() += 1;
+        }));
+
+        // trigger_redraw_all(true,true) → mỗi engine invalidate_all + cả callback fire.
+        r.trigger_redraw_all(true, true);
+        assert_eq!(s1.borrow().invalidate_all_calls, 1);
+        assert_eq!(s2.borrow().invalidate_all_calls, 1);
+        assert!(s1.borrow().invalidate_calls.is_empty(), "All không per-region");
+        assert!(s2.borrow().invalidate_calls.is_empty());
+        assert_eq!(*bg_counter.borrow(), 1);
+        assert_eq!(*frame_counter.borrow(), 1);
+
+        // trigger_redraw_all(false,false) → invalidate_all lại, callbacks KHÔNG fire.
+        r.trigger_redraw_all(false, false);
+        assert_eq!(s1.borrow().invalidate_all_calls, 2);
+        assert_eq!(*bg_counter.borrow(), 1, "bg callback fire-and-forget, không sticky");
+        assert_eq!(*frame_counter.borrow(), 1, "frame callback không sticky");
+    }
+
+    /// VR4 — `trigger_teardown` sets thread_keep_running=false + thread handle
+    /// inactive. Mirror WT renderer.cpp:113 `_threadKeepRunning.store(false)` +
+    /// thread reset. `start_thread()` lifecycles observable.
+    #[test]
+    fn test_trigger_teardown_sets_thread_keep_running_false() {
+        let mut r = RendererState::new();
+        assert!(!r.is_thread_keep_running(), "new: thread not started");
+        assert!(!r.is_thread_active());
+        assert!(r.is_teardown_complete(), "new: teardown trivially complete");
+        r.start_thread();
+        assert!(r.is_thread_keep_running());
+        assert!(r.is_thread_active());
+        assert!(!r.is_teardown_complete(), "thread active: teardown not complete");
+        r.trigger_teardown();
+        assert!(!r.is_thread_keep_running());
+        assert!(!r.is_thread_active());
+        assert!(r.is_teardown_complete(), "sau teardown: complete");
+    }
+
+    /// VR5 — `trigger_redraw` KHÔNG accumulate bbox union (loop-04 fabricated
+    /// drift closed). Mỗi `trigger_redraw` dispatch riêng; engine nhận N calls
+    /// cho N trigger — không bbox union single accumulated call.
+    #[test]
+    fn test_trigger_redraw_no_bbox_accumulation() {
+        let mut r = RendererState::new();
+        let s = Rc::new(RefCell::new(CountingEngine::default()));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s))));
+        // 2 trigger disjoint regions → engine nhận 2 calls riêng, KHÔNG accumulate.
         r.trigger_redraw(&Viewport::new(5, 7, 10, 12));
         r.trigger_redraw(&Viewport::new(20, 3, 25, 8));
         assert_eq!(
-            r.invalid_rect(),
-            Some(&InvalidRect {
-                left: 5,
-                top: 3,
-                right: 25,
-                bottom: 12
-            })
+            s.borrow().invalidate_calls.len(),
+            2,
+            "2 dispatch riêng, không bbox union accumulate"
         );
-    }
-
-    /// VR5 part 1 — `trigger_redraw_all` clears rect, sets all_invalidated; sau
-    /// `trigger_redraw` clears all_invalidated (mirror WT line 708).
-    #[test]
-    fn test_trigger_redraw_all_clears_rect_sets_all_invalidated() {
-        let mut r = RendererState::new();
-        // Accumulate rect trước.
-        r.trigger_redraw(&Viewport::new(5, 7, 10, 12));
-        assert!(r.invalid_rect().is_some());
-        // trigger_redraw_all superset → clear rect, set all.
-        r.trigger_redraw_all(false, false);
-        assert!(r.is_all_invalidated());
-        assert!(r.invalid_rect().is_none(), "all-invalidated clears rect");
-        assert!(!r.invalid_rect_used);
-        assert!(r.is_invalidated(), "all_invalidated ⇒ is_invalidated");
-        // Sau trigger_redraw(region) → all_invalidated cleared (mirror WT
-        // `TriggerRedraw` set `_fAllInvalidated=false`).
-        r.trigger_redraw(&Viewport::new(0, 0, 3, 3));
-        assert!(!r.is_all_invalidated(), "TriggerRedraw clears all_invalidated");
-        assert!(r.is_invalidated(), "rect used lại");
-        assert!(r.invalid_rect().is_some());
-    }
-
-    /// VR5 part 2 — `trigger_redraw_all(true,true)` records bg/frame flags; sticky
-    /// (sau `trigger_redraw_all(false,false)` không clear, mirror WT `|=`).
-    #[test]
-    fn test_trigger_redraw_all_records_bg_frame_flags() {
-        let mut r = RendererState::new();
-        r.trigger_redraw_all(true, true);
-        assert!(r.background_changed());
-        assert!(r.frame_changed());
-        // Sticky — `trigger_redraw_all(false,false)` không clear.
-        r.trigger_redraw_all(false, false);
-        assert!(r.background_changed(), "bg flag sticky");
-        assert!(r.frame_changed(), "frame flag sticky");
-    }
-
-    /// VR6 — `trigger_teardown()` sets teardown_requested; không invalidate.
-    #[test]
-    fn test_trigger_teardown_sets_flag() {
-        let mut r = RendererState::new();
-        r.trigger_teardown();
-        assert!(r.is_teardown_requested());
-        assert!(!r.is_invalidated(), "teardown không invalidate");
-        assert!(r.invalid_rect().is_none());
+        assert_eq!(s.borrow().invalidate_calls[0], Viewport::new(5, 7, 10, 12));
+        assert_eq!(s.borrow().invalidate_calls[1], Viewport::new(20, 3, 25, 8));
     }
 }

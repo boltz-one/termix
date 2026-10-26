@@ -8,7 +8,7 @@ s006,GetLightness,ColorFix.cpp:219,fn,crates/renderer/src/colorfix.rs,partial,te
 s007,AdjustLightness,ColorFix.cpp:212,fn,crates/renderer/src/colorfix.rs,partial,,ADR-0015,OKlab L+offset
 s008,GetAttributeColors,RenderSettings.cpp:183,fn,crates/renderer/src/settings.rs,partial,wt_renderer__always_distinguishable_nudges_close_pair,ADR-0015;ADR-0003,AdjustIndistinguishable wire (loop 03)
 s009,GetAttributeUnderlineColor,RenderSettings.cpp:259,fn,crates/renderer/src/settings.rs,partial,test_get_attribute_underline_color_distinguishable_nudges,ADR-0015,ul adjust
-s010,Renderer::TriggerRedraw,renderer.cpp:656,fn,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_sets_invalid_rect_and_used,ADR-0003,viewport invalidation bbox union
-s011,Renderer::TriggerRedrawAll,renderer.cpp:704,fn,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_all_clears_rect_sets_all_invalidated,ADR-0003,all-invalidated + bg/frame flags
-s012,Renderer::TriggerTeardown,renderer.cpp:110,fn,crates/renderer/src/renderer.rs,partial,test_trigger_teardown_sets_flag,ADR-0003,teardown state flag
-s013,Renderer::_fInvalidRect,renderer.hpp:181,field,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_accumulates_bbox_union,ADR-0003,accumulated invalid bbox
+s010,Renderer::TriggerRedraw,renderer.cpp:656,fn,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_dispatches_invalidate_to_each_engine_rc,ADR-0003,per-engine Invalidate dispatch (no bbox union accumulate)
+s011,Renderer::TriggerRedrawAll,renderer.cpp:704,fn,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_all_dispatches_invalidate_all_and_callbacks,ADR-0003,per-engine InvalidateAll + bg/frame callbacks fire-and-forget
+s012,Renderer::TriggerTeardown,renderer.cpp:110,fn,crates/renderer/src/renderer.rs,partial,test_trigger_teardown_sets_thread_keep_running_false,ADR-0003,thread_keep_running store false + thread handle inactive
+s013,Renderer::_engines,renderer.hpp:175,field,crates/renderer/src/renderer.rs,partial,test_trigger_redraw_dispatches_invalidate_to_each_engine_rc,ADR-0003,per-engine dispatch Vec (replaces _fInvalidRect loop-04 fabricated)
