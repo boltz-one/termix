@@ -1,6 +1,6 @@
 ---
 loop: 6
-status: pending
+status: accepted
 preservation_constraints:
   - p1_loop05_workspace_regression         # cargo test --workspace --lib ≥485 pass / 0 fail (loop05 485 base)
   - p2_loop05_colorfix_unit_intact          # renderer --lib colorfix 8 pass

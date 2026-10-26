@@ -45,10 +45,27 @@ pub trait RenderEngine {
     /// WT `RenderEngineBase::InvalidateAll()` — full-frame invalidation
     /// (renderer.cpp:710-712 `pEngine->InvalidateAll()`).
     fn invalidate_all(&mut self);
+    /// WT `IRenderEngine::InvalidateScroll(const til::point* pcoordDelta)`
+    /// (`renderer/inc/IRenderEngine.hpp:73`, abstract virtual; called by
+    /// `Renderer::TriggerScroll(point*)` renderer.cpp:894-896). Per-engine
+    /// scroll-delta invalidation. Loop 06 port slice; full trait defer.
+    fn invalidate_scroll(&mut self, delta: (i32, i32));
 }
 
-/// `RendererState` — port WT `renderer/base/renderer.cpp:110,656-722` +
-/// `renderer.hpp:175-185`. Per-engine dispatch + thread lifecycle state.
+/// `CursorOptions` — port slice WT `CursorOptions.h:22` struct. Loop 06 chỉ
+/// dùng `coord_cursor` field ( shift bởi `_ScrollPreviousSelection`,
+/// renderer.cpp:1877). Full struct (isOn, isDoubleWidth, style, color…) defer
+/// cursor-render loop (P10 step 6). `til::point` port = `(i32, i32)` tuple.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CursorOptions {
+    /// WT `CursorOptions::coordCursor` (CursorOptions.h:26, `til::point`).
+    /// Buffer-space coord của cursor; shift bởi `_ScrollPreviousSelection`.
+    pub coord_cursor: (i32, i32),
+}
+
+/// `RendererState` — port WT `renderer/base/renderer.cpp:110,656-722,891-900,
+/// 1870-1879` + `renderer.hpp:151-183`. Per-engine dispatch + thread lifecycle
+/// + scroll/selection state.
 ///
 /// State observable qua getters; trigger methods mutate state + dispatch trait
 /// calls, không wire GPUI scene (ADR-0003 — `cx.notify()` loop sau).
@@ -70,6 +87,15 @@ pub struct RendererState {
     /// WT `_pfnFrameColorChanged` (renderer.hpp:176) — gọi trong
     /// `TriggerRedrawAll(frameChanged=true)` (renderer.cpp:720).
     on_frame_color_changed: Option<Box<dyn FnMut()>>,
+    /// WT `_currentCursorOptions` (renderer.hpp:162, `CursorOptions{}`) —
+    /// cursor state; `coord_cursor` shift bởi `_ScrollPreviousSelection`
+    /// (renderer.cpp:1877). Full struct defer cursor-render loop.
+    current_cursor_options: CursorOptions,
+    /// WT `_lastSelectionRectsByViewport` (renderer.hpp:183,
+    /// `std::vector<til::rect>{}`) — selection rects in viewport space;
+    /// shift bởi `_ScrollPreviousSelection` (renderer.cpp:1874-1876).
+    /// Empty khi chưa có selection (textbuffer/P11 wire defer).
+    last_selection_rects_by_viewport: Vec<InvalidRect>,
 }
 
 impl RendererState {
@@ -80,6 +106,8 @@ impl RendererState {
             engines: Vec::new(),
             on_background_color_changed: None,
             on_frame_color_changed: None,
+            current_cursor_options: CursorOptions::default(),
+            last_selection_rects_by_viewport: Vec::new(),
         }
     }
 
@@ -142,6 +170,40 @@ impl RendererState {
         self.thread_handle_active = false;
     }
 
+    /// Port `TriggerScroll(const til::point* pcoordDelta)` (renderer.cpp:891-900).
+    /// WT: `for pEngine in _engines: pEngine->InvalidateScroll(pcoordDelta)` →
+    /// `_ScrollPreviousSelection(*pcoordDelta)` → `NotifyPaintFrame()`. Loop 06
+    /// port dispatch + state shift slice; `NotifyPaintFrame()` wire `cx.notify()`
+    /// defer ADR-0003. **KHÔNG** port `TriggerScroll()` no-arg (cần
+    /// `_CheckViewportAndScroll` + `_viewport` — defer viewport-driver loop).
+    pub fn trigger_scroll(&mut self, delta: (i32, i32)) {
+        for engine in &mut self.engines {
+            engine.invalidate_scroll(delta);
+        }
+        self.scroll_previous_selection(delta);
+    }
+
+    /// Port `_ScrollPreviousSelection(const til::point delta)`
+    /// (renderer.cpp:1870-1879). WT: `if delta != {0,0}: for rc in
+    /// _lastSelectionRectsByViewport: rc += delta; _currentCursorOptions.coordCursor
+    /// += delta`. Shift selection rects + cursor coord by delta; no-op khi
+    /// `delta == (0,0)` (mirror WT early-return cpp:1872). Empty selection vector
+    /// → chỉ cursor shift (cpp:1877无条件 inside `if delta != 0`).
+    fn scroll_previous_selection(&mut self, delta: (i32, i32)) {
+        if delta == (0, 0) {
+            return;
+        }
+        for rc in &mut self.last_selection_rects_by_viewport {
+            rc.left += delta.0;
+            rc.right += delta.0;
+            rc.top += delta.1;
+            rc.bottom += delta.1;
+        }
+        self.current_cursor_options.coord_cursor =
+            (self.current_cursor_options.coord_cursor.0 + delta.0,
+             self.current_cursor_options.coord_cursor.1 + delta.1);
+    }
+
     /// WT `_threadKeepRunning.load()` — render thread keeps running.
     pub fn is_thread_keep_running(&self) -> bool {
         self.thread_keep_running.load(Ordering::SeqCst)
@@ -172,6 +234,23 @@ impl RendererState {
     pub fn set_on_frame_color_changed(&mut self, cb: Box<dyn FnMut()>) {
         self.on_frame_color_changed = Some(cb);
     }
+    /// WT `_currentCursorOptions.coordCursor` accessor (renderer.hpp:162,
+    /// `CursorOptions.h:26`) — cursor buffer coord (re-expression cho
+    /// testability; shift bởi `_ScrollPreviousSelection`).
+    pub fn current_cursor_coord(&self) -> (i32, i32) {
+        self.current_cursor_options.coord_cursor
+    }
+    /// WT `_lastSelectionRectsByViewport` accessor (renderer.hpp:183) —
+    /// selection rects in viewport space (re-expression cho testability).
+    pub fn last_selection_rects(&self) -> &[InvalidRect] {
+        &self.last_selection_rects_by_viewport
+    }
+    /// WT `_lastSelectionRectsByViewport` setter — test hook cho pre-populate
+    /// selection state (mirror TriggerSelection wiring, defer P11). Production
+    /// wire defer textbuffer/P11.
+    pub fn set_last_selection_rects(&mut self, rects: Vec<InvalidRect>) {
+        self.last_selection_rects_by_viewport = rects;
+    }
 }
 
 impl Default for RendererState {
@@ -193,6 +272,7 @@ mod tests {
     struct CountingEngine {
         invalidate_calls: Vec<Viewport>,
         invalidate_all_calls: usize,
+        invalidate_scroll_calls: Vec<(i32, i32)>,
     }
 
     impl RenderEngine for CountingEngine {
@@ -201,6 +281,9 @@ mod tests {
         }
         fn invalidate_all(&mut self) {
             self.invalidate_all_calls += 1;
+        }
+        fn invalidate_scroll(&mut self, delta: (i32, i32)) {
+            self.invalidate_scroll_calls.push(delta);
         }
     }
 
@@ -213,6 +296,9 @@ mod tests {
         }
         fn invalidate_all(&mut self) {
             self.0.borrow_mut().invalidate_all();
+        }
+        fn invalidate_scroll(&mut self, delta: (i32, i32)) {
+            self.0.borrow_mut().invalidate_scroll(delta);
         }
     }
 
@@ -324,5 +410,107 @@ mod tests {
         );
         assert_eq!(s.borrow().invalidate_calls[0], Viewport::new(5, 7, 10, 12));
         assert_eq!(s.borrow().invalidate_calls[1], Viewport::new(20, 3, 25, 8));
+    }
+
+    /// VR6 (loop-06) — `trigger_scroll(delta)` dispatches `invalidate_scroll(delta)`
+    /// to EACH engine. Mirror WT `renderer.cpp:894-896` `for pEngine: _engines:
+    /// pEngine->InvalidateScroll(pcoordDelta)`.
+    #[test]
+    fn test_trigger_scroll_dispatches_invalidate_scroll_to_each_engine() {
+        let mut r = RendererState::new();
+        let s1 = Rc::new(RefCell::new(CountingEngine::default()));
+        let s2 = Rc::new(RefCell::new(CountingEngine::default()));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s1))));
+        r.push_engine(Box::new(SharedCountingEngine(Rc::clone(&s2))));
+        r.trigger_scroll((3, -2));
+        assert_eq!(s1.borrow().invalidate_scroll_calls, vec![(3, -2)]);
+        assert_eq!(s2.borrow().invalidate_scroll_calls, vec![(3, -2)]);
+        assert!(s1.borrow().invalidate_calls.is_empty(), "scroll không per-region");
+        assert!(s2.borrow().invalidate_calls.is_empty());
+        assert_eq!(s1.borrow().invalidate_all_calls, 0);
+    }
+
+    /// VR7 (loop-06) — `trigger_scroll((0,0))` no-op on state. Mirror
+    /// `_ScrollPreviousSelection` early-return `delta != {0,0}` (cpp:1872).
+    #[test]
+    fn test_scroll_previous_selection_noop_zero_delta() {
+        let mut r = RendererState::new();
+        // Pre-populate state non-empty để verify no shift.
+        r.set_last_selection_rects(vec![InvalidRect {
+            left: 0,
+            top: 0,
+            right: 10,
+            bottom: 5,
+        }]);
+        // cursor coord không có public setter — verify qua default (0,0) + no-shift.
+        r.trigger_scroll((0, 0));
+        assert_eq!(
+            r.last_selection_rects(),
+            [InvalidRect {
+                left: 0,
+                top: 0,
+                right: 10,
+                bottom: 5
+            }],
+            "(0,0) delta: rects unchanged"
+        );
+        assert_eq!(r.current_cursor_coord(), (0, 0), "(0,0) delta: coord unchanged");
+    }
+
+    /// VR8 (loop-06) — `trigger_scroll((3,-2))` shifts selection rects + cursor
+    /// coord. Mirror `_ScrollPreviousSelection` `rc += delta` (cpp:1875) +
+    /// `coordCursor += delta` (cpp:1877). Empty-state no-panic covered cùng VR9.
+    #[test]
+    fn test_scroll_previous_selection_shifts_state_nonzero_delta() {
+        let mut r = RendererState::new();
+        r.set_last_selection_rects(vec![
+            InvalidRect {
+                left: 0,
+                top: 0,
+                right: 10,
+                bottom: 5,
+            },
+            InvalidRect {
+                left: 20,
+                top: 10,
+                right: 30,
+                bottom: 15,
+            },
+        ]);
+        r.trigger_scroll((3, -2));
+        assert_eq!(
+            r.last_selection_rects(),
+            [
+                InvalidRect {
+                    left: 3,
+                    top: -2,
+                    right: 13,
+                    bottom: 3
+                },
+                InvalidRect {
+                    left: 23,
+                    top: 8,
+                    right: 33,
+                    bottom: 13
+                },
+            ],
+            "rects shift: left/right += 3, top/bottom += -2"
+        );
+        assert_eq!(r.current_cursor_coord(), (3, -2), "coord shifts (0,0)+(3,-2)");
+    }
+
+    /// VR9 (loop-06) — `trigger_scroll` empty state no panic + cursor still
+    /// shifts. Mirror WT: empty `_lastSelectionRectsByViewport` vector iter
+    /// no-op, nhưng cursor shift无条件 inside `if delta != 0` (cpp:1877).
+    /// Default getters verify (vr6 state empty, coord (0,0)).
+    #[test]
+    fn test_trigger_scroll_empty_state_no_panic_and_default_getters() {
+        let mut r = RendererState::new();
+        // Default: empty selection, coord (0,0).
+        assert!(r.last_selection_rects().is_empty());
+        assert_eq!(r.current_cursor_coord(), (0, 0));
+        r.trigger_scroll((5, 5));
+        assert!(r.last_selection_rects().is_empty(), "empty selection vẫn empty");
+        assert_eq!(r.current_cursor_coord(), (5, 5), "cursor shift dù selection empty");
     }
 }
