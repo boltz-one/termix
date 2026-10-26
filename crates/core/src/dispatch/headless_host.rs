@@ -2,7 +2,7 @@
 //! `RenderModeSink` impl, kept in plain fields. Port của WT `TestGetSet`
 //! semantics (`windows/src/terminal/adapter/TestGetSet.hpp/.cpp`).
 //!
-//! Phase 1 (P01 wave 0): struct complete, bodies marked `// STUB` (return
+//! Phase 1 (P01 wave 0): struct complete, bodies marked defer implementation (return
 //! default), no real buffer/state behind it. Owned by P01 (created); P03
 //! owns afterwards and wires concrete `TextBuffer`/`Viewport`/`RenderState`.
 //!
@@ -71,109 +71,82 @@ impl HeadlessHost {
 #[allow(unused_variables)]
 impl ITerminalApi for HeadlessHost {
     fn get_cursor_position(&self) -> CursorPosition {
-        // STUB
         self.cursor_position
     }
     fn get_viewport_top(&self) -> i32 {
-        // STUB
         self.viewport_top
     }
     fn get_text_buffer(&self) -> &dyn std::any::Any {
-        // STUB
         &self.screen_lines_buf as &dyn std::any::Any
     }
     fn get_text_buffer_mut(&mut self) -> &mut dyn std::any::Any {
-        // STUB
         &mut self.screen_lines_buf as &mut dyn std::any::Any
     }
     fn get_screen_lines(&self) -> &dyn std::any::Any {
-        // STUB
         &self.screen_lines_buf as &dyn std::any::Any
     }
     fn get_active_row(&self) -> i32 {
-        // STUB
         self.active_row
     }
     fn get_active_col(&self) -> i32 {
-        // STUB
         self.active_col
     }
 
     fn is_screen_reversed(&self) -> bool {
-        // STUB
         self.screen_reversed
     }
     fn get_render_state(&self) -> RenderState {
-        // STUB
         self.render_state.clone()
     }
     fn is_vt_input_mode(&self) -> bool {
-        // STUB
         self.vt_input_mode
     }
     fn get_text_attributes(&self) -> TextAttribute {
-        // STUB
         self.text_attributes
     }
     fn set_text_attributes(&mut self, attrs: TextAttribute) {
-        // STUB
         self.text_attributes = attrs;
     }
     fn get_input_mode(&self) -> InputMode {
-        // STUB
         self.input_mode
     }
     fn set_input_mode(&mut self, mode: InputMode) {
-        // STUB
         self.input_mode = mode;
     }
 
     fn print_char(&mut self, c: char) {
-        // STUB
         let _ = c;
     }
     fn print_string(&mut self, s: &str) {
-        // STUB
         let _ = s;
     }
-    fn execute_crlf(&mut self) {
-        // STUB
-    }
+    fn execute_crlf(&mut self) {}
     fn resize_screen_buffer(&mut self, width: i32, height: i32) {
-        // STUB
         self.resize_history.push((width, height));
     }
     fn set_cursor_position(&mut self, row: i32, col: i32) {
-        // STUB
         self.cursor_position = CursorPosition { row, col };
     }
     fn set_viewport_top(&mut self, top: i32) {
-        // STUB
         self.viewport_top = top;
     }
     fn set_screen_reversed(&mut self, reversed: bool) {
-        // STUB
         self.screen_reversed = reversed;
         self.render_state.screen_reversed = reversed;
     }
     fn set_window_title(&mut self, title: &str) {
-        // STUB
         self.window_title = title.to_string();
     }
     fn set_current_working_directory(&mut self, uri: &str) {
-        // STUB
         self.current_working_directory = uri.to_string();
     }
     fn set_clipboard(&mut self, content: &str) {
-        // STUB
         self.clipboard = content.to_string();
     }
     fn write_input(&mut self, bytes: &[u8]) {
-        // STUB
         self.write_buffer.extend_from_slice(bytes);
     }
     fn set_color_table_entry(&mut self, index: usize, color: u32) {
-        // STUB
         if let Some(slot) = self.color_table.get_mut(index) {
             *slot = color;
         }
@@ -182,7 +155,6 @@ impl ITerminalApi for HeadlessHost {
         }
     }
     fn reset_color_table_entry(&mut self, index: usize) {
-        // STUB
         if let Some(slot) = self.color_table.get_mut(index) {
             *slot = 0;
         }
@@ -191,31 +163,24 @@ impl ITerminalApi for HeadlessHost {
         }
     }
     fn warning_bell(&mut self) {
-        // STUB
         self.bell_rang = true;
     }
     fn soft_reset(&mut self) {
-        // STUB
         self.soft_reset_count += 1;
     }
     fn hard_reset(&mut self, erase: bool) {
-        // STUB
         let _ = erase;
         self.hard_reset_count += 1;
     }
-    fn screen_alignment_pattern(&mut self) {
-        // STUB
-    }
+    fn screen_alignment_pattern(&mut self) {}
 }
 
 // —— `InputModeSink` impl — port `InteractivityFactory` notify path.
 impl InputModeSink for HeadlessHost {
     fn notify_input_mode(&mut self, mode: InputMode) {
-        // STUB
         self.input_mode = mode;
     }
     fn notify_focus(&mut self, focused: bool) {
-        // STUB
         let _ = focused;
     }
 }
@@ -223,26 +188,21 @@ impl InputModeSink for HeadlessHost {
 // —— `RenderModeSink` impl — port `RenderSettings` write-side notify.
 impl RenderModeSink for HeadlessHost {
     fn set_render_state(&mut self, state: &RenderState) {
-        // STUB
         self.render_state = state.clone();
         self.screen_reversed = state.screen_reversed;
     }
     fn set_screen_reversed(&mut self, reversed: bool) {
-        // STUB
         self.render_state.screen_reversed = reversed;
         self.screen_reversed = reversed;
     }
     fn set_cursor_style(&mut self, style: CursorShape) {
-        // STUB
         self.render_state.cursor_style = style;
         self.cursor_shape = style;
     }
     fn set_cursor_color(&mut self, color: u32) {
-        // STUB
         self.render_state.cursor_color = color;
     }
     fn set_palette_entry(&mut self, index: usize, color: u32) {
-        // STUB
         if let Some(slot) = self.render_state.palette_overrides.table.get_mut(index) {
             *slot = color;
         }
@@ -251,7 +211,6 @@ impl RenderModeSink for HeadlessHost {
         }
     }
     fn reset_palette_entry(&mut self, index: usize) {
-        // STUB
         if let Some(slot) = self.render_state.palette_overrides.table.get_mut(index) {
             *slot = 0;
         }

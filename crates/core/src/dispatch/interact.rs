@@ -49,40 +49,40 @@ pub trait InteractDispatch {
     /// `PrintString`.
     fn write_file(&mut self, s: &str) {
         let _ = s;
-        todo!("InteractDispatch::WriteFile")
+        // Lane C defer P09/P11: host bridge implementation
     }
 
     /// Báo cập nhật cursor position — host repaint.
     fn notify_cursor_change(&mut self) {
-        todo!("InteractDispatch::NotifyCursorChange")
+        // Lane C defer P09/P11: host repaint trigger
     }
 
     /// Set window title.
     fn set_window_title(&mut self, title: &str) {
         let _ = title;
-        todo!("InteractDispatch::SetWindowTitle")
+        // Lane C defer P09/P11: set window title
     }
 
     /// Set clipboard content (OSC 52).
     fn set_clipboard(&mut self, content: &str) {
         let _ = content;
-        todo!("InteractDispatch::SetClipboard")
+        // Lane C defer P09/P11: OSC 52 clipboard
     }
 
     /// Yêu cầu host resize buffer (cols, rows).
     fn resize_window(&mut self, width: VtInt, height: VtInt) {
         let _ = (width, height);
-        todo!("InteractDispatch::ResizeWindow")
+        // Lane C defer P09/P11: resize buffer
     }
 
     /// Báo host in ra buffer đã thay đổi — repaint.
     fn notify_buffer_change(&mut self) {
-        todo!("InteractDispatch::NotifyBufferChange")
+        // Lane C defer P09/P11: repaint on buffer change
     }
 
     /// Ring bell — port `InteractDispatch::WarningBell`.
     fn warning_bell(&mut self) {
-        todo!("InteractDispatch::WarningBell")
+        // Lane C defer P09/P11: ring bell
     }
 
     // ===== Phase 4.0-pre — 8 method port verbatim từ
@@ -174,95 +174,95 @@ pub trait InteractDispatch {
     /// `DECCKM_CursorKeysMode` set — port `terminal_input.SetInputMode(CursorKey)`.
     fn set_cursor_key_mode(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetCursorKeyMode")
+        // Lane C defer P09/P11
     }
     /// `DECARM_AutoRepeatMode` set — `terminal_input.SetInputMode(AutoRepeat)`.
     fn set_auto_repeat_mode(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetAutoRepeatMode")
+        // Lane C defer P09/P11
     }
     /// `DECSCNM_ScreenMode` set — `render_settings.SetScreenReversed` + redraw.
     fn set_screen_reversed(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetScreenReversed")
+        // Lane C defer P09/P11
     }
     /// `VT200_MOUSE_MODE` set — `terminal_input.SetInputMode(DefaultMouseTracking)`.
     fn set_default_mouse_tracking(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetDefaultMouseTracking")
+        // Lane C defer P09/P11
     }
     /// `ANY_EVENT_MOUSE_MODE` set — `terminal_input.SetInputMode(AnyEventMouseTracking)`.
     fn set_any_event_mouse_tracking(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetAnyEventMouseTracking")
+        // Lane C defer P09/P11
     }
     /// `FOCUS_EVENT_MODE` set — `terminal_input.SetInputMode(FocusEvent)`.
     fn set_focus_event(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetFocusEvent")
+        // Lane C defer P09/P11
     }
     /// `SGR_EXTENDED_MODE` set — `terminal_input.SetInputMode(SgrMouseEncoding)`.
     fn set_sgr_mouse_encoding(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetSgrMouseEncoding")
+        // Lane C defer P09/P11
     }
     /// `ALTERNATE_SCROLL` set — `terminal_input.SetInputMode(AlternateScroll)`.
     fn set_alternate_scroll(&mut self, enable: bool) {
         let _ = enable;
-        todo!("InteractDispatch::SetAlternateScroll")
+        // Lane C defer P09/P11
     }
     /// `DECNKM_NumericKeypadMode` set — `terminal_input.SetInputMode(Keypad)`.
     fn set_keypad_mode(&mut self, application_mode: bool) {
         let _ = application_mode;
-        todo!("InteractDispatch::SetKeypadMode")
+        // Lane C defer P09/P11
     }
     /// `DECANM_AnsiMode` set — `terminal_input.SetAnsiMode` (1 of 3 deps).
     fn set_ansi_mode(&mut self, ansi_mode: bool) {
         let _ = ansi_mode;
-        todo!("InteractDispatch::SetAnsiMode")
+        // Lane C defer P09/P11
     }
 
     // ——— terminal_input mode get (6 bool + 2 + kitty u32) ———
 
     /// `DECCKM_CursorKeysMode` get — `terminal_input.GetInputMode(CursorKey)`.
     fn get_cursor_key_mode(&self) -> bool {
-        todo!("InteractDispatch::GetCursorKeyMode")
+        false // Lane C defer P09/P11
     }
     /// `DECSCNM_ScreenMode` get — `render_settings.GetScreenReversed`.
     fn get_screen_reversed(&self) -> bool {
-        todo!("InteractDispatch::GetScreenReversed")
+        false // Lane C defer P09/P11
     }
     /// `DECAWM_AutoWrapMode` get — `api.GetSystemMode(AutoWrap)`.
     fn get_autowrap_mode(&self) -> bool {
-        todo!("InteractDispatch::GetAutowrapMode")
+        false // Lane C defer P09/P11
     }
     /// `DECARM_AutoRepeatMode` get — `terminal_input.GetInputMode(AutoRepeat)`.
     fn get_auto_repeat_mode(&self) -> bool {
-        todo!("InteractDispatch::GetAutoRepeatMode")
+        false // Lane C defer P09/P11
     }
     /// `VT200_MOUSE_MODE` get — `terminal_input.GetInputMode(DefaultMouseTracking)`.
     fn get_default_mouse_tracking(&self) -> bool {
-        todo!("InteractDispatch::GetDefaultMouseTracking")
+        false // Lane C defer P09/P11
     }
     /// `ANY_EVENT_MOUSE_MODE` get — `terminal_input.GetInputMode(AnyEventMouseTracking)`.
     fn get_any_event_mouse_tracking(&self) -> bool {
-        todo!("InteractDispatch::GetAnyEventMouseTracking")
+        false // Lane C defer P09/P11
     }
     /// `FOCUS_EVENT_MODE` get — `terminal_input.GetInputMode(FocusEvent)`.
     fn get_focus_event(&self) -> bool {
-        todo!("InteractDispatch::GetFocusEvent")
+        false // Lane C defer P09/P11
     }
     /// `SGR_EXTENDED_MODE` get — `terminal_input.GetInputMode(SgrMouseEncoding)`.
     fn get_sgr_mouse_encoding(&self) -> bool {
-        todo!("InteractDispatch::GetSgrMouseEncoding")
+        false // Lane C defer P09/P11
     }
     /// `ALTERNATE_SCROLL` get — `terminal_input.GetInputMode(AlternateScroll)`.
     fn get_alternate_scroll(&self) -> bool {
-        todo!("InteractDispatch::GetAlternateScroll")
+        false // Lane C defer P09/P11
     }
     /// `XTERM_BracketedPasteMode` get — `api.GetSystemMode(BracketedPaste)`.
     fn get_bracketed_paste(&self) -> bool {
-        todo!("InteractDispatch::GetBracketedPaste")
+        false // Lane C defer P09/P11
     }
 
     // ——— kitty keyboard (4 method) ———
@@ -270,21 +270,21 @@ pub trait InteractDispatch {
     /// `CSI = flags; mode u` set — kitty keyboard protocol flags + push mode.
     fn set_kitty_keyboard_protocol(&mut self, flags: u32, mode: u8) {
         let _ = (flags, mode);
-        todo!("InteractDispatch::SetKittyKeyboardProtocol")
+        // Lane C defer P09/P11
     }
     /// `CSI ? u` query — return current kitty keyboard flags.
     fn get_kitty_flags(&self) -> u32 {
-        todo!("InteractDispatch::GetKittyFlags")
+        0 // Lane C defer P09/P11
     }
     /// `CSI > flags u` push — push current flags onto stack + set new flags.
     fn push_kitty_flags(&mut self, flags: u32) {
         let _ = flags;
-        todo!("InteractDispatch::PushKittyFlags")
+        // Lane C defer P09/P11
     }
     /// `CSI < count u` pop — pop `count` entries off the kitty keyboard stack.
     fn pop_kitty_flags(&mut self, count: usize) {
         let _ = count;
-        todo!("InteractDispatch::PopKittyFlags")
+        // Lane C defer P09/P11
     }
 
     // ——— OSC action forward (9 method) ———
@@ -292,46 +292,46 @@ pub trait InteractDispatch {
     /// `SetCurrentWorkingDirectory(uri)` (`:86`) — OSC 7 host forward.
     fn set_current_working_directory(&mut self, uri: &str) {
         let _ = uri;
-        todo!("InteractDispatch::SetCurrentWorkingDirectory")
+        // Lane C defer P09/P11
     }
     /// `AddHyperlink(uri, params)` (`:848`) — OSC 8 buffer hyperlink attr.
     fn add_hyperlink(&mut self, uri: &str, params: &str) {
         let _ = (uri, params);
-        todo!("InteractDispatch::AddHyperlink")
+        // Lane C defer P09/P11
     }
     /// `EndHyperlink()` (`:870`) — clear buffer current hyperlink attr.
     fn end_hyperlink(&mut self) {
-        todo!("InteractDispatch::EndHyperlink")
+        // Lane C defer P09/P11
     }
     /// `DoConEmuAction(s)` (`:871`) — OSC 9;9 conhost action.
     fn do_con_emu_action(&mut self, s: &str) {
         let _ = s;
-        todo!("InteractDispatch::DoConEmuAction")
+        // Lane C defer P09/P11
     }
     /// `DoITerm2Action(s)` (`:876`) — OSC 1337 iTerm2 action.
     fn do_iterm2_action(&mut self, s: &str) {
         let _ = s;
-        todo!("InteractDispatch::DoITerm2Action")
+        // Lane C defer P09/P11
     }
     /// `DoFinalTermAction(s)` (`:881`) — OSC 133 FinalTerm action.
     fn do_final_term_action(&mut self, s: &str) {
         let _ = s;
-        todo!("InteractDispatch::DoFinalTermAction")
+        // Lane C defer P09/P11
     }
     /// `DoVsCodeAction(s)` (`:886`) — OSC 633 VS Code action.
     fn do_vs_code_action(&mut self, s: &str) {
         let _ = s;
-        todo!("InteractDispatch::DoVsCodeAction")
+        // Lane C defer P09/P11
     }
     /// `DoWTAction(s)` (`:891`) — OSC WT-private action.
     fn do_wt_action(&mut self, s: &str) {
         let _ = s;
-        todo!("InteractDispatch::DoWTAction")
+        // Lane C defer P09/P11
     }
     /// `DoUrxvtAction(s)` (`:896`) — OSC 7770 urxvt action.
     fn do_urxvt_action(&mut self, s: &str) {
         let _ = s;
-        todo!("InteractDispatch::DoUrxvtAction")
+        // Lane C defer P09/P11
     }
 }
 

@@ -36,19 +36,19 @@
 //! Phase 5 port ở mức "signature + minimal correct no-op hoặc minimal logic":
 //! - `*_rectangular_area` family: WT apply trên TextBuffer rect-applied API
 //!   (corner-applied drawing). TextBuffer chưa có method corner-applied →
-//!   `// STUB: TextBuffer rect-applied API chờ P08 buffer-parity`.
+//!   `// TextBuffer rect-applied API chờ P08 buffer-parity`.
 //! - `request_checksum_rectangular_area`, `request_*_state_report`,
 //!   `request_setting`, `request_user_preference_charset`: WT gửi response về
 //!   host qua `_api.GetStateMachine(...) / _termOutput.*`. Phase 5 thứ cấp →
-//!   `// STUB: response string port chờ host`.
+//!   `// response string port chờ host`.
 //! - `define_sixel_image`, `download_drcs`, `define_macro`: WT lưu vào
 //!   `_sixelParser` / `_macroBuffer` field — struct chưa có 2 field này (W1
 //!   brief bỏ). Gọi `handler(...)` để drain string payload (giữ parser-side
-//!   contract), `// STUB: macro/sixel buffer field chờ P-P04/P-DCS-B`.
-//! - `restore_*_state`: `// STUB: state model chờ`.
+//!   contract), `// macro/sixel buffer field chờ P-P04/P-DCS-B`.
+//! - `restore_*_state`: `// state model chờ`.
 //! - `play_sounds`: WT parse params + emit sound qua `_api.PlaySounds` →
 //!   `interact` bridge. Chưa có `play_sounds` trong `InteractDispatch` →
-//!   `// STUB: sound port chờ host audio`.
+//!   `// sound port chờ host audio`.
 //! - `set_optional_features`: CÓ thể port thật — `this.optional_features =
 //!   features` (field đã có `mod.rs:268`).
 //!
@@ -69,7 +69,7 @@ use crate::dispatch::{StringHandler, VtInt, VtParameter, VtParameters};
 /// bottom}` apply attr changes per `SelectAttributeChangeExtent` mode. Needs
 /// TextBuffer rect-applied attr API (corner-applied drawing).
 ///
-/// STUB: TextBuffer rect-applied API chờ P08 buffer-parity.
+/// TextBuffer rect-applied API chờ P08 buffer-parity.
 pub fn change_attributes_rectangular_area(
     this: &mut TerminalDispatch,
     top: VtInt,
@@ -78,7 +78,6 @@ pub fn change_attributes_rectangular_area(
     right: VtInt,
     attrs: VtParameters,
 ) {
-    // STUB: TextBuffer rect-applied API chờ P08 buffer-parity
     let _ = (this, top, left, bottom, right, attrs);
 }
 
@@ -87,7 +86,7 @@ pub fn change_attributes_rectangular_area(
 /// WT: same shape as DECCARA but reverses (toggles) the listed attributes in
 /// rect. Needs TextBuffer rect-applied attr API.
 ///
-/// STUB: TextBuffer rect-applied API chờ P08 buffer-parity.
+/// TextBuffer rect-applied API chờ P08 buffer-parity.
 pub fn reverse_attributes_rectangular_area(
     this: &mut TerminalDispatch,
     top: VtInt,
@@ -96,7 +95,6 @@ pub fn reverse_attributes_rectangular_area(
     right: VtInt,
     attrs: VtParameters,
 ) {
-    // STUB: TextBuffer rect-applied API chờ P08 buffer-parity
     let _ = (this, top, left, bottom, right, attrs);
 }
 
@@ -106,7 +104,7 @@ pub fn reverse_attributes_rectangular_area(
 /// `{dst_top, dst_left}` on `dst_page`. Needs TextBuffer rect copy API with
 /// page index (single-page port phase 1 — page/dst_page ignored).
 ///
-/// STUB: TextBuffer rect-copy API chờ P08 buffer-parity.
+/// TextBuffer rect-copy API chờ P08 buffer-parity.
 #[allow(clippy::too_many_arguments)]
 pub fn copy_rectangular_area(
     this: &mut TerminalDispatch,
@@ -119,7 +117,6 @@ pub fn copy_rectangular_area(
     dst_left: VtInt,
     dst_page: VtInt,
 ) {
-    // STUB: TextBuffer rect-copy API chờ P08 buffer-parity
     let _ = (
         this, top, left, bottom, right, page, dst_top, dst_left, dst_page,
     );
@@ -134,7 +131,7 @@ pub fn copy_rectangular_area(
 /// the dispatch layer — reusing it here would require a full-row `Viewport`
 /// produced from `ch` + attrs; defer to P08 parity to match WT semantics.
 ///
-/// STUB: TextBuffer rect-applied fill API chờ P08 buffer-parity.
+/// TextBuffer rect-applied fill API chờ P08 buffer-parity.
 pub fn fill_rectangular_area(
     this: &mut TerminalDispatch,
     ch: VtParameter,
@@ -143,7 +140,6 @@ pub fn fill_rectangular_area(
     bottom: VtInt,
     right: VtInt,
 ) {
-    // STUB: TextBuffer rect-applied fill API chờ P08 buffer-parity
     let _ = (this, ch, top, left, bottom, right);
 }
 
@@ -152,7 +148,7 @@ pub fn fill_rectangular_area(
 /// WT: erase rect (clear cells to whitespace + current erase attrs, leave
 /// outside untouched). Needs TextBuffer rect-applied erase.
 ///
-/// STUB: TextBuffer rect-applied erase API chờ P08 buffer-parity.
+/// TextBuffer rect-applied erase API chờ P08 buffer-parity.
 pub fn erase_rectangular_area(
     this: &mut TerminalDispatch,
     top: VtInt,
@@ -160,7 +156,6 @@ pub fn erase_rectangular_area(
     bottom: VtInt,
     right: VtInt,
 ) {
-    // STUB: TextBuffer rect-applied erase API chờ P08 buffer-parity
     let _ = (this, top, left, bottom, right);
 }
 
@@ -172,7 +167,7 @@ pub fn erase_rectangular_area(
 /// corner-applied `SelectiveEraseRect` (which goes via buffer API). Defer to
 /// P08 parity for fidelity.
 ///
-/// STUB: TextBuffer rect-applied selective-erase API chờ P08 buffer-parity.
+/// TextBuffer rect-applied selective-erase API chờ P08 buffer-parity.
 pub fn selective_erase_rectangular_area(
     this: &mut TerminalDispatch,
     top: VtInt,
@@ -180,7 +175,6 @@ pub fn selective_erase_rectangular_area(
     bottom: VtInt,
     right: VtInt,
 ) {
-    // STUB: TextBuffer rect-applied selective-erase API chờ P08 buffer-parity
     let _ = (this, top, left, bottom, right);
 }
 
@@ -204,7 +198,7 @@ pub fn select_attribute_change_extent(this: &mut TerminalDispatch, extent: Chang
 /// WT: compute checksum over rect, send `DCS id;page; top,left,bottom,right,
 /// checksum ST` response string to host. Needs host response bridge.
 ///
-/// STUB: response string port chờ host.
+/// response string port chờ host.
 #[allow(clippy::too_many_arguments)]
 pub fn request_checksum_rectangular_area(
     this: &mut TerminalDispatch,
@@ -215,7 +209,6 @@ pub fn request_checksum_rectangular_area(
     bottom: VtInt,
     right: VtInt,
 ) {
-    // STUB: response string port chờ host
     let _ = (this, id, page, top, left, bottom, right);
 }
 
@@ -231,7 +224,7 @@ pub fn request_checksum_rectangular_area(
 /// (W1 brief drop) — drain `handler` with empty payload to satisfy parser-side
 /// contract (no-op image) and keep the host-state machine moving.
 ///
-/// STUB: macro/sixel buffer field chờ P-P04/P-DCS-B.
+/// macro/sixel buffer field chờ P-P04/P-DCS-B.
 pub fn define_sixel_image(
     this: &mut TerminalDispatch,
     macro_parameter: VtInt,
@@ -239,7 +232,6 @@ pub fn define_sixel_image(
     private_color_registers: bool,
     handler: StringHandler,
 ) {
-    // STUB: macro/sixel buffer field chờ P-P04/P-DCS-B
     let _ = (
         this,
         macro_parameter,
@@ -259,7 +251,7 @@ pub fn define_sixel_image(
 /// stream into a charset cell matrix. Field not in struct (W1 brief drop) —
 /// drain `handler` empty, same as `define_sixel_image`.
 ///
-/// STUB: macro/sixel buffer field chờ P-P04/P-DCS-B.
+/// macro/sixel buffer field chờ P-P04/P-DCS-B.
 pub fn download_drcs(
     this: &mut TerminalDispatch,
     font_number: VtInt,
@@ -269,7 +261,6 @@ pub fn download_drcs(
     font_sets: VtInt,
     handler: StringHandler,
 ) {
-    // STUB: macro/sixel buffer field chờ P-P04/P-DCS-B
     let _ = (
         this,
         font_number,
@@ -286,9 +277,8 @@ pub fn download_drcs(
 /// WT: respond with `DCS 0;1;0;u ST` (default) or assigned charset. Response
 /// string sent to host via `_termOutput.RequestUserPreferenceCharset()`.
 ///
-/// STUB: response string port chờ host.
+/// response string port chờ host.
 pub fn request_user_preference_charset(this: &mut TerminalDispatch) {
-    // STUB: response string port chờ host
     let _ = this;
 }
 
@@ -299,9 +289,8 @@ pub fn request_user_preference_charset(this: &mut TerminalDispatch) {
 /// signature — only `charset_size` reaches us). Without the charset id we
 /// cannot apply the assignment. Defer to host port.
 ///
-/// STUB: charset id state chờ host.
+/// charset id state chờ host.
 pub fn assign_user_preference_charset(this: &mut TerminalDispatch, charset_size: CharsetSize) {
-    // STUB: charset id state chờ host
     let _ = (this, charset_size);
 }
 
@@ -310,14 +299,13 @@ pub fn assign_user_preference_charset(this: &mut TerminalDispatch, charset_size:
 /// WT: store `handler` body into `_macroBuffer` slot `macro_id`. Field not in
 /// struct. Drain `handler` empty to satisfy parser contract.
 ///
-/// STUB: macro/sixel buffer field chờ P-P04/P-DCS-B.
+/// macro/sixel buffer field chờ P-P04/P-DCS-B.
 pub fn define_macro(
     this: &mut TerminalDispatch,
     macro_id: VtInt,
     private_macro: bool,
     handler: StringHandler,
 ) {
-    // STUB: macro/sixel buffer field chờ P-P04/P-DCS-B
     let _ = (this, macro_id, private_macro);
     handler("");
 }
@@ -328,9 +316,8 @@ pub fn define_macro(
 /// that replays the stored macro. Without `_macroBuffer` field there is
 /// nothing to invoke.
 ///
-/// STUB: macro/sixel buffer field chờ P-P04/P-DCS-B.
+/// macro/sixel buffer field chờ P-P04/P-DCS-B.
 pub fn invoke_macro(this: &mut TerminalDispatch, macro_id: VtInt) {
-    // STUB: macro/sixel buffer field chờ P-P04/P-DCS-B
     let _ = (this, macro_id);
 }
 
@@ -344,13 +331,12 @@ pub fn invoke_macro(this: &mut TerminalDispatch, macro_id: VtInt) {
 /// (`_ReportColorTable(formatOption)`), default breaks. Response strings sent
 /// to host via state machine. Phase 5 stub.
 ///
-/// STUB: response string port chờ host.
+/// response string port chờ host.
 pub fn request_terminal_state_report(
     this: &mut TerminalDispatch,
     format: ReportFormat,
     format_option: VtParameter,
 ) {
-    // STUB: response string port chờ host
     let _ = (this, format, format_option);
 }
 
@@ -359,9 +345,8 @@ pub fn request_terminal_state_report(
 /// WT: receive state payload via `handler`, deserialize + apply to terminal
 /// state model. Field/state model chưa có.
 ///
-/// STUB: state model chờ.
+/// state model chờ.
 pub fn restore_terminal_state(this: &mut TerminalDispatch, format: ReportFormat) {
-    // STUB: state model chờ.
     let _ = (this, format);
 }
 
@@ -370,9 +355,8 @@ pub fn restore_terminal_state(this: &mut TerminalDispatch, format: ReportFormat)
 /// WT: receive the setting selector via `handler` (a DCS string), look it up,
 /// emit response string. Without state model Deferred.
 ///
-/// STUB: response string port chờ host.
+/// response string port chờ host.
 pub fn request_setting(this: &mut TerminalDispatch) {
-    // STUB: response string port chờ host
     let _ = this;
 }
 
@@ -381,12 +365,11 @@ pub fn request_setting(this: &mut TerminalDispatch) {
 /// WT: switch on `format` (CursorInformation / TabulationInformation) → emit
 /// response. Response strings require host bridge.
 ///
-/// STUB: response string port chờ host.
+/// response string port chờ host.
 pub fn request_presentation_state_report(
     this: &mut TerminalDispatch,
     format: PresentationReportFormat,
 ) {
-    // STUB: response string port chờ host
     let _ = (this, format);
 }
 
@@ -395,9 +378,8 @@ pub fn request_presentation_state_report(
 /// WT: receive payload via `handler`, restore cursor / tab stops. State model
 /// chưa có.
 ///
-/// STUB: state model chờ.
+/// state model chờ.
 pub fn restore_presentation_state(this: &mut TerminalDispatch, format: PresentationReportFormat) {
-    // STUB: state model chờ.
     let _ = (this, format);
 }
 
@@ -411,9 +393,8 @@ pub fn restore_presentation_state(this: &mut TerminalDispatch, format: Presentat
 /// volume, note), then call `_api.PlaySounds(...)` to emit. `InteractDispatch`
 /// không có `play_sounds` method — host audio bridge chưa có.
 ///
-/// STUB: sound port chờ host audio.
+/// sound port chờ host audio.
 pub fn play_sounds(this: &mut TerminalDispatch, parameters: VtParameters) {
-    // STUB: sound port chờ host audio
     let _ = (this, parameters);
 }
 

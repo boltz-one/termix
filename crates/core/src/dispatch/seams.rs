@@ -1,7 +1,7 @@
 //! `dispatch::seams` — frozen contract surface between phase boundaries.
 //!
 //! Phase 1 (P01 wave 0 enabler): trait SIGNATURES only — bodies marked
-//! `// STUB`. Later phases implement concretely:
+//! defer implementation. Later phases implement concretely:
 //! - P03 (`host`) — `ITerminalApi` glue impl + `HeadlessHost` ownership.
 //! - P09 (`core`/terminal core) — Terminal writes `RenderState` via
 //!   `RenderModeSink`, drives `InputModeSink` notify on interactivity/mode

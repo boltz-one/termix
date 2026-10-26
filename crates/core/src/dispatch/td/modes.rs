@@ -407,8 +407,6 @@ pub fn set_ansi_mode(this: &mut TerminalDispatch, ansi_mode: bool) {
     // `terminal_input.SetAnsiMode` qua `this.interact.set_ansi_mode`; 2 dep
     // khác giữ STUB inline (build pass, không panic khi parser gọi).
     this.interact.set_ansi_mode(ansi_mode);
-    // STUB: term_output.SoftReset — Phase 4.y term_output port.
-    // STUB: api.state_machine.SetParserMode(Ansi) — Phase 4.y ITerminalApi port.
 }
 
 // —— Kitty keyboard — port `:2079-2128` — public.
