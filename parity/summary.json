@@ -1,16 +1,16 @@
 {
-  "round": 13,
+  "round": 16,
   "rows_by_status": {
     "not-started": 982,
     "partial": 29
   },
   "tests_by_status": {},
   "stubs_by_crate": {
-    "core": 126,
+    "core": 2,
     "xtask": 18
   },
   "new_gaps": 0,
-  "clean_streak": 0,
+  "clean_streak": 1,
   "coverage_diff_line": 0.0,
   "coverage_diff_branch": 0.0
 }

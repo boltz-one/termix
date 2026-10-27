@@ -157,7 +157,10 @@ fn gate_build_release(errors: &mut Vec<String>) {
 }
 
 fn gate_test_workspace(errors: &mut Vec<String>) {
-    let out = Command::new("cargo").args(["test", "--workspace"]).output();
+    // Skip xtask to avoid Windows file-locking (xtask.exe rebuilding itself while running)
+    let out = Command::new("cargo")
+        .args(["test", "--workspace", "--exclude", "xtask"])
+        .output();
     match out {
         Ok(o) if !o.status.success() => {
             errors.push(format!(
