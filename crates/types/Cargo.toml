@@ -7,3 +7,5 @@ edition = "2021"
 path = "src/lib.rs"
 
 [dependencies]
+bitflags = "2.4"
+unicode-segmentation = "1.10"

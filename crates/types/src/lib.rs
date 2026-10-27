@@ -1,5 +1,8 @@
-//! `types` — shared boxed types (port của `windows/src/types/` và
-//! `til/` boxed-by-value).
+//! `types` — Geometric primitives, color ops, Unicode width detection
 //!
-//! Phase 1 skeleton (P01 wave 0): module trống — signature + chứathực
-//! hiện hạ tầng landing P02 trở đi.
+//! Port of Windows Terminal `til/*` and `types/*` utilities.
+//! Phase P05 (types-til), Wave 1.
+
+pub mod primitives;
+
+pub use primitives::{Point, Rect, Size};
